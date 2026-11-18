@@ -336,7 +336,8 @@ func TestProxyAndGroupPyPI(t *testing.T) {
 	inst.CreateRepo("pypi-local", "pypi", "hosted", nil)
 	inst.CreateRepo("pypi-all", "pypi", "group", map[string]any{
 		"anonymousRead": true,
-		"group":         map[string]any{"members": []string{"pypi-local", "pypi-remote"}},
+		// Merging hosted and proxied files of a project needs preferHosted off.
+		"group": map[string]any{"members": []string{"pypi-local", "pypi-remote"}, "preferHosted": false},
 	})
 
 	// Proxy project page: links are rewritten to go through Entrepot.
@@ -442,5 +443,27 @@ func TestProxyAndGroupPyPI(t *testing.T) {
 	if indexHits.Load() < 2 {
 		t.Fatal("index was not refetched after delete")
 	}
+
+	// preferHosted (the default): demo is published internally, so the
+	// public files are never merged in, whatever the member order.
+	inst.CreateRepo("pypi-safe", "pypi", "group", map[string]any{
+		"anonymousRead": true,
+		"group":         map[string]any{"members": []string{"pypi-remote", "pypi-local"}},
+	})
+	js = getJSON(t, inst, "/repository/pypi-safe/simple/demo/", "")
+	if len(js.Files) != 1 || js.Files[0].Filename != localName || len(js.Versions) != 1 || js.Versions[0] != "2.0" {
+		t.Fatalf("preferHosted page: %+v", js)
+	}
+	html := testutil.Expect(t, inst.Do("GET", "/repository/pypi-safe/simple/demo/", "", nil), http.StatusOK)
+	if strings.Contains(html, demoName) {
+		t.Fatalf("preferHosted html page lists the public file:\n%s", html)
+	}
+	testutil.Expect(t, inst.Do("GET", "/repository/pypi-safe/packages/demo/1.0/"+demoName, "", nil), http.StatusNotFound)
+	testutil.Expect(t, inst.Do("GET", "/repository/pypi-safe/packages/demo/2.0/"+localName, "", nil), http.StatusOK)
+	// Projects not published internally still come from the proxy.
+	if page := testutil.Expect(t, inst.Do("GET", "/repository/pypi-safe/simple/legacy-proj/", "", nil), http.StatusOK); !strings.Contains(page, legacyName) {
+		t.Fatalf("preferHosted proxied project: %s", page)
+	}
+	testutil.Expect(t, inst.Do("GET", "/repository/pypi-safe/packages/legacy-proj/0.5/"+legacyName, "", nil), http.StatusOK)
 	_ = io.Discard
 }

@@ -253,7 +253,7 @@ func (h *Handler) page(ctx context.Context, rp *repo.Repository, project string)
 		seen := map[string]bool{}
 		versions := map[string]bool{}
 		found := false
-		for _, m := range h.env.Members(ctx, rp) {
+		for _, m := range h.groupMembers(ctx, rp, project) {
 			pg, err := h.page(ctx, m, project)
 			if err != nil {
 				if !isNotFound(err) {

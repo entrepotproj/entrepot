@@ -81,7 +81,11 @@ func (h *Handler) find(ctx context.Context, rp *repo.Repository, p string) (*rep
 		a, err := h.proxyFile(ctx, rp, p)
 		return rp, a, err
 	case repo.KindGroup:
-		for _, m := range h.env.Members(ctx, rp) {
+		members := h.env.Members(ctx, rp)
+		if fp, ok := parseFilePath(p); ok {
+			members = h.groupMembers(ctx, rp, fp.Project)
+		}
+		for _, m := range members {
 			owner, a, err := h.find(ctx, m, p)
 			if err == nil {
 				return owner, a, nil

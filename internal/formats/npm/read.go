@@ -204,7 +204,7 @@ func (h *Handler) proxyPackument(ctx context.Context, rp *repo.Repository, name 
 
 func (h *Handler) groupPackument(ctx context.Context, rp *repo.Repository, name string) (*packument, error) {
 	var merged *packument
-	for _, m := range h.env.Members(ctx, rp) {
+	for _, m := range h.groupMembers(ctx, rp, name) {
 		pk, err := h.packument(ctx, m, name)
 		if err != nil {
 			if !errors.Is(err, repo.ErrNotFound) {
@@ -248,7 +248,7 @@ func (h *Handler) findTarball(ctx context.Context, rp *repo.Repository, name, fi
 		a, err := h.proxyTarball(ctx, rp, name, file)
 		return rp, a, err
 	case repo.KindGroup:
-		for _, m := range h.env.Members(ctx, rp) {
+		for _, m := range h.groupMembers(ctx, rp, name) {
 			owner, a, err := h.findTarball(ctx, m, name, file)
 			if err == nil {
 				return owner, a, nil

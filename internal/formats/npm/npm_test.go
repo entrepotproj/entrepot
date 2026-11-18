@@ -357,7 +357,8 @@ func TestProxyAndGroupNpm(t *testing.T) {
 	inst.CreateRepo("npm-local", "npm", "hosted", nil)
 	inst.CreateRepo("npm-all", "npm", "group", map[string]any{
 		"anonymousRead": true,
-		"group":         map[string]any{"members": []string{"npm-local", "npm-remote"}},
+		// Merging hosted and proxied versions of a name needs preferHosted off.
+		"group": map[string]any{"members": []string{"npm-local", "npm-remote"}, "preferHosted": false},
 	})
 	remote := inst.URL + "/repository/npm-remote/"
 
@@ -451,5 +452,49 @@ func TestProxyAndGroupNpm(t *testing.T) {
 	getPackument(t, inst, "/repository/npm-remote/left-pad", "")
 	if docHits.Load() != before+1 {
 		t.Fatalf("packument not refetched after purge (%d)", docHits.Load())
+	}
+
+	// preferHosted (the default): left-pad is published internally, so the
+	// public versions are never merged in, whatever the member order.
+	inst.CreateRepo("npm-safe", "npm", "group", map[string]any{
+		"anonymousRead": true,
+		"group":         map[string]any{"members": []string{"npm-remote", "npm-local"}},
+	})
+	var safeRepo struct {
+		Group struct {
+			PreferHosted bool `json:"preferHosted"`
+		} `json:"group"`
+	}
+	inst.JSON("GET", "/repositories/npm-safe", nil, http.StatusOK, &safeRepo)
+	if !safeRepo.Group.PreferHosted {
+		t.Fatal("preferHosted should default to true")
+	}
+	safe := inst.URL + "/repository/npm-safe/"
+	sp2, _ := getPackument(t, inst, "/repository/npm-safe/left-pad", "")
+	if len(sp2.Versions) != 1 || sp2.DistTags["latest"] != "9.0.0" || sp2.Versions["9.0.0"].Dist.Tarball != safe+"left-pad/-/left-pad-9.0.0.tgz" {
+		t.Fatalf("preferHosted packument: %+v", sp2)
+	}
+	testutil.Expect(t, inst.Do("GET", "/repository/npm-safe/left-pad/-/left-pad-1.3.0.tgz", "", nil), http.StatusNotFound)
+	if got := testutil.Expect(t, inst.Do("GET", "/repository/npm-safe/left-pad/-/left-pad-9.0.0.tgz", "", nil), http.StatusOK); got != string(mine) {
+		t.Fatal("preferHosted tarball differs")
+	}
+	if got := testutil.Expect(t, inst.Do("GET", "/repository/npm-safe/left-pad/9.0.0", "", nil), http.StatusOK); !strings.Contains(got, `"version":"9.0.0"`) {
+		t.Fatalf("preferHosted version: %s", got)
+	}
+	testutil.Expect(t, inst.Do("GET", "/repository/npm-safe/left-pad/1.3.0", "", nil), http.StatusNotFound)
+	// Names not published internally still come from the proxy.
+	ns, _ := getPackument(t, inst, "/repository/npm-safe/@types%2fnode", "")
+	if ns.Versions["20.0.0"].Dist.Tarball != safe+"@types/node/-/node-20.0.0.tgz" {
+		t.Fatalf("preferHosted proxied package: %+v", ns)
+	}
+	testutil.Expect(t, inst.Do("GET", "/repository/npm-safe/@types/node/-/node-20.0.0.tgz", "", nil), http.StatusOK)
+	// Nested groups: the hosted member of an inner group counts too.
+	inst.CreateRepo("npm-outer", "npm", "group", map[string]any{
+		"anonymousRead": true,
+		"group":         map[string]any{"members": []string{"npm-remote", "npm-all"}},
+	})
+	op, _ := getPackument(t, inst, "/repository/npm-outer/left-pad", "")
+	if len(op.Versions) != 1 || op.Versions["9.0.0"].Version != "9.0.0" {
+		t.Fatalf("nested preferHosted packument: %+v", op)
 	}
 }
