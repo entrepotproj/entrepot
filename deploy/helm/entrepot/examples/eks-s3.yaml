@@ -1,0 +1,23 @@
+# Stateless replicas with artifacts in S3 (IRSA), plus a small EBS store for
+# repositories that prefer block storage. Repositories pick a store on creation.
+replicaCount: 1        # the EBS store below is ReadWriteOnce; drop it to scale out
+baseURL: https://entrepot.example.com
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/entrepot-s3
+database:
+  existingSecret: entrepot-db
+blobStores:
+  - name: s3
+    type: s3
+    s3:
+      bucket: my-entrepot-artifacts
+      region: eu-west-2
+      prefix: prod
+      redirectDownloads: true          # large downloads go straight to S3 via presigned URLs
+  - name: ebs
+    type: file
+    volume:
+      storageClass: gp3
+      accessMode: ReadWriteOnce
+      size: 100Gi

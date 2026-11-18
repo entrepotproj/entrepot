@@ -1,0 +1,171 @@
+# Default values for Entrepot.
+
+image:
+  repository: ghcr.io/geoffo-dev/entrepot
+  tag: ""          # defaults to the chart appVersion
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+
+# Number of replicas. More than one requires every file blob store to use a
+# ReadWriteMany volume (e.g. EFS) or S3. With a ReadWriteOnce volume (EBS)
+# keep replicaCount: 1; the Deployment then uses the Recreate strategy.
+replicaCount: 1
+
+# External URL of Entrepot (used for OIDC redirects, Docker token realm,
+# rewritten package metadata and as the default GitLab id_token audience).
+baseURL: "https://entrepot.example.com"
+
+serviceAccount:
+  create: true
+  name: ""
+  # e.g. eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/entrepot (IRSA for S3)
+  annotations: {}
+
+# Database. Use an external Postgres (recommended) or the bundled single-pod
+# Postgres for evaluation (postgresql.enabled).
+database:
+  # Full connection URL. Ignored when existingSecret is set.
+  url: ""
+  # Secret containing the connection URL.
+  existingSecret: ""
+  existingSecretKey: database-url
+  maxConns: 20
+
+postgresql:
+  enabled: false
+  image: postgres:16-alpine
+  database: entrepot
+  username: entrepot
+  password: ""     # generated when empty
+  persistence:
+    size: 10Gi
+    storageClass: ""
+
+auth:
+  # Encrypts sessions and signs registry tokens. Generated when empty, but
+  # set it (or existingSecret) so it survives upgrades and is shared by replicas.
+  sessionSecret: ""
+  # Break-glass admin token. Leave empty to disable.
+  bootstrapToken: ""
+  # Secret with keys session-secret, bootstrap-token, oidc-client-secret.
+  existingSecret: ""
+  anonymousAccess: true
+  adminGroups: []    # e.g. [entrepot-admins]
+  adminUsers: []
+  oidc:
+    enabled: false
+    issuerURL: ""    # e.g. https://keycloak.example.com/realms/platform
+    clientID: entrepot
+    clientSecret: ""
+    displayName: Keycloak
+    groupsClaim: groups
+    usernameClaim: preferred_username
+    scopes: [openid, profile, email]
+    bearerAudiences: []
+  # Trusted GitLab instances for CI/CD id_tokens.
+  gitlab: []
+  #  - name: gitlab
+  #    issuerURL: https://gitlab.example.com
+  #    audience: ""   # defaults to baseURL
+
+# Blob stores created at startup. Repositories choose a store when created.
+#
+#  type: file  -> a PersistentVolumeClaim mounted at /data/<name>. Pick the
+#                 storageClass for EBS (gp3, ReadWriteOnce) or EFS (efs-sc,
+#                 ReadWriteMany), or reuse an existingClaim.
+#  type: s3    -> an S3 bucket (IRSA via serviceAccount.annotations, or keys).
+blobStores:
+  - name: default
+    type: file
+    volume:
+      storageClass: ""
+      accessMode: ReadWriteOnce
+      size: 50Gi
+      existingClaim: ""
+      annotations: {}
+#  - name: s3-artifacts
+#    type: s3
+#    s3:
+#      bucket: my-entrepot-artifacts
+#      region: eu-west-2
+#      prefix: ""
+#      redirectDownloads: true
+
+# Extra raw configuration merged into config.yaml (see docs/configuration.md).
+config: {}
+
+# Scratch space for spooling uploads (S3 ingest, multipart forms).
+tmp:
+  sizeLimit: 20Gi
+
+log:
+  level: info
+  format: json
+
+service:
+  type: ClusterIP
+  port: 80
+  annotations: {}
+
+ingress:
+  enabled: false
+  className: ""
+  annotations:
+    # Large uploads (Docker layers, wheels) need generous limits.
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "900"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "900"
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+  hosts:
+    - host: entrepot.example.com
+      paths: ["/"]
+  tls: []
+  #  - secretName: entrepot-tls
+  #    hosts: [entrepot.example.com]
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 1Gi
+
+podAnnotations: {}
+podLabels: {}
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: [ALL]
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+topologySpreadConstraints: []
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 75
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+
+metrics:
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    labels: {}
+
+extraEnv: []
+extraVolumes: []
+extraVolumeMounts: []

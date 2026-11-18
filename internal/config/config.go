@@ -301,3 +301,5 @@ func setValue(fv reflect.Value, raw string) error {
 	}
 	return nil
 }
+
+func reflectValue(c *Config) reflect.Value { return reflect.ValueOf(c).Elem() }

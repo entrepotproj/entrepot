@@ -1,0 +1,26 @@
+# Run Entrepot on the host (`make run`) against the compose Postgres/Keycloak:
+#   docker compose -f deploy/compose/docker-compose.yaml up -d postgres keycloak
+server:
+  addr: ":8080"
+  baseURL: "http://localhost:8080"
+database:
+  url: "postgres://entrepot:entrepot@localhost:5432/entrepot?sslmode=disable"
+auth:
+  sessionSecret: "dev-only-session-secret-change-me-0123456789"
+  bootstrapToken: "dev-bootstrap-token"
+  adminGroups: ["entrepot-admins"]
+  oidc:
+    enabled: true
+    issuerURL: "http://keycloak.localhost:8081/realms/entrepot"
+    clientID: "entrepot"
+    clientSecret: "entrepot-dev-secret"
+    displayName: "Keycloak"
+storage:
+  allowedRoots: ["./.data"]
+blobStores:
+  - name: default
+    type: file
+    path: ./.data/default
+log:
+  format: text
+  level: debug

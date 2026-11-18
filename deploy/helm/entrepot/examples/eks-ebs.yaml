@@ -1,0 +1,17 @@
+# Single replica on an EBS gp3 volume (ReadWriteOnce).
+replicaCount: 1
+baseURL: https://entrepot.example.com
+database:
+  existingSecret: entrepot-db          # key: database-url (e.g. an RDS Postgres URL)
+blobStores:
+  - name: default
+    type: file
+    volume:
+      storageClass: gp3                # EBS CSI driver StorageClass
+      accessMode: ReadWriteOnce
+      size: 200Gi
+ingress:
+  enabled: true
+  className: nginx
+  hosts: [{host: entrepot.example.com, paths: ["/"]}]
+  tls: [{secretName: entrepot-tls, hosts: [entrepot.example.com]}]

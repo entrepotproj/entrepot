@@ -1,0 +1,78 @@
+# Local development stack: Entrepot + Postgres + MinIO (S3) + Keycloak (OIDC).
+#
+#   docker compose -f deploy/compose/docker-compose.yaml up -d --build
+#
+# Entrepot:  http://localhost:8080      (UI, API docs at /api/docs)
+# Keycloak:  http://keycloak.localhost:8081  (admin / admin; users alice/alice, bob/bob)
+# MinIO:     http://localhost:9001      (minioadmin / minioadmin)
+#
+# Keycloak's issuer URL must be the same for your browser and for the
+# Entrepot container, so it is published as keycloak.localhost:8081 (browsers
+# resolve *.localhost to 127.0.0.1) and mapped to the host inside the
+# Entrepot container via extra_hosts.
+name: entrepot
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: entrepot
+      POSTGRES_USER: entrepot
+      POSTGRES_PASSWORD: entrepot
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "entrepot"]
+      interval: 5s
+      retries: 20
+
+  minio:
+    image: minio/minio:RELEASE.2024-10-13T13-34-11Z
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports: ["9000:9000", "9001:9001"]
+    volumes: [miniodata:/data]
+
+  minio-init:
+    image: minio/mc:RELEASE.2024-10-08T09-37-26Z
+    depends_on: [minio]
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 minioadmin minioadmin; do sleep 1; done;
+      mc mb --ignore-existing local/entrepot;
+      "
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: ["start-dev", "--import-realm", "--http-port=8081"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: http://keycloak.localhost:8081
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "false"
+    ports: ["8081:8081"]
+    volumes:
+      - ./keycloak-realm.json:/opt/keycloak/data/import/entrepot-realm.json:ro
+
+  entrepot:
+    build:
+      context: ../..
+    depends_on:
+      postgres: {condition: service_healthy}
+      minio-init: {condition: service_completed_successfully}
+    ports: ["8080:8080"]
+    extra_hosts:
+      - "keycloak.localhost:host-gateway"
+    environment:
+      ENTREPOT_CONFIG: /etc/entrepot/config.yaml
+    volumes:
+      - ./entrepot.yaml:/etc/entrepot/config.yaml:ro
+      - blobdata:/data
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  miniodata:
+  blobdata:

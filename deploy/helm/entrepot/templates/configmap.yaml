@@ -1,0 +1,38 @@
+{{- $stores := list }}
+{{- range .Values.blobStores }}
+{{- if eq .type "file" }}
+{{- $stores = append $stores (dict "name" .name "type" "file" "path" (printf "/data/%s" .name)) }}
+{{- else if eq .type "s3" }}
+{{- $s3 := dict }}
+{{- range $k, $v := .s3 }}
+{{- $_ := set $s3 $k (toString $v) }}
+{{- end }}
+{{- $stores = append $stores (dict "name" .name "type" "s3" "s3" $s3) }}
+{{- else }}
+{{- fail (printf "blobStores[%s]: type must be file or s3" .name) }}
+{{- end }}
+{{- end }}
+{{- $oidc := omit .Values.auth.oidc "clientSecret" }}
+{{- $cfg := dict
+  "server" (dict "addr" ":8080" "baseURL" .Values.baseURL "trustForwardedHeaders" true)
+  "database" (dict "maxConns" .Values.database.maxConns "autoMigrate" true)
+  "auth" (dict
+      "anonymousAccess" .Values.auth.anonymousAccess
+      "adminGroups" .Values.auth.adminGroups
+      "adminUsers" .Values.auth.adminUsers
+      "oidc" $oidc
+      "gitlab" .Values.auth.gitlab)
+  "storage" (dict "allowedRoots" (list "/data") "tempDir" "/tmp")
+  "blobStores" $stores
+  "log" .Values.log
+}}
+{{- $cfg = mergeOverwrite $cfg .Values.config }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "entrepot.fullname" . }}
+  labels:
+    {{- include "entrepot.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    {{- toYaml $cfg | nindent 4 }}

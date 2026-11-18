@@ -1,0 +1,142 @@
+{{- $fullname := include "entrepot.fullname" . }}
+{{- $rwo := eq (include "entrepot.hasRWO" .) "true" }}
+{{- if and $rwo (or (gt (int .Values.replicaCount) 1) .Values.autoscaling.enabled) }}
+{{- fail "a ReadWriteOnce (e.g. EBS) blob store volume cannot be shared by several replicas; use ReadWriteMany (EFS) or S3, or replicaCount: 1" }}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullname }}
+  labels:
+    {{- include "entrepot.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  strategy:
+    {{- if $rwo }}
+    # ReadWriteOnce volumes can only attach to one node at a time.
+    type: Recreate
+    {{- else }}
+    type: RollingUpdate
+    {{- end }}
+  selector:
+    matchLabels:
+      {{- include "entrepot.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "entrepot.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "entrepot.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: entrepot
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["serve", "-config", "/etc/entrepot/config.yaml"]
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: ENTREPOT_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "entrepot.dbSecretName" . }}
+                  key: {{ .Values.database.existingSecretKey }}
+            - name: ENTREPOT_AUTH_SESSIONSECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "entrepot.secretName" . }}
+                  key: session-secret
+            - name: ENTREPOT_AUTH_BOOTSTRAPTOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "entrepot.secretName" . }}
+                  key: bootstrap-token
+                  optional: true
+            - name: ENTREPOT_AUTH_OIDC_CLIENTSECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "entrepot.secretName" . }}
+                  key: oidc-client-secret
+                  optional: true
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          readinessProbe:
+            httpGet: {path: /readyz, port: http}
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: {path: /healthz, port: http}
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          startupProbe:
+            httpGet: {path: /healthz, port: http}
+            failureThreshold: 30
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/entrepot
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            {{- range .Values.blobStores }}
+            {{- if eq .type "file" }}
+            - name: blob-{{ .name }}
+              mountPath: /data/{{ .name }}
+            {{- end }}
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ $fullname }}
+        - name: tmp
+          emptyDir:
+            sizeLimit: {{ .Values.tmp.sizeLimit }}
+        {{- range .Values.blobStores }}
+        {{- if eq .type "file" }}
+        - name: blob-{{ .name }}
+          persistentVolumeClaim:
+            claimName: {{ default (printf "%s-blob-%s" $fullname .name) .volume.existingClaim }}
+        {{- end }}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

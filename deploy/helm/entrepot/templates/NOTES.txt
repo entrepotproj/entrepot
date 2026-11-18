@@ -1,0 +1,32 @@
+Entrepot is deployed.
+
+  URL:      {{ .Values.baseURL }}
+  API docs: {{ .Values.baseURL }}/api/docs
+
+{{- if not .Values.ingress.enabled }}
+
+No ingress is configured. To try it locally:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "entrepot.fullname" . }} 8080:{{ .Values.service.port }}
+{{- end }}
+
+Blob stores:
+{{- range .Values.blobStores }}
+  - {{ .name }} ({{ .type }}{{ if eq .type "file" }}, {{ default "ReadWriteOnce" .volume.accessMode }}{{ with .volume.storageClass }}, storageClass {{ . }}{{ end }}{{ end }})
+{{- end }}
+
+{{- if .Values.auth.bootstrapToken }}
+
+A bootstrap admin token is configured. Use it to create repositories and
+role bindings, then remove it:
+  curl -H "Authorization: Bearer $BOOTSTRAP_TOKEN" {{ .Values.baseURL }}/api/v1/me
+{{- end }}
+{{- if .Values.auth.oidc.enabled }}
+
+Single sign-on: {{ .Values.auth.oidc.issuerURL }} (client {{ .Values.auth.oidc.clientID }}).
+Register the redirect URI {{ .Values.baseURL }}/auth/callback with your IdP.
+{{- end }}
+{{- range .Values.auth.gitlab }}
+
+GitLab CI ({{ .name }}): in .gitlab-ci.yml request an id_token with
+  aud: {{ default $.Values.baseURL .audience }}
+{{- end }}

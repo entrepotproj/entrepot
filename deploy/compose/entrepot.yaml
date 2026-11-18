@@ -1,0 +1,42 @@
+# Entrepot configuration for the docker compose development stack.
+# Every key can be overridden with ENTREPOT_* environment variables.
+server:
+  addr: ":8080"
+  baseURL: "http://localhost:8080"
+database:
+  url: "postgres://entrepot:entrepot@postgres:5432/entrepot?sslmode=disable"
+auth:
+  # Development values only — generate real secrets for any shared deployment.
+  sessionSecret: "dev-only-session-secret-change-me-0123456789"
+  bootstrapToken: "dev-bootstrap-token"
+  adminGroups: ["entrepot-admins"]
+  oidc:
+    enabled: true
+    issuerURL: "http://keycloak.localhost:8081/realms/entrepot"
+    clientID: "entrepot"
+    clientSecret: "entrepot-dev-secret"
+    displayName: "Keycloak"
+    groupsClaim: "groups"
+  # Uncomment to trust CI/CD id_tokens from a GitLab instance:
+  # gitlab:
+  #   - name: gitlab
+  #     issuerURL: "https://gitlab.example.com"
+  #     audience: "http://localhost:8080"
+storage:
+  allowedRoots: ["/data"]
+blobStores:
+  - name: default
+    type: file
+    path: /data/default
+  - name: minio
+    type: s3
+    s3:
+      bucket: entrepot
+      endpoint: "http://minio:9000"
+      region: us-east-1
+      forcePathStyle: "true"
+      accessKeyId: minioadmin
+      secretAccessKey: minioadmin
+log:
+  format: text
+  level: info

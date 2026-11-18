@@ -1,0 +1,18 @@
+# Single sign-on with Keycloak and GitLab CI/CD id_token authentication.
+baseURL: https://entrepot.example.com
+postgresql:
+  enabled: true                        # evaluation only
+auth:
+  existingSecret: entrepot-auth        # keys: session-secret, oidc-client-secret, bootstrap-token (optional)
+  adminGroups: [entrepot-admins]
+  anonymousAccess: false
+  oidc:
+    enabled: true
+    issuerURL: https://keycloak.example.com/realms/platform
+    clientID: entrepot
+    displayName: Keycloak
+    groupsClaim: groups
+  gitlab:
+    - name: gitlab
+      issuerURL: https://gitlab.example.com
+      # audience defaults to baseURL; use the same value as `aud:` in .gitlab-ci.yml

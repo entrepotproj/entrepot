@@ -3,6 +3,7 @@
 //	entrepot serve   [-config file]   run the server (default)
 //	entrepot migrate [-config file]   apply database migrations and exit
 //	entrepot gc      [-config file]   garbage-collect unreferenced blobs
+//	entrepot check-config [-config file]  validate configuration and print it (secrets redacted)
 //	entrepot version
 package main
 
@@ -23,6 +24,7 @@ import (
 	"github.com/geoffo-dev/package-repository/internal/app"
 	"github.com/geoffo-dev/package-repository/internal/config"
 	"github.com/geoffo-dev/package-repository/internal/db"
+	"gopkg.in/yaml.v3"
 )
 
 func main() {
@@ -43,6 +45,10 @@ func main() {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "config:", err)
 		os.Exit(2)
+	}
+	if cmd == "check-config" {
+		printConfig(cfg)
+		return
 	}
 	logger := newLogger(cfg.Log)
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -129,4 +135,36 @@ func gc(ctx context.Context, cfg *config.Config, logger *slog.Logger) error {
 	}
 	logger.Info("gc complete", "removed", n)
 	return nil
+}
+
+func printConfig(cfg *config.Config) {
+	c := *cfg
+	redact := func(s string) string {
+		if s == "" {
+			return ""
+		}
+		return "<redacted>"
+	}
+	c.Auth.SessionSecret = redact(c.Auth.SessionSecret)
+	c.Auth.BootstrapToken = redact(c.Auth.BootstrapToken)
+	c.Auth.OIDC.ClientSecret = redact(c.Auth.OIDC.ClientSecret)
+	c.Database.URL = redact(c.Database.URL)
+	var stores []config.BlobStoreSpec
+	for _, b := range c.BlobStores {
+		if b.S3 != nil {
+			s3 := map[string]string{}
+			for k, v := range b.S3 {
+				if k == "secretAccessKey" {
+					v = redact(v)
+				}
+				s3[k] = v
+			}
+			b.S3 = s3
+		}
+		stores = append(stores, b)
+	}
+	c.BlobStores = stores
+	out, _ := yaml.Marshal(c)
+	fmt.Print(string(out))
+	fmt.Fprintln(os.Stderr, "configuration is valid")
 }

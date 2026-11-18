@@ -12,8 +12,6 @@ info:
 
     Package clients (pip, npm, docker, …) use the format endpoints under
     `/repository/{name}/` and `/v2/` instead of this API.
-  license:
-    name: Apache-2.0
 servers:
   - url: /api/v1
 security:
