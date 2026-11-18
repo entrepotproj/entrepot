@@ -37,6 +37,12 @@ invalid are rejected with `401`, never downgraded to anonymous.
 * API tokens may be restricted with **scopes** (e.g. a `read`-only token for a
   build machine). A scoped credential cannot create a broader token.
 
+**Group repositories** are authorised as a whole: read access to a group
+grants read access to content served through it from any member, as in
+Nexus. Don't put private hosted repositories into a group that has
+`anonymousRead` enabled, or into a group that is readable by a wider audience
+than the members are.
+
 Repositories the caller cannot read are reported as `404` by the management
 API, so repository names are not disclosed.
 

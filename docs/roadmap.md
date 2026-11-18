@@ -37,6 +37,10 @@ Entrepot is being built in phases. Phase 1 is the core and has shipped.
     no extra infrastructure is needed.
   * Normalised findings, a per-repository policy (*warn* or *quarantine*: block
     downloads until the asset is clean or waived), waivers, and findings in the UI.
+* **Dependency-confusion protection** for groups. Today npm and PyPI groups
+  merge versions from all members (the first member wins per version). Add
+  routing rules, such as "names in `@acme/*` or present in hosted members
+  never come from proxies", and per-repository allow/deny lists.
 * **Cleanup policies**: by age, last download or regex. Docker untagged
   manifest cleanup.
 * **Secrets at rest**: encrypt proxy passwords and S3 keys stored in Postgres.
