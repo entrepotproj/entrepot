@@ -23,6 +23,7 @@ import (
 
 	"github.com/geoffo-dev/package-repository/internal/repo"
 	"github.com/geoffo-dev/package-repository/internal/store"
+	"github.com/geoffo-dev/package-repository/internal/usage"
 )
 
 var (
@@ -62,6 +63,8 @@ type Cache struct {
 	// Allow, when set, is consulted before any upstream fetch (routing
 	// rules). Disallowed paths are reported as not found.
 	Allow func(ctx context.Context, rp *repo.Repository, path string) bool
+	// Usage records cache hits and misses (may be nil).
+	Usage *usage.Recorder
 
 	repos  *repo.Service
 	Client *http.Client
@@ -92,6 +95,7 @@ func (c *Cache) Get(ctx context.Context, rp *repo.Repository, path string, ttl t
 		return nil, err
 	}
 	if existing != nil && fresh(existing, ttl) {
+		c.Usage.CacheHit(repo.UsageRepo(rp))
 		return existing, nil
 	}
 	if !rp.Online {
@@ -111,6 +115,7 @@ func (c *Cache) Get(ctx context.Context, rp *repo.Repository, path string, ttl t
 		c.neg.Delete(key)
 	}
 
+	c.Usage.CacheMiss(repo.UsageRepo(rp))
 	v, err, _ := c.sf.Do(key, func() (any, error) {
 		// Shared fetch: detach from a single client's cancellation.
 		fctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Minute)

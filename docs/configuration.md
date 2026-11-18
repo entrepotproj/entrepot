@@ -29,6 +29,9 @@ followed by its upper-cased path joined with `_`:
 | `scan.workers` | `ENTREPOT_SCAN_WORKERS` | `2` in-process scan workers (`0` when a separate `entrepot scan-worker` runs them) |
 | `scan.workDir` / `scan.jobTimeout` / `scan.pollInterval` | `ENTREPOT_SCAN_*` | temp dir / `15m` / `2s` |
 | `cleanup.interval` | `ENTREPOT_CLEANUP_INTERVAL` | `24h` (`0` disables scheduled cleanup) |
+| `usage.recordDownloads` | `ENTREPOT_USAGE_RECORDDOWNLOADS` | `true`: add every download to the activity log (counters and charts are always kept) |
+| `usage.activityRetention` | `ENTREPOT_USAGE_ACTIVITYRETENTION` | `720h` (30 days) |
+| `usage.flushInterval` | `ENTREPOT_USAGE_FLUSHINTERVAL` | `10s`: how often usage counters are written to Postgres |
 | `auth.gitlab[].api` | — | `{url, token \| tokenEnv \| tokenFile}`: a GitLab API token for scan feedback |
 
 Validate a configuration with `entrepot check-config -config file.yaml`. It

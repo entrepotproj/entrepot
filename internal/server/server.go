@@ -24,6 +24,7 @@ import (
 	"github.com/geoffo-dev/package-repository/internal/httpx"
 	"github.com/geoffo-dev/package-repository/internal/repo"
 	"github.com/geoffo-dev/package-repository/internal/store"
+	"github.com/geoffo-dev/package-repository/internal/usage"
 )
 
 var (
@@ -45,6 +46,28 @@ type Server struct {
 	API     *api.Server
 	UI      fs.FS
 	Logger  *slog.Logger
+	// Usage counts requests per repository (may be nil).
+	Usage *usage.Recorder
+}
+
+// repoFromPath extracts the repository name from package-client paths.
+func repoFromPath(p string) string {
+	var rest string
+	switch {
+	case strings.HasPrefix(p, "/repository/"):
+		rest = strings.TrimPrefix(p, "/repository/")
+	case strings.HasPrefix(p, "/api/repository/"):
+		rest = strings.TrimPrefix(p, "/api/repository/")
+	case strings.HasPrefix(p, "/v2/"):
+		rest = strings.TrimPrefix(p, "/v2/")
+		if rest == "" || rest == "token" || strings.HasPrefix(rest, "_catalog") {
+			return ""
+		}
+	default:
+		return ""
+	}
+	name, _, _ := strings.Cut(rest, "/")
+	return name
 }
 
 // Handler builds the root router.
@@ -182,8 +205,18 @@ func area(p string) string {
 func (s *Server) logAndMeasure(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
+		r = httpx.WithRequestInfo(r)
 		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 		next.ServeHTTP(ww, r)
+		if name := repoFromPath(r.URL.Path); name != "" && s.Usage != nil {
+			if rp, err := s.Env.Repos.Get(r.Context(), name); err == nil {
+				st := ww.Status()
+				if st == 0 {
+					st = http.StatusOK
+				}
+				s.Usage.Request(repo.UsageRepo(rp), st)
+			}
+		}
 		a := area(r.URL.Path)
 		dur := time.Since(start)
 		code := ww.Status()

@@ -38,6 +38,7 @@ import (
 	"github.com/geoffo-dev/package-repository/internal/signing"
 	"github.com/geoffo-dev/package-repository/internal/storage"
 	"github.com/geoffo-dev/package-repository/internal/store"
+	"github.com/geoffo-dev/package-repository/internal/usage"
 	"github.com/geoffo-dev/package-repository/web"
 )
 
@@ -54,6 +55,7 @@ type App struct {
 	Scan    *scan.Service
 	Cleanup *cleanup.Service
 	Routing *routing.Service
+	Usage   *usage.Recorder
 }
 
 // New connects to the database, runs migrations (if enabled) and builds all
@@ -79,6 +81,10 @@ func New(ctx context.Context, cfg *config.Config, logger *slog.Logger) (*App, er
 	blobs.Open = box.Open
 	repos := repo.NewService(st, blobs, logger)
 	repos.Secrets = box
+	rec := usage.New(st, logger)
+	rec.RecordDownloads = cfg.Usage.RecordDownloads
+	rec.Retention = cfg.Usage.ActivityRetention
+	repos.Usage = rec
 	authn, err := auth.NewAuthenticator(cfg, st, logger)
 	if err != nil {
 		pool.Close()
@@ -99,6 +105,7 @@ func New(ctx context.Context, cfg *config.Config, logger *slog.Logger) (*App, er
 	}
 	routes := routing.New(st)
 	env.Proxy.Allow = routes.Allowed
+	env.Proxy.Usage = rec
 	formats := format.NewRegistry(
 		raw.New(env),
 		pypi.New(env),
@@ -112,17 +119,18 @@ func New(ctx context.Context, cfg *config.Config, logger *slog.Logger) (*App, er
 	scanner.Attach()
 	cleaner := cleanup.New(cleanup.Deps{Store: st, Repos: repos, Formats: formats, Logger: logger})
 	a := &App{Config: cfg, Pool: pool, Store: st, Repos: repos, Env: env, Formats: formats, Logger: logger,
-		Scan: scanner, Cleanup: cleaner, Routing: routes}
+		Scan: scanner, Cleanup: cleaner, Routing: routes, Usage: rec}
 	a.Server = &server.Server{
 		Env:     env,
 		Store:   st,
 		Formats: formats,
 		UI:      web.Dist(),
 		Logger:  logger,
+		Usage:   rec,
 		API: &api.Server{
 			Config: cfg, Store: st, Repos: repos, Blobs: blobs, Auth: authn, Authz: az,
 			Formats: formats, URLs: urls, Logger: logger, Secrets: box,
-			Signing: env.Signing, Scan: scanner, Cleanup: cleaner, Routing: routes,
+			Signing: env.Signing, Scan: scanner, Cleanup: cleaner, Routing: routes, Usage: rec,
 		},
 	}
 	a.Secrets = box
@@ -146,6 +154,11 @@ func (a *App) RunBackground(ctx context.Context) {
 	go a.Repos.RunMaintenance(ctx, 15*time.Minute, a.Logger)
 	go a.Scan.Run(ctx)
 	go a.Cleanup.Run(ctx, a.Config.Cleanup.Interval)
+	flush := a.Config.Usage.FlushInterval
+	if flush <= 0 {
+		flush = 10 * time.Second
+	}
+	go a.Usage.Run(ctx, flush)
 }
 
 // bootstrap creates blob stores declared in configuration, or a "default"

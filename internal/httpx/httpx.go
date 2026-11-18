@@ -2,6 +2,7 @@
 package httpx
 
 import (
+	"context"
 	"encoding/json"
 	"net"
 	"net/http"
@@ -65,4 +66,27 @@ func RemoteIP(r *http.Request) string {
 		return r.RemoteAddr
 	}
 	return host
+}
+
+// RequestInfo describes the client of the current request.
+type RequestInfo struct {
+	RemoteIP  string
+	UserAgent string
+}
+
+type requestInfoKey struct{}
+
+// WithRequestInfo stores client details for recorders deep in the stack.
+func WithRequestInfo(r *http.Request) *http.Request {
+	ua := r.UserAgent()
+	if len(ua) > 256 {
+		ua = ua[:256]
+	}
+	return r.WithContext(context.WithValue(r.Context(), requestInfoKey{}, RequestInfo{RemoteIP: RemoteIP(r), UserAgent: ua}))
+}
+
+// RequestInfoFrom returns the client details stored by WithRequestInfo.
+func RequestInfoFrom(ctx context.Context) RequestInfo {
+	ri, _ := ctx.Value(requestInfoKey{}).(RequestInfo)
+	return ri
 }

@@ -3,10 +3,13 @@
 package api
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/geoffo-dev/package-repository/internal/api/apigen"
 	"github.com/geoffo-dev/package-repository/internal/auth"
@@ -22,6 +25,7 @@ import (
 	"github.com/geoffo-dev/package-repository/internal/signing"
 	"github.com/geoffo-dev/package-repository/internal/storage"
 	"github.com/geoffo-dev/package-repository/internal/store"
+	"github.com/geoffo-dev/package-repository/internal/usage"
 )
 
 // Version is set at build time via -ldflags.
@@ -42,6 +46,7 @@ type Server struct {
 	Scan    *scan.Service
 	Cleanup *cleanup.Service
 	Routing *routing.Service
+	Usage   *usage.Recorder
 }
 
 var _ apigen.ServerInterface = (*Server)(nil)
@@ -215,13 +220,28 @@ func (s *Server) ListAuditEvents(w http.ResponseWriter, r *http.Request, params 
 	if !s.requireAdmin(w, r) {
 		return
 	}
-	var before int64
-	if params.Before != nil {
-		before = *params.Before
+	csvOut := params.Format != nil && *params.Format == "csv"
+	limit := deref(params.Limit)
+	if csvOut && limit == 0 {
+		limit = 5000
 	}
-	evs, err := s.Store.ListAuditEvents(r.Context(), before, deref(params.Limit))
+	evs, err := s.Store.SearchAuditEvents(r.Context(), store.AuditQuery{
+		Actor: deref(params.Actor), Action: deref(params.Action), Target: deref(params.Target),
+		From: params.From, To: params.To, BeforeID: deref(params.Before), Limit: limit,
+	})
 	if err != nil {
 		s.writeErr(w, err)
+		return
+	}
+	if csvOut {
+		w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+		w.Header().Set("Content-Disposition", `attachment; filename="entrepot-audit.csv"`)
+		cw := csv.NewWriter(w)
+		_ = cw.Write([]string{"id", "at", "actor", "action", "target", "remote_ip", "details"})
+		for _, e := range evs {
+			_ = cw.Write([]string{strconv.FormatInt(e.ID, 10), e.At.Format(time.RFC3339), e.Actor, e.Action, e.Target, e.RemoteIP, string(e.Details)})
+		}
+		cw.Flush()
 		return
 	}
 	out := make([]apigen.AuditEvent, 0, len(evs))

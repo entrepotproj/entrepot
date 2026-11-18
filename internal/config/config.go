@@ -31,6 +31,7 @@ type Config struct {
 	Secrets  Secrets  `yaml:"secrets"`
 	Scan     Scan     `yaml:"scan"`
 	Cleanup  Cleanup  `yaml:"cleanup"`
+	Usage    Usage    `yaml:"usage"`
 	// BlobStores are created (or updated) at startup. Useful for declaring the
 	// volumes mounted by the Helm chart. Stores can also be managed via the API.
 	BlobStores []BlobStoreSpec `yaml:"blobStores"`
@@ -175,6 +176,18 @@ type Storage struct {
 	TempDir string `yaml:"tempDir"`
 }
 
+// Usage configures usage statistics and the activity log.
+type Usage struct {
+	// RecordDownloads adds every artifact download to the activity log
+	// (uploads and deletes are always recorded). Download counters and
+	// charts are kept regardless.
+	RecordDownloads bool `yaml:"recordDownloads"`
+	// ActivityRetention is how long activity events are kept.
+	ActivityRetention time.Duration `yaml:"activityRetention"`
+	// FlushInterval is how often buffered statistics are written.
+	FlushInterval time.Duration `yaml:"flushInterval"`
+}
+
 type Proxy struct {
 	// Timeout for upstream requests.
 	Timeout time.Duration `yaml:"timeout"`
@@ -232,6 +245,7 @@ func Default() *Config {
 			PollInterval: 2 * time.Second,
 		},
 		Cleanup: Cleanup{Interval: 24 * time.Hour},
+		Usage:   Usage{RecordDownloads: true, ActivityRetention: 30 * 24 * time.Hour, FlushInterval: 10 * time.Second},
 	}
 }
 

@@ -18,7 +18,13 @@ import (
 	"github.com/geoffo-dev/package-repository/internal/secrets"
 	"github.com/geoffo-dev/package-repository/internal/storage"
 	"github.com/geoffo-dev/package-repository/internal/store"
+	"github.com/geoffo-dev/package-repository/internal/usage"
 )
+
+// UsageRepo identifies rp for the usage recorder.
+func UsageRepo(rp *Repository) usage.Repo {
+	return usage.Repo{ID: rp.ID, Name: rp.Name, Format: rp.Format}
+}
 
 const (
 	KindHosted = "hosted"
@@ -216,6 +222,8 @@ type Service struct {
 	logger *slog.Logger
 	// Secrets opens sealed values in repository config (proxy passwords).
 	Secrets *secrets.Box
+	// Usage records downloads, uploads and deletes (may be nil).
+	Usage *usage.Recorder
 
 	// QuarantineCheck, when set, is consulted before serving content. A
 	// blocked asset is answered with 403 and the returned reason.
@@ -427,6 +435,9 @@ func (s *Service) PutStored(ctx context.Context, rp *Repository, d storage.Diges
 	if errors.Is(err, store.ErrConflict) {
 		return nil, ErrRedeploy
 	}
+	if err == nil && !o.Cached {
+		s.Usage.Upload(ctx, UsageRepo(rp), usage.Asset{Path: a.Path, ComponentID: a.ComponentID, Bytes: a.Size})
+	}
 	if err == nil && componentID != nil {
 		s.fireStored(ctx, StoredEvent{Repository: rp, Asset: a, ComponentID: *componentID, Cached: o.Cached,
 			Changed: prevDigest != a.Digest})
@@ -540,6 +551,7 @@ func (s *Service) Serve(w http.ResponseWriter, r *http.Request, rp *Repository, 
 		w.WriteHeader(http.StatusOK)
 		return
 	}
+	s.Usage.Download(ctx, UsageRepo(rp), usage.Asset{Path: a.Path, ComponentID: a.ComponentID, Bytes: a.Size})
 	if ps, ok := bs.(storage.Presigner); ok && !o.NoRedirect && a.Size > 1<<20 {
 		if u, err := ps.PresignGet(ctx, d, 15*time.Minute); err == nil {
 			http.Redirect(w, r, u, http.StatusTemporaryRedirect)
@@ -578,6 +590,11 @@ func (s *Service) Delete(ctx context.Context, assetID string) (*store.Asset, err
 	a, err := s.Store.DeleteAsset(ctx, assetID)
 	if errors.Is(err, store.ErrNotFound) {
 		return nil, ErrNotFound
+	}
+	if err == nil && s.Usage != nil {
+		if rp, gerr := s.Get(ctx, a.Repository); gerr == nil {
+			s.Usage.Delete(ctx, UsageRepo(rp), usage.Asset{Path: a.Path, ComponentID: a.ComponentID, Bytes: a.Size})
+		}
 	}
 	return a, err
 }
