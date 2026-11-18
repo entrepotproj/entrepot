@@ -3,6 +3,7 @@
 //	entrepot serve   [-config file]   run the server (default)
 //	entrepot migrate [-config file]   apply database migrations and exit
 //	entrepot gc      [-config file]   garbage-collect unreferenced blobs
+//	entrepot scan-worker [-config file] [-health-addr :8081]  run scan workers only (no HTTP API)
 //	entrepot check-config [-config file]  validate configuration and print it (secrets redacted)
 //	entrepot version
 package main
@@ -35,6 +36,8 @@ func main() {
 	}
 	fs := flag.NewFlagSet(cmd, flag.ExitOnError)
 	cfgPath := fs.String("config", os.Getenv("ENTREPOT_CONFIG"), "path to config file (env ENTREPOT_CONFIG)")
+	healthAddr := fs.String("health-addr", os.Getenv("ENTREPOT_SCAN_WORKER_ADDR"),
+		"scan-worker: serve /healthz and /readyz on this address (env ENTREPOT_SCAN_WORKER_ADDR)")
 	_ = fs.Parse(args)
 
 	if cmd == "version" {
@@ -61,6 +64,8 @@ func main() {
 		err = migrate(ctx, cfg)
 	case "gc":
 		err = gc(ctx, cfg, logger)
+	case "scan-worker":
+		err = scanWorker(ctx, cfg, logger, *healthAddr)
 	default:
 		err = fmt.Errorf("unknown command %q", cmd)
 	}
@@ -134,6 +139,42 @@ func gc(ctx context.Context, cfg *config.Config, logger *slog.Logger) error {
 		return err
 	}
 	logger.Info("gc complete", "removed", n)
+	return nil
+}
+
+// scanWorker runs only the scanning pipeline (workers, rescan scheduler,
+// lease reaper) against the configured database and blob stores. It runs
+// scan.workers workers (at least one).
+func scanWorker(ctx context.Context, cfg *config.Config, logger *slog.Logger, healthAddr string) error {
+	if cfg.Scan.Workers < 1 {
+		cfg.Scan.Workers = 1
+	}
+	a, err := app.New(ctx, cfg, logger)
+	if err != nil {
+		return err
+	}
+	defer a.Close()
+	if healthAddr != "" {
+		mux := http.NewServeMux()
+		mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) { w.Write([]byte("ok")) }) //nolint:errcheck
+		mux.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
+			if err := a.Store.Ping(r.Context()); err != nil {
+				http.Error(w, "database unavailable", http.StatusServiceUnavailable)
+				return
+			}
+			w.Write([]byte("ready")) //nolint:errcheck
+		})
+		srv := &http.Server{Addr: healthAddr, Handler: mux, ReadHeaderTimeout: 10 * time.Second}
+		go func() {
+			if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+				logger.Error("scan-worker health server", "err", err)
+			}
+		}()
+		defer srv.Close()
+	}
+	logger.Info("entrepot scan worker starting", "workers", cfg.Scan.Workers, "version", api.Version)
+	a.Scan.Run(ctx)
+	logger.Info("scan worker stopped")
 	return nil
 }
 

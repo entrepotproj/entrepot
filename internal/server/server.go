@@ -75,10 +75,19 @@ func (s *Server) Handler() http.Handler {
 	r.Get("/api/docs", swaggerUI)
 	r.Get("/api", func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, "/api/docs", http.StatusFound) })
 
+	apiHandler := s.API.Handler()
 	r.Group(func(r chi.Router) {
 		r.Use(authn, auth.CSRFMiddleware)
-		r.Mount("/api/v1", s.API.Handler())
+		r.Mount("/api/v1", apiHandler)
 	})
+	// Webhook scanners authenticate with per-job tokens (Bearer header or
+	// ?token=), which are not principals: these routes skip the authenticator.
+	scanJobRoute := func(w http.ResponseWriter, r *http.Request) {
+		chi.RouteContext(r.Context()).RoutePath = strings.TrimPrefix(r.URL.Path, "/api/v1")
+		apiHandler.ServeHTTP(w, r)
+	}
+	r.Get("/api/v1/scan-jobs/{id}/artifact", scanJobRoute)
+	r.Post("/api/v1/scan-jobs/{id}/result", scanJobRoute)
 
 	// Browser login.
 	ah := &auth.Handlers{A: s.Env.Auth, URLs: s.Env.URLs, OnLogin: func(r *http.Request, p *auth.Principal) {
