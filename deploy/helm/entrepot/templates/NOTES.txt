@@ -30,3 +30,14 @@ Register the redirect URI {{ .Values.baseURL }}/auth/callback with your IdP.
 GitLab CI ({{ .name }}): in .gitlab-ci.yml request an id_token with
   aud: {{ default $.Values.baseURL .audience }}
 {{- end }}
+{{- if .Values.scanning.trivyServer.enabled }}
+
+Trivy server: http://{{ include "entrepot.fullname" . }}-trivy:4954
+Register it as a scanner (Administration → Scanners, or):
+  curl -H "Authorization: Bearer $TOKEN" -X POST {{ .Values.baseURL }}/api/v1/scanners \
+    -d '{"name":"trivy","type":"trivy","trivy":{"serverUrl":"http://{{ include "entrepot.fullname" . }}-trivy:4954"}}'
+{{- end }}
+{{- if .Values.scanning.worker.enabled }}
+
+Scans run in the {{ include "entrepot.fullname" . }}-scan-worker Deployment ({{ .Values.scanning.worker.replicaCount }} replica(s)).
+{{- end }}

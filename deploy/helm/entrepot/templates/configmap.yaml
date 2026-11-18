@@ -13,6 +13,17 @@
 {{- end }}
 {{- end }}
 {{- $oidc := omit .Values.auth.oidc "clientSecret" }}
+{{- $gitlab := list }}
+{{- range .Values.auth.gitlab }}
+{{- $g := dict "name" .name "issuerURL" .issuerURL }}
+{{- with .audience }}{{- $_ := set $g "audience" . }}{{- end }}
+{{- if or .apiToken .feedback }}
+{{- $_ := set $g "api" (dict "url" (default .issuerURL .apiURL) "tokenEnv" (include "entrepot.gitlabTokenEnv" .name)) }}
+{{- end }}
+{{- $gitlab = append $gitlab $g }}
+{{- end }}
+{{- $workers := .Values.scanning.workers }}
+{{- if .Values.scanning.worker.enabled }}{{- $workers = 0 }}{{- end }}
 {{- $cfg := dict
   "server" (dict "addr" ":8080" "baseURL" .Values.baseURL "trustForwardedHeaders" true)
   "database" (dict "maxConns" .Values.database.maxConns "autoMigrate" true)
@@ -21,10 +32,12 @@
       "adminGroups" .Values.auth.adminGroups
       "adminUsers" .Values.auth.adminUsers
       "oidc" $oidc
-      "gitlab" .Values.auth.gitlab)
+      "gitlab" $gitlab)
   "storage" (dict "allowedRoots" (list "/data") "tempDir" "/tmp")
   "blobStores" $stores
   "log" .Values.log
+  "scan" (dict "workers" $workers "workDir" "/tmp" "jobTimeout" .Values.scanning.jobTimeout)
+  "cleanup" (dict "interval" .Values.cleanup.interval)
 }}
 {{- $cfg = mergeOverwrite $cfg .Values.config }}
 apiVersion: v1

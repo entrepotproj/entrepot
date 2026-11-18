@@ -1,0 +1,27 @@
+# Scanning with a dedicated worker Deployment (trivy + grype installed) and a
+# shared Trivy server, plus GitLab feedback on scans of CI-published artifacts.
+baseURL: https://entrepot.example.com
+database:
+  existingSecret: entrepot-db
+auth:
+  existingSecret: entrepot-auth   # session-secret, secrets-key, gitlab-token-gitlab, trivy-token
+  gitlab:
+    - name: gitlab
+      issuerURL: https://gitlab.example.com
+      feedback: true              # token from key gitlab-token-gitlab
+blobStores:
+  - name: artifacts
+    type: s3
+    s3: {bucket: my-entrepot-artifacts, region: eu-west-2, redirectDownloads: true}
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/entrepot-s3
+replicaCount: 2
+scanning:
+  worker:
+    enabled: true
+    replicaCount: 2
+  trivyServer:
+    enabled: true
+cleanup:
+  interval: 12h

@@ -70,6 +70,18 @@ jobs:
           load: true
           tags: entrepot:ci
           build-args: VERSION=${{ github.sha }}
+      - name: Build scanner image (trivy + grype)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: scanner
+          load: true
+          tags: entrepot-scanner:ci
+          build-args: VERSION=${{ github.sha }}
+      - name: Scanner image has trivy and grype
+        run: |
+          docker run --rm --entrypoint trivy entrepot-scanner:ci --version
+          docker run --rm --entrypoint grype entrepot-scanner:ci version
       - uses: helm/kind-action@v1
         with:
           cluster_name: entrepot

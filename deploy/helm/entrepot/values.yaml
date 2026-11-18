@@ -67,6 +67,58 @@ auth:
   #  - name: gitlab
   #    issuerURL: https://gitlab.example.com
   #    audience: ""   # defaults to baseURL
+  #    # Scan feedback (commit statuses + MR notes) needs a GitLab token with
+  #    # the "api" scope: either apiToken here, or key gitlab-token-<name> in
+  #    # auth.existingSecret together with feedback: true.
+  #    apiToken: ""
+  #    feedback: false
+  #    apiURL: ""      # defaults to issuerURL
+
+# Encryption of secrets stored in Postgres (proxy passwords, S3 keys, scanner
+# secrets, signing keys). Defaults to a key derived from auth.sessionSecret.
+# With auth.existingSecret, put it under key secrets-key.
+secrets:
+  key: ""
+
+# Vulnerability scanning. Scanners themselves are configured through the API/UI
+# (Administration → Scanners); this section controls where they run.
+scanning:
+  # Scan workers inside the server pods. Needs the trivy/grype CLIs in the
+  # image (use the scanner image) or only webhook / trivy-server scanners.
+  workers: 2
+  jobTimeout: 15m
+  # A separate Deployment running `entrepot scan-worker` with trivy and grype
+  # installed. When enabled, in-process workers are disabled.
+  worker:
+    enabled: false
+    replicaCount: 1
+    workers: 2
+    image:
+      repository: ghcr.io/geoffo-dev/entrepot-scanner
+      tag: ""
+    resources:
+      requests: {cpu: 250m, memory: 512Mi}
+      limits: {memory: 2Gi}
+    cache:
+      size: 5Gi
+      storageClass: ""
+  # A Trivy server (client/server mode) so the vulnerability DB is
+  # downloaded once. Point a trivy scanner's serverUrl at
+  # http://<release>-entrepot-trivy:4954 (see NOTES).
+  trivyServer:
+    enabled: false
+    image: aquasec/trivy:0.57.1
+    token: ""
+    resources:
+      requests: {cpu: 250m, memory: 512Mi}
+      limits: {memory: 2Gi}
+    persistence:
+      size: 5Gi
+      storageClass: ""
+
+cleanup:
+  # How often cleanup policies run (0 disables the schedule).
+  interval: 24h
 
 # Blob stores created at startup. Repositories choose a store when created.
 #
