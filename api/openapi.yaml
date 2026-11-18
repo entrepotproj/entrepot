@@ -1,0 +1,1090 @@
+openapi: 3.0.3
+info:
+  title: Entrepot API
+  version: 1.0.0
+  description: |
+    Management API for Entrepot, a package repository manager.
+
+    Authenticate with `Authorization: Bearer <token>` where the token is an
+    Entrepot API token (`ent_…`), an OIDC access token from the configured
+    identity provider, or a GitLab CI/CD `id_token`. Browser sessions use a
+    cookie and must send `X-Entrepot-CSRF: 1` on state-changing requests.
+
+    Package clients (pip, npm, docker, …) use the format endpoints under
+    `/repository/{name}/` and `/v2/` instead of this API.
+  license:
+    name: Apache-2.0
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+  - basicAuth: []
+  - sessionCookie: []
+tags:
+  - name: system
+  - name: blob-stores
+  - name: repositories
+  - name: components
+  - name: security
+paths:
+  /system/info:
+    get:
+      tags: [system]
+      operationId: getSystemInfo
+      summary: Server information and enabled features
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SystemInfo" }
+  /me:
+    get:
+      tags: [system]
+      operationId: getMe
+      summary: The calling principal
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Me" }
+  /maintenance/gc:
+    post:
+      tags: [system]
+      operationId: runGC
+      summary: Garbage-collect unreferenced blobs now (admin)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [removed]
+                properties:
+                  removed: { type: integer }
+        default: { $ref: "#/components/responses/Error" }
+  /audit-events:
+    get:
+      tags: [system]
+      operationId: listAuditEvents
+      summary: Audit log, newest first (admin)
+      parameters:
+        - { name: before, in: query, schema: { type: integer, format: int64 } }
+        - { $ref: "#/components/parameters/Limit" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AuditEvent" }
+        default: { $ref: "#/components/responses/Error" }
+
+  /blob-stores:
+    get:
+      tags: [blob-stores]
+      operationId: listBlobStores
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/BlobStore" }
+        default: { $ref: "#/components/responses/Error" }
+    post:
+      tags: [blob-stores]
+      operationId: createBlobStore
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BlobStoreInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BlobStore" }
+        default: { $ref: "#/components/responses/Error" }
+  /blob-stores/{name}:
+    parameters:
+      - { $ref: "#/components/parameters/Name" }
+    get:
+      tags: [blob-stores]
+      operationId: getBlobStore
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BlobStore" }
+        default: { $ref: "#/components/responses/Error" }
+    put:
+      tags: [blob-stores]
+      operationId: updateBlobStore
+      description: Updates the store configuration. The type cannot change.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BlobStoreInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BlobStore" }
+        default: { $ref: "#/components/responses/Error" }
+    delete:
+      tags: [blob-stores]
+      operationId: deleteBlobStore
+      description: Fails with 409 while repositories still use the store.
+      responses:
+        "204": { description: Deleted }
+        default: { $ref: "#/components/responses/Error" }
+
+  /repositories:
+    get:
+      tags: [repositories]
+      operationId: listRepositories
+      description: Lists repositories the caller can read.
+      parameters:
+        - { name: format, in: query, schema: { type: string } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Repository" }
+        default: { $ref: "#/components/responses/Error" }
+    post:
+      tags: [repositories]
+      operationId: createRepository
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RepositoryInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Repository" }
+        default: { $ref: "#/components/responses/Error" }
+  /repositories/{name}:
+    parameters:
+      - { $ref: "#/components/parameters/Name" }
+    get:
+      tags: [repositories]
+      operationId: getRepository
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Repository" }
+        default: { $ref: "#/components/responses/Error" }
+    put:
+      tags: [repositories]
+      operationId: updateRepository
+      description: Format, kind and blob store are immutable; other fields are replaced.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RepositoryInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Repository" }
+        default: { $ref: "#/components/responses/Error" }
+    delete:
+      tags: [repositories]
+      operationId: deleteRepository
+      description: Deletes the repository and all of its content.
+      responses:
+        "204": { description: Deleted }
+        default: { $ref: "#/components/responses/Error" }
+  /repositories/{name}/assets:
+    parameters:
+      - { $ref: "#/components/parameters/Name" }
+    get:
+      tags: [repositories]
+      operationId: listAssets
+      parameters:
+        - { name: prefix, in: query, schema: { type: string } }
+        - { name: after, in: query, description: Continuation token (path of the last item), schema: { type: string } }
+        - { $ref: "#/components/parameters/Limit" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssetPage" }
+        default: { $ref: "#/components/responses/Error" }
+  /repositories/{name}/browse:
+    parameters:
+      - { $ref: "#/components/parameters/Name" }
+    get:
+      tags: [repositories]
+      operationId: browseRepository
+      parameters:
+        - { name: path, in: query, description: Directory path ("" for root, otherwise ending in "/"), schema: { type: string } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/BrowseEntry" }
+        default: { $ref: "#/components/responses/Error" }
+  /repositories/{name}/components:
+    parameters:
+      - { $ref: "#/components/parameters/Name" }
+    get:
+      tags: [components]
+      operationId: listRepositoryComponents
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+        - { $ref: "#/components/parameters/Limit" }
+        - { $ref: "#/components/parameters/Offset" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Component" }
+        default: { $ref: "#/components/responses/Error" }
+  /repositories/{name}/upload:
+    parameters:
+      - { $ref: "#/components/parameters/Name" }
+    post:
+      tags: [components]
+      operationId: uploadComponent
+      description: |
+        Generic upload into a hosted repository.
+
+        * **raw**: `file` plus `path` (defaults to the file name).
+        * **pypi**: `file` is a wheel or sdist; name/version are read from the filename.
+        * **npm**: `file` is a package tarball (`npm pack`); package.json is read from it.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+                path: { type: string, description: "raw: destination path" }
+      responses:
+        "201":
+          description: Uploaded
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Asset" }
+        default: { $ref: "#/components/responses/Error" }
+
+  /assets/{id}:
+    parameters:
+      - { $ref: "#/components/parameters/ID" }
+    get:
+      tags: [components]
+      operationId: getAsset
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Asset" }
+        default: { $ref: "#/components/responses/Error" }
+    delete:
+      tags: [components]
+      operationId: deleteAsset
+      responses:
+        "204": { description: Deleted }
+        default: { $ref: "#/components/responses/Error" }
+  /assets/{id}/content:
+    parameters:
+      - { $ref: "#/components/parameters/ID" }
+    get:
+      tags: [components]
+      operationId: downloadAsset
+      responses:
+        "200":
+          description: The asset content
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        default: { $ref: "#/components/responses/Error" }
+  /components/{id}:
+    parameters:
+      - { $ref: "#/components/parameters/ID" }
+    get:
+      tags: [components]
+      operationId: getComponent
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ComponentDetail" }
+        default: { $ref: "#/components/responses/Error" }
+    delete:
+      tags: [components]
+      operationId: deleteComponent
+      description: Deletes the component and all of its assets.
+      responses:
+        "204": { description: Deleted }
+        default: { $ref: "#/components/responses/Error" }
+  /search:
+    get:
+      tags: [components]
+      operationId: searchComponents
+      parameters:
+        - { name: q, in: query, description: Name substring, schema: { type: string } }
+        - { name: format, in: query, schema: { type: string } }
+        - { name: repository, in: query, schema: { type: string } }
+        - { name: version, in: query, schema: { type: string } }
+        - { $ref: "#/components/parameters/Limit" }
+        - { $ref: "#/components/parameters/Offset" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Component" }
+        default: { $ref: "#/components/responses/Error" }
+
+  /tokens:
+    get:
+      tags: [security]
+      operationId: listTokens
+      summary: The caller's API tokens
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ApiToken" }
+        default: { $ref: "#/components/responses/Error" }
+    post:
+      tags: [security]
+      operationId: createToken
+      summary: Create an API token for the caller
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApiTokenInput" }
+      responses:
+        "201":
+          description: Created. The secret is only returned once.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiTokenCreated" }
+        default: { $ref: "#/components/responses/Error" }
+  /tokens/{id}:
+    parameters:
+      - { $ref: "#/components/parameters/ID" }
+    delete:
+      tags: [security]
+      operationId: deleteToken
+      responses:
+        "204": { description: Revoked }
+        default: { $ref: "#/components/responses/Error" }
+  /service-accounts:
+    get:
+      tags: [security]
+      operationId: listServiceAccounts
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/User" }
+        default: { $ref: "#/components/responses/Error" }
+    post:
+      tags: [security]
+      operationId: createServiceAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServiceAccountInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        default: { $ref: "#/components/responses/Error" }
+  /service-accounts/{name}:
+    parameters:
+      - { $ref: "#/components/parameters/Name" }
+    get:
+      tags: [security]
+      operationId: getServiceAccount
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        default: { $ref: "#/components/responses/Error" }
+    delete:
+      tags: [security]
+      operationId: deleteServiceAccount
+      responses:
+        "204": { description: Deleted }
+        default: { $ref: "#/components/responses/Error" }
+  /service-accounts/{name}/tokens:
+    parameters:
+      - { $ref: "#/components/parameters/Name" }
+    get:
+      tags: [security]
+      operationId: listServiceAccountTokens
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ApiToken" }
+        default: { $ref: "#/components/responses/Error" }
+    post:
+      tags: [security]
+      operationId: createServiceAccountToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApiTokenInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiTokenCreated" }
+        default: { $ref: "#/components/responses/Error" }
+  /service-accounts/{name}/tokens/{id}:
+    parameters:
+      - { $ref: "#/components/parameters/Name" }
+      - { $ref: "#/components/parameters/ID" }
+    delete:
+      tags: [security]
+      operationId: deleteServiceAccountToken
+      responses:
+        "204": { description: Revoked }
+        default: { $ref: "#/components/responses/Error" }
+  /users:
+    get:
+      tags: [security]
+      operationId: listUsers
+      summary: Users seen via OIDC and service accounts (admin)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/User" }
+        default: { $ref: "#/components/responses/Error" }
+  /roles:
+    get:
+      tags: [security]
+      operationId: listRoles
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Role" }
+        default: { $ref: "#/components/responses/Error" }
+    post:
+      tags: [security]
+      operationId: createRole
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RoleInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Role" }
+        default: { $ref: "#/components/responses/Error" }
+  /roles/{name}:
+    parameters:
+      - { $ref: "#/components/parameters/Name" }
+    get:
+      tags: [security]
+      operationId: getRole
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Role" }
+        default: { $ref: "#/components/responses/Error" }
+    put:
+      tags: [security]
+      operationId: updateRole
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RoleInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Role" }
+        default: { $ref: "#/components/responses/Error" }
+    delete:
+      tags: [security]
+      operationId: deleteRole
+      responses:
+        "204": { description: Deleted }
+        default: { $ref: "#/components/responses/Error" }
+  /role-bindings:
+    get:
+      tags: [security]
+      operationId: listRoleBindings
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/RoleBinding" }
+        default: { $ref: "#/components/responses/Error" }
+    post:
+      tags: [security]
+      operationId: createRoleBinding
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RoleBindingInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RoleBinding" }
+        default: { $ref: "#/components/responses/Error" }
+  /role-bindings/{id}:
+    parameters:
+      - { $ref: "#/components/parameters/ID" }
+    get:
+      tags: [security]
+      operationId: getRoleBinding
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RoleBinding" }
+        default: { $ref: "#/components/responses/Error" }
+    delete:
+      tags: [security]
+      operationId: deleteRoleBinding
+      responses:
+        "204": { description: Deleted }
+        default: { $ref: "#/components/responses/Error" }
+  /gitlab-trust-policies:
+    get:
+      tags: [security]
+      operationId: listGitLabTrustPolicies
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/GitLabTrustPolicy" }
+        default: { $ref: "#/components/responses/Error" }
+    post:
+      tags: [security]
+      operationId: createGitLabTrustPolicy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GitLabTrustPolicyInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GitLabTrustPolicy" }
+        default: { $ref: "#/components/responses/Error" }
+  /gitlab-trust-policies/{name}:
+    parameters:
+      - { $ref: "#/components/parameters/Name" }
+    get:
+      tags: [security]
+      operationId: getGitLabTrustPolicy
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GitLabTrustPolicy" }
+        default: { $ref: "#/components/responses/Error" }
+    put:
+      tags: [security]
+      operationId: updateGitLabTrustPolicy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GitLabTrustPolicyInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GitLabTrustPolicy" }
+        default: { $ref: "#/components/responses/Error" }
+    delete:
+      tags: [security]
+      operationId: deleteGitLabTrustPolicy
+      description: Also deletes role bindings that reference the policy.
+      responses:
+        "204": { description: Deleted }
+        default: { $ref: "#/components/responses/Error" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Entrepot API token, OIDC access token or GitLab CI id_token
+    basicAuth:
+      type: http
+      scheme: basic
+      description: Any username; the password is a token
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: entrepot_session
+  parameters:
+    Name:
+      name: name
+      in: path
+      required: true
+      schema: { type: string }
+    ID:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 1000 }
+    Offset:
+      name: offset
+      in: query
+      schema: { type: integer, minimum: 0 }
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string, example: not_found }
+        message: { type: string }
+    SystemInfo:
+      type: object
+      required: [version, baseUrl, formats, oidc, gitlabInstances, anonymousAccess]
+      properties:
+        version: { type: string }
+        baseUrl: { type: string }
+        formats:
+          type: array
+          items: { $ref: "#/components/schemas/FormatInfo" }
+        oidc:
+          type: object
+          required: [enabled, displayName]
+          properties:
+            enabled: { type: boolean }
+            displayName: { type: string }
+        gitlabInstances:
+          type: array
+          items: { type: string }
+        anonymousAccess: { type: boolean }
+    FormatInfo:
+      type: object
+      required: [name, kinds]
+      properties:
+        name: { type: string, example: npm }
+        kinds:
+          type: array
+          items: { $ref: "#/components/schemas/RepositoryKind" }
+    Me:
+      type: object
+      required: [kind, name, groups, policies, scopes, admin]
+      properties:
+        kind: { type: string, enum: [anonymous, user, gitlab, bootstrap] }
+        name: { type: string }
+        userId: { type: string }
+        email: { type: string }
+        groups: { type: array, items: { type: string } }
+        policies: { type: array, items: { type: string } }
+        scopes: { type: array, items: { type: string } }
+        admin: { type: boolean }
+        claims:
+          type: object
+          additionalProperties: true
+    AuditEvent:
+      type: object
+      required: [id, at, actor, action, target, details, remoteIp]
+      properties:
+        id: { type: integer, format: int64 }
+        at: { type: string, format: date-time }
+        actor: { type: string }
+        action: { type: string }
+        target: { type: string }
+        details: { type: object, additionalProperties: true }
+        remoteIp: { type: string }
+
+    BlobStoreType:
+      type: string
+      enum: [file, s3]
+    FileBlobStoreConfig:
+      type: object
+      required: [path]
+      properties:
+        path:
+          type: string
+          description: Directory on a mounted volume (PVC, EBS, EFS). Must be under storage.allowedRoots.
+          example: /data/default
+    S3BlobStoreConfig:
+      type: object
+      required: [bucket]
+      properties:
+        bucket: { type: string }
+        region: { type: string }
+        prefix: { type: string }
+        endpoint: { type: string, description: Custom endpoint for MinIO / Ceph }
+        forcePathStyle: { type: boolean }
+        accessKeyId: { type: string, description: Leave empty to use the AWS default chain (IRSA) }
+        secretAccessKey: { type: string, writeOnly: true }
+        redirectDownloads:
+          type: boolean
+          description: Redirect large downloads to presigned S3 URLs
+    BlobStoreInput:
+      type: object
+      required: [name, type]
+      properties:
+        name: { type: string, pattern: "^[a-z0-9][a-z0-9._-]{0,62}$" }
+        type: { $ref: "#/components/schemas/BlobStoreType" }
+        file: { $ref: "#/components/schemas/FileBlobStoreConfig" }
+        s3: { $ref: "#/components/schemas/S3BlobStoreConfig" }
+    BlobStore:
+      type: object
+      required: [name, type, usage, createdAt, updatedAt]
+      properties:
+        name: { type: string }
+        type: { $ref: "#/components/schemas/BlobStoreType" }
+        file: { $ref: "#/components/schemas/FileBlobStoreConfig" }
+        s3: { $ref: "#/components/schemas/S3BlobStoreConfig" }
+        usage:
+          type: object
+          required: [blobCount, totalBytes, repositories]
+          properties:
+            blobCount: { type: integer, format: int64 }
+            totalBytes: { type: integer, format: int64 }
+            repositories: { type: integer, format: int64 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    RepositoryKind:
+      type: string
+      enum: [hosted, proxy, group]
+    ProxySettings:
+      type: object
+      required: [remoteUrl]
+      properties:
+        remoteUrl: { type: string, example: "https://registry.npmjs.org" }
+        username: { type: string }
+        password: { type: string, writeOnly: true }
+        metadataTtlSeconds: { type: integer, description: "Default 3600" }
+        contentTtlSeconds: { type: integer, description: "0 = artifacts never expire (default)" }
+        negativeCacheTtlSeconds: { type: integer, description: "Default 300; -1 disables" }
+    HostedSettings:
+      type: object
+      properties:
+        allowRedeploy: { type: boolean, description: Allow overwriting existing artifacts/versions }
+    GroupSettings:
+      type: object
+      required: [members]
+      properties:
+        members:
+          type: array
+          description: Member repositories, searched in order
+          items: { type: string }
+    RepositoryInput:
+      type: object
+      required: [name, format, kind, blobStore]
+      properties:
+        name: { type: string, pattern: "^[a-z0-9][a-z0-9._-]{0,62}$" }
+        format: { type: string, enum: [raw, pypi, npm, docker] }
+        kind: { $ref: "#/components/schemas/RepositoryKind" }
+        blobStore: { type: string }
+        description: { type: string }
+        online: { type: boolean, default: true }
+        anonymousRead: { type: boolean, default: false }
+        proxy: { $ref: "#/components/schemas/ProxySettings" }
+        hosted: { $ref: "#/components/schemas/HostedSettings" }
+        group: { $ref: "#/components/schemas/GroupSettings" }
+    Repository:
+      type: object
+      required: [name, format, kind, blobStore, description, online, anonymousRead, url, permissions, createdAt, updatedAt]
+      properties:
+        name: { type: string }
+        format: { type: string }
+        kind: { $ref: "#/components/schemas/RepositoryKind" }
+        blobStore: { type: string }
+        description: { type: string }
+        online: { type: boolean }
+        anonymousRead: { type: boolean }
+        url: { type: string, description: URL for package clients }
+        proxy: { $ref: "#/components/schemas/ProxySettings" }
+        hosted: { $ref: "#/components/schemas/HostedSettings" }
+        group: { $ref: "#/components/schemas/GroupSettings" }
+        permissions:
+          type: array
+          description: Actions the caller may perform
+          items: { type: string }
+        stats: { $ref: "#/components/schemas/RepositoryStats" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    RepositoryStats:
+      type: object
+      required: [assets, components, totalBytes]
+      properties:
+        assets: { type: integer, format: int64 }
+        components: { type: integer, format: int64 }
+        totalBytes: { type: integer, format: int64 }
+
+    Asset:
+      type: object
+      required: [id, repository, path, digest, size, contentType, createdBy, createdAt, updatedAt, attrs]
+      properties:
+        id: { type: string }
+        repository: { type: string }
+        componentId: { type: string }
+        path: { type: string }
+        digest: { type: string, example: "sha256:…" }
+        size: { type: integer, format: int64 }
+        contentType: { type: string }
+        createdBy: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        cachedAt: { type: string, format: date-time }
+        lastDownloadedAt: { type: string, format: date-time }
+        downloadUrl: { type: string }
+        attrs: { type: object, additionalProperties: true }
+    AssetPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Asset" }
+        next: { type: string, description: Pass as `after` to fetch the next page }
+    BrowseEntry:
+      type: object
+      required: [name, path, isDir, size]
+      properties:
+        name: { type: string }
+        path: { type: string }
+        isDir: { type: boolean }
+        assetId: { type: string }
+        size: { type: integer, format: int64 }
+    Component:
+      type: object
+      required: [id, repository, format, name, version, createdAt, updatedAt, attrs]
+      properties:
+        id: { type: string }
+        repository: { type: string }
+        format: { type: string }
+        name: { type: string }
+        version: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        attrs: { type: object, additionalProperties: true }
+    ComponentDetail:
+      type: object
+      required: [component, assets]
+      properties:
+        component: { $ref: "#/components/schemas/Component" }
+        assets:
+          type: array
+          items: { $ref: "#/components/schemas/Asset" }
+
+    User:
+      type: object
+      required: [id, username, issuer, subject, email, displayName, groups, serviceAccount, createdAt]
+      properties:
+        id: { type: string }
+        username: { type: string }
+        issuer: { type: string }
+        subject: { type: string }
+        email: { type: string }
+        displayName: { type: string }
+        groups: { type: array, items: { type: string } }
+        serviceAccount: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        lastLoginAt: { type: string, format: date-time }
+    ServiceAccountInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, pattern: "^[a-z0-9][a-z0-9._-]{0,62}$" }
+        description: { type: string }
+    ApiTokenInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        scopes:
+          type: array
+          description: Restrict the token to these actions (default unrestricted)
+          items: { type: string, enum: [read, write, delete, admin] }
+        expiresInDays: { type: integer, minimum: 1, description: Omit for no expiry }
+    ApiToken:
+      type: object
+      required: [id, name, hint, scopes, createdAt]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        hint: { type: string, example: "ent_AbCd…wXyZ" }
+        scopes: { type: array, items: { type: string } }
+        expiresAt: { type: string, format: date-time }
+        lastUsedAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+    ApiTokenCreated:
+      type: object
+      required: [token, secret]
+      properties:
+        token: { $ref: "#/components/schemas/ApiToken" }
+        secret: { type: string, description: The token value. Shown only once. }
+
+    Action:
+      type: string
+      enum: [read, write, delete, admin]
+    RoleInput:
+      type: object
+      required: [name, actions]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        actions:
+          type: array
+          items: { $ref: "#/components/schemas/Action" }
+    Role:
+      type: object
+      required: [name, description, actions, builtin]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        actions:
+          type: array
+          items: { $ref: "#/components/schemas/Action" }
+        builtin: { type: boolean }
+    SubjectType:
+      type: string
+      enum: [user, group, gitlab_policy, authenticated]
+    RoleBindingInput:
+      type: object
+      required: [role, subjectType]
+      properties:
+        role: { type: string }
+        subjectType: { $ref: "#/components/schemas/SubjectType" }
+        subject:
+          type: string
+          description: Username, OIDC group, or trust policy name (empty for authenticated)
+        repositoryPattern:
+          type: string
+          default: "*"
+          description: "Glob over repository names; `*` on a role with admin grants system admin"
+    RoleBinding:
+      type: object
+      required: [id, role, subjectType, subject, repositoryPattern, createdAt]
+      properties:
+        id: { type: string }
+        role: { type: string }
+        subjectType: { $ref: "#/components/schemas/SubjectType" }
+        subject: { type: string }
+        repositoryPattern: { type: string }
+        createdAt: { type: string, format: date-time }
+    GitLabTrustPolicyInput:
+      type: object
+      required: [name, gitlab, conditions]
+      properties:
+        name: { type: string, pattern: "^[a-z0-9][a-z0-9._-]{0,62}$" }
+        description: { type: string }
+        gitlab: { type: string, description: Name of a trusted GitLab instance from server configuration }
+        conditions:
+          type: object
+          description: |
+            id_token claim -> glob pattern. All must match. Common claims:
+            project_path, namespace_path, ref, ref_type, ref_protected,
+            environment, pipeline_source.
+          additionalProperties: { type: string }
+          example:
+            project_path: "platform/**"
+            ref_protected: "true"
+    GitLabTrustPolicy:
+      type: object
+      required: [name, description, gitlab, conditions, createdAt, updatedAt]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        gitlab: { type: string }
+        conditions:
+          type: object
+          additionalProperties: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
