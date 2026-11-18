@@ -20,6 +20,10 @@ type Component struct {
 	Attrs        json.RawMessage `json:"attrs"`
 	CreatedAt    time.Time       `json:"createdAt"`
 	UpdatedAt    time.Time       `json:"updatedAt"`
+	// ScanState is unscanned, pending, clean, vulnerable, error or unsupported.
+	ScanState   string     `json:"scanState"`
+	Quarantined bool       `json:"quarantined"`
+	ScannedAt   *time.Time `json:"scannedAt,omitempty"`
 }
 
 type Asset struct {
@@ -37,16 +41,19 @@ type Asset struct {
 	UpdatedAt        time.Time       `json:"updatedAt"`
 	CachedAt         *time.Time      `json:"cachedAt,omitempty"`
 	LastDownloadedAt *time.Time      `json:"lastDownloadedAt,omitempty"`
+	// Uploader describes who stored the asset (kind, name and, for GitLab
+	// CI jobs, project/pipeline/commit claims).
+	Uploader json.RawMessage `json:"uploader,omitempty"`
 }
 
 const assetSelect = `SELECT a.id, a.repository_id, r.name, a.component_id, a.path, a.digest, a.size,
-	a.content_type, a.attrs, a.created_by, a.created_at, a.updated_at, a.cached_at, a.last_downloaded_at
+	a.content_type, a.attrs, a.created_by, a.created_at, a.updated_at, a.cached_at, a.last_downloaded_at, a.uploader
 	FROM assets a JOIN repositories r ON r.id = a.repository_id`
 
 func scanAsset(row interface{ Scan(...any) error }) (*Asset, error) {
 	var a Asset
 	err := row.Scan(&a.ID, &a.RepositoryID, &a.Repository, &a.ComponentID, &a.Path, &a.Digest, &a.Size,
-		&a.ContentType, &a.Attrs, &a.CreatedBy, &a.CreatedAt, &a.UpdatedAt, &a.CachedAt, &a.LastDownloadedAt)
+		&a.ContentType, &a.Attrs, &a.CreatedBy, &a.CreatedAt, &a.UpdatedAt, &a.CachedAt, &a.LastDownloadedAt, &a.Uploader)
 	return &a, err
 }
 
@@ -155,6 +162,8 @@ type PutAssetParams struct {
 	// NoOverwrite fails with ErrConflict if an asset already exists at Path
 	// with different content.
 	NoOverwrite bool
+	// Uploader is recorded when the content changes (JSON object).
+	Uploader json.RawMessage
 }
 
 // PutAsset inserts or replaces the asset at (repository, path) and maintains
@@ -165,6 +174,9 @@ func (s *Store) PutAsset(ctx context.Context, p PutAssetParams) (*Asset, error) 
 	}
 	if p.ContentType == "" {
 		p.ContentType = "application/octet-stream"
+	}
+	if p.Uploader == nil {
+		p.Uploader = json.RawMessage(`{}`)
 	}
 	var id string
 	err := s.inTx(ctx, func(tx pgx.Tx) error {
@@ -196,13 +208,14 @@ func (s *Store) PutAsset(ctx context.Context, p PutAssetParams) (*Asset, error) 
 			_, err = tx.Exec(ctx, `UPDATE assets SET digest=$2, size=$3, content_type=$4, attrs=$5,
 				component_id=coalesce($6, component_id), updated_at=now(),
 				cached_at = CASE WHEN $7 THEN now() ELSE cached_at END,
+				uploader = CASE WHEN digest = $2 THEN uploader ELSE $9 END,
 				created_by = CASE WHEN digest = $2 THEN created_by ELSE $8 END
-				WHERE id=$1`, oldID, p.Digest, p.Size, p.ContentType, p.Attrs, p.ComponentID, p.Cached, p.CreatedBy)
+				WHERE id=$1`, oldID, p.Digest, p.Size, p.ContentType, p.Attrs, p.ComponentID, p.Cached, p.CreatedBy, p.Uploader)
 			return err
 		}
 		return tx.QueryRow(ctx, `INSERT INTO assets (repository_id, component_id, path, digest, size, content_type,
-			attrs, created_by, cached_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8, CASE WHEN $9 THEN now() END) RETURNING id`,
-			p.RepositoryID, p.ComponentID, p.Path, p.Digest, p.Size, p.ContentType, p.Attrs, p.CreatedBy, p.Cached).Scan(&id)
+			attrs, created_by, cached_at, uploader) VALUES ($1,$2,$3,$4,$5,$6,$7,$8, CASE WHEN $9 THEN now() END, $10) RETURNING id`,
+			p.RepositoryID, p.ComponentID, p.Path, p.Digest, p.Size, p.ContentType, p.Attrs, p.CreatedBy, p.Cached, p.Uploader).Scan(&id)
 	})
 	if err != nil {
 		return nil, mapErr(err, "put asset "+p.Path)
@@ -289,12 +302,14 @@ func (s *Store) UpsertComponent(ctx context.Context, repoID, name, version strin
 	return s.GetComponent(ctx, id)
 }
 
-const componentSelect = `SELECT c.id, c.repository_id, r.name, r.format, c.name, c.version, c.attrs, c.created_at, c.updated_at
+const componentSelect = `SELECT c.id, c.repository_id, r.name, r.format, c.name, c.version, c.attrs, c.created_at, c.updated_at,
+	c.scan_state, c.quarantined, c.scanned_at
 	FROM components c JOIN repositories r ON r.id = c.repository_id`
 
 func scanComponent(row interface{ Scan(...any) error }) (*Component, error) {
 	var c Component
-	err := row.Scan(&c.ID, &c.RepositoryID, &c.Repository, &c.Format, &c.Name, &c.Version, &c.Attrs, &c.CreatedAt, &c.UpdatedAt)
+	err := row.Scan(&c.ID, &c.RepositoryID, &c.Repository, &c.Format, &c.Name, &c.Version, &c.Attrs, &c.CreatedAt, &c.UpdatedAt,
+		&c.ScanState, &c.Quarantined, &c.ScannedAt)
 	return &c, err
 }
 

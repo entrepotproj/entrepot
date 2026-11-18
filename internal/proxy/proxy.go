@@ -59,6 +59,10 @@ type FetchResult struct {
 type FetchFunc func(ctx context.Context, existing *store.Asset) (*FetchResult, error)
 
 type Cache struct {
+	// Allow, when set, is consulted before any upstream fetch (routing
+	// rules). Disallowed paths are reported as not found.
+	Allow func(ctx context.Context, rp *repo.Repository, path string) bool
+
 	repos  *repo.Service
 	Client *http.Client
 	ua     string
@@ -94,6 +98,9 @@ func (c *Cache) Get(ctx context.Context, rp *repo.Repository, path string, ttl t
 		if existing != nil {
 			return existing, nil
 		}
+		return nil, repo.ErrNotFound
+	}
+	if c.Allow != nil && !c.Allow(ctx, rp, path) {
 		return nil, repo.ErrNotFound
 	}
 	key := rp.ID + "\x00" + path

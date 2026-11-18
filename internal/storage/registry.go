@@ -19,6 +19,8 @@ type FileConfig struct {
 type Registry struct {
 	allowedRoots []string
 	tempDir      string
+	// Open decrypts sealed secret values in store configs (may be nil).
+	Open func(string) (string, error)
 
 	mu     sync.Mutex
 	stores map[string]cached
@@ -76,6 +78,13 @@ func (r *Registry) Build(ctx context.Context, typ string, config json.RawMessage
 		var sc S3Config
 		if err := json.Unmarshal(config, &sc); err != nil {
 			return nil, fmt.Errorf("s3 store config: %w", err)
+		}
+		if r.Open != nil && sc.SecretAccessKey != "" {
+			key, err := r.Open(sc.SecretAccessKey)
+			if err != nil {
+				return nil, fmt.Errorf("s3 store config: secretAccessKey: %w", err)
+			}
+			sc.SecretAccessKey = key
 		}
 		return NewS3Store(ctx, sc, r.tempDir)
 	default:

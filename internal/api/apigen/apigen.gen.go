@@ -113,22 +113,31 @@ func (e MeKind) Valid() bool {
 
 // Defines values for RepositoryInputFormat.
 const (
+	Apt    RepositoryInputFormat = "apt"
 	Docker RepositoryInputFormat = "docker"
+	Helm   RepositoryInputFormat = "helm"
 	Npm    RepositoryInputFormat = "npm"
 	Pypi   RepositoryInputFormat = "pypi"
 	Raw    RepositoryInputFormat = "raw"
+	Yum    RepositoryInputFormat = "yum"
 )
 
 // Valid indicates whether the value is a known member of the RepositoryInputFormat enum.
 func (e RepositoryInputFormat) Valid() bool {
 	switch e {
+	case Apt:
+		return true
 	case Docker:
+		return true
+	case Helm:
 		return true
 	case Npm:
 		return true
 	case Pypi:
 		return true
 	case Raw:
+		return true
+	case Yum:
 		return true
 	default:
 		return false
@@ -156,6 +165,231 @@ func (e RepositoryKind) Valid() bool {
 	}
 }
 
+// Defines values for RoutingRuleMode.
+const (
+	RoutingRuleModeAllow RoutingRuleMode = "allow"
+	RoutingRuleModeBlock RoutingRuleMode = "block"
+)
+
+// Valid indicates whether the value is a known member of the RoutingRuleMode enum.
+func (e RoutingRuleMode) Valid() bool {
+	switch e {
+	case RoutingRuleModeAllow:
+		return true
+	case RoutingRuleModeBlock:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RoutingRuleInputMode.
+const (
+	RoutingRuleInputModeAllow RoutingRuleInputMode = "allow"
+	RoutingRuleInputModeBlock RoutingRuleInputMode = "block"
+)
+
+// Valid indicates whether the value is a known member of the RoutingRuleInputMode enum.
+func (e RoutingRuleInputMode) Valid() bool {
+	switch e {
+	case RoutingRuleInputModeAllow:
+		return true
+	case RoutingRuleInputModeBlock:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ScanCallbackFormat.
+const (
+	Cyclonedx ScanCallbackFormat = "cyclonedx"
+	Entrepot  ScanCallbackFormat = "entrepot"
+	Sarif     ScanCallbackFormat = "sarif"
+)
+
+// Valid indicates whether the value is a known member of the ScanCallbackFormat enum.
+func (e ScanCallbackFormat) Valid() bool {
+	switch e {
+	case Cyclonedx:
+		return true
+	case Entrepot:
+		return true
+	case Sarif:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ScanJobReason.
+const (
+	ScanJobReasonManual ScanJobReason = "manual"
+	ScanJobReasonProxy  ScanJobReason = "proxy"
+	ScanJobReasonRescan ScanJobReason = "rescan"
+	ScanJobReasonUpload ScanJobReason = "upload"
+)
+
+// Valid indicates whether the value is a known member of the ScanJobReason enum.
+func (e ScanJobReason) Valid() bool {
+	switch e {
+	case ScanJobReasonManual:
+		return true
+	case ScanJobReasonProxy:
+		return true
+	case ScanJobReasonRescan:
+		return true
+	case ScanJobReasonUpload:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ScanJobStatus.
+const (
+	ScanJobStatusDone    ScanJobStatus = "done"
+	ScanJobStatusFailed  ScanJobStatus = "failed"
+	ScanJobStatusQueued  ScanJobStatus = "queued"
+	ScanJobStatusRunning ScanJobStatus = "running"
+)
+
+// Valid indicates whether the value is a known member of the ScanJobStatus enum.
+func (e ScanJobStatus) Valid() bool {
+	switch e {
+	case ScanJobStatusDone:
+		return true
+	case ScanJobStatusFailed:
+		return true
+	case ScanJobStatusQueued:
+		return true
+	case ScanJobStatusRunning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ScanResultStatus.
+const (
+	ScanResultStatusError       ScanResultStatus = "error"
+	ScanResultStatusOk          ScanResultStatus = "ok"
+	ScanResultStatusUnsupported ScanResultStatus = "unsupported"
+)
+
+// Valid indicates whether the value is a known member of the ScanResultStatus enum.
+func (e ScanResultStatus) Valid() bool {
+	switch e {
+	case ScanResultStatusError:
+		return true
+	case ScanResultStatusOk:
+		return true
+	case ScanResultStatusUnsupported:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ScanSettingsMode.
+const (
+	Off        ScanSettingsMode = "off"
+	Quarantine ScanSettingsMode = "quarantine"
+	Warn       ScanSettingsMode = "warn"
+)
+
+// Valid indicates whether the value is a known member of the ScanSettingsMode enum.
+func (e ScanSettingsMode) Valid() bool {
+	switch e {
+	case Off:
+		return true
+	case Quarantine:
+		return true
+	case Warn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ScanState.
+const (
+	ScanStateClean       ScanState = "clean"
+	ScanStateError       ScanState = "error"
+	ScanStatePending     ScanState = "pending"
+	ScanStateUnscanned   ScanState = "unscanned"
+	ScanStateUnsupported ScanState = "unsupported"
+	ScanStateVulnerable  ScanState = "vulnerable"
+)
+
+// Valid indicates whether the value is a known member of the ScanState enum.
+func (e ScanState) Valid() bool {
+	switch e {
+	case ScanStateClean:
+		return true
+	case ScanStateError:
+		return true
+	case ScanStatePending:
+		return true
+	case ScanStateUnscanned:
+		return true
+	case ScanStateUnsupported:
+		return true
+	case ScanStateVulnerable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ScannerType.
+const (
+	Grype   ScannerType = "grype"
+	Trivy   ScannerType = "trivy"
+	Webhook ScannerType = "webhook"
+)
+
+// Valid indicates whether the value is a known member of the ScannerType enum.
+func (e ScannerType) Valid() bool {
+	switch e {
+	case Grype:
+		return true
+	case Trivy:
+		return true
+	case Webhook:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for Severity.
+const (
+	Critical Severity = "critical"
+	High     Severity = "high"
+	Low      Severity = "low"
+	Medium   Severity = "medium"
+	Unknown  Severity = "unknown"
+)
+
+// Valid indicates whether the value is a known member of the Severity enum.
+func (e Severity) Valid() bool {
+	switch e {
+	case Critical:
+		return true
+	case High:
+		return true
+	case Low:
+		return true
+	case Medium:
+		return true
+	case Unknown:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SubjectType.
 const (
 	SubjectTypeAuthenticated SubjectType = "authenticated"
@@ -174,6 +408,30 @@ func (e SubjectType) Valid() bool {
 	case SubjectTypeGroup:
 		return true
 	case SubjectTypeUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListScanJobsParamsStatus.
+const (
+	ListScanJobsParamsStatusDone    ListScanJobsParamsStatus = "done"
+	ListScanJobsParamsStatusFailed  ListScanJobsParamsStatus = "failed"
+	ListScanJobsParamsStatusQueued  ListScanJobsParamsStatus = "queued"
+	ListScanJobsParamsStatusRunning ListScanJobsParamsStatus = "running"
+)
+
+// Valid indicates whether the value is a known member of the ListScanJobsParamsStatus enum.
+func (e ListScanJobsParamsStatus) Valid() bool {
+	switch e {
+	case ListScanJobsParamsStatusDone:
+		return true
+	case ListScanJobsParamsStatusFailed:
+		return true
+	case ListScanJobsParamsStatusQueued:
+		return true
+	case ListScanJobsParamsStatusRunning:
 		return true
 	default:
 		return false
@@ -216,6 +474,26 @@ type ApiTokenInput struct {
 // ApiTokenInputScopes defines model for ApiTokenInput.Scopes.
 type ApiTokenInputScopes string
 
+// AptDistribution defines model for AptDistribution.
+type AptDistribution struct {
+	// Architectures Example: ["amd64","arm64","all"]
+	Architectures *[]string `json:"architectures,omitempty"`
+
+	// Components Example: ["main"]
+	Components *[]string `json:"components,omitempty"`
+	Label      *string   `json:"label,omitempty"`
+
+	// Name Example: stable
+	Name   string  `json:"name"`
+	Origin *string `json:"origin,omitempty"`
+}
+
+// AptHostedSettings defines model for AptHostedSettings.
+type AptHostedSettings struct {
+	// Distributions Distributions to publish (default one "stable" distribution with component "main")
+	Distributions *[]AptDistribution `json:"distributions,omitempty"`
+}
+
 // Asset defines model for Asset.
 type Asset struct {
 	Attrs       map[string]interface{} `json:"attrs"`
@@ -234,6 +512,9 @@ type Asset struct {
 	Repository       string     `json:"repository"`
 	Size             int64      `json:"size"`
 	UpdatedAt        time.Time  `json:"updatedAt"`
+
+	// Uploader Who stored the asset (kind, name; GitLab CI jobs include project_path, ref, sha, pipeline_id)
+	Uploader *map[string]interface{} `json:"uploader,omitempty"`
 }
 
 // AssetPage defines model for AssetPage.
@@ -290,22 +571,98 @@ type BrowseEntry struct {
 	Size    int64   `json:"size"`
 }
 
+// CleanupCriteria All set criteria must match for a component to be removed.
+type CleanupCriteria struct {
+	// KeepLatest Always keep this many newest versions of each component
+	KeepLatest *int `json:"keepLatest,omitempty"`
+
+	// LastDownloadedOlderThanDays Components never downloaded count by their publish date
+	LastDownloadedOlderThanDays *int    `json:"lastDownloadedOlderThanDays,omitempty"`
+	NameRegex                   *string `json:"nameRegex,omitempty"`
+
+	// PrereleaseOnly Only versions with a pre-release part (1.2.0-rc.1
+	PrereleaseOnly         *bool `json:"prereleaseOnly,omitempty"`
+	PublishedOlderThanDays *int  `json:"publishedOlderThanDays,omitempty"`
+
+	// UntaggedOlderThanDays Docker: delete untagged manifests (and unreferenced layers) older than this
+	UntaggedOlderThanDays *int    `json:"untaggedOlderThanDays,omitempty"`
+	VersionRegex          *string `json:"versionRegex,omitempty"`
+}
+
+// CleanupPolicy defines model for CleanupPolicy.
+type CleanupPolicy struct {
+	CreatedAt time.Time `json:"createdAt"`
+
+	// Criteria All set criteria must match for a component to be removed.
+	Criteria    CleanupCriteria `json:"criteria"`
+	Description string          `json:"description"`
+	Format      string          `json:"format"`
+	Name        string          `json:"name"`
+
+	// Repositories Repositories using the policy
+	Repositories *[]string `json:"repositories,omitempty"`
+	UpdatedAt    time.Time `json:"updatedAt"`
+}
+
+// CleanupPolicyInput defines model for CleanupPolicyInput.
+type CleanupPolicyInput struct {
+	// Criteria All set criteria must match for a component to be removed.
+	Criteria    CleanupCriteria `json:"criteria"`
+	Description *string         `json:"description,omitempty"`
+
+	// Format Restrict to one format (empty = any)
+	Format *string `json:"format,omitempty"`
+	Name   string  `json:"name"`
+}
+
+// CleanupRunResult defines model for CleanupRunResult.
+type CleanupRunResult struct {
+	Assets int64 `json:"assets"`
+	Bytes  int64 `json:"bytes"`
+
+	// Components Components deleted (or that would be)
+	Components   []Component `json:"components"`
+	DryRun       bool        `json:"dryRun"`
+	Repositories []string    `json:"repositories"`
+}
+
+// CleanupSettings defines model for CleanupSettings.
+type CleanupSettings struct {
+	Policies *[]string `json:"policies,omitempty"`
+}
+
 // Component defines model for Component.
 type Component struct {
-	Attrs      map[string]interface{} `json:"attrs"`
-	CreatedAt  time.Time              `json:"createdAt"`
-	Format     string                 `json:"format"`
-	Id         string                 `json:"id"`
-	Name       string                 `json:"name"`
-	Repository string                 `json:"repository"`
-	UpdatedAt  time.Time              `json:"updatedAt"`
-	Version    string                 `json:"version"`
+	Attrs       map[string]interface{} `json:"attrs"`
+	CreatedAt   time.Time              `json:"createdAt"`
+	Format      string                 `json:"format"`
+	Id          string                 `json:"id"`
+	Name        string                 `json:"name"`
+	Quarantined *bool                  `json:"quarantined,omitempty"`
+	Repository  string                 `json:"repository"`
+	ScanState   *ScanState             `json:"scanState,omitempty"`
+	ScannedAt   *time.Time             `json:"scannedAt,omitempty"`
+	UpdatedAt   time.Time              `json:"updatedAt"`
+	Version     string                 `json:"version"`
 }
 
 // ComponentDetail defines model for ComponentDetail.
 type ComponentDetail struct {
 	Assets    []Asset   `json:"assets"`
 	Component Component `json:"component"`
+}
+
+// ComponentScans defines model for ComponentScans.
+type ComponentScans struct {
+	// Jobs Recent jobs
+	Jobs             []ScanJob `json:"jobs"`
+	QuarantineReason *string   `json:"quarantineReason,omitempty"`
+	Quarantined      bool      `json:"quarantined"`
+
+	// Results Latest result per scanner
+	Results   []ScanResult `json:"results"`
+	ScanState ScanState    `json:"scanState"`
+	ScannedAt *time.Time   `json:"scannedAt,omitempty"`
 }
 
 // Error defines model for Error.
@@ -321,6 +678,21 @@ type FileBlobStoreConfig struct {
 	//
 	// Example: /data/default
 	Path string `json:"path"`
+}
+
+// Finding defines model for Finding.
+type Finding struct {
+	FixedVersion     string   `json:"fixedVersion"`
+	InstalledVersion string   `json:"installedVersion"`
+	Package          string   `json:"package"`
+	Severity         Severity `json:"severity"`
+	Title            string   `json:"title"`
+	Url              string   `json:"url"`
+
+	// VulnId Example: CVE-2021-23337
+	VulnId   string  `json:"vulnId"`
+	Waived   bool    `json:"waived"`
+	WaiverId *string `json:"waiverId,omitempty"`
 }
 
 // FormatInfo defines model for FormatInfo.
@@ -361,12 +733,25 @@ type GitLabTrustPolicyInput struct {
 type GroupSettings struct {
 	// Members Member repositories, searched in order
 	Members []string `json:"members"`
+
+	// PreferHosted npm/PyPI: never serve a package name from proxy members if any hosted member has it (dependency-confusion protection). Default true.
+	PreferHosted *bool `json:"preferHosted,omitempty"`
+}
+
+// GrypeSettings defines model for GrypeSettings.
+type GrypeSettings struct {
+	// Binary Path to the grype CLI (default "grype")
+	Binary         *string   `json:"binary,omitempty"`
+	ExtraArgs      *[]string `json:"extraArgs,omitempty"`
+	TimeoutSeconds *int      `json:"timeoutSeconds,omitempty"`
 }
 
 // HostedSettings defines model for HostedSettings.
 type HostedSettings struct {
 	// AllowRedeploy Allow overwriting existing artifacts/versions. For Docker it allows moving tags. Defaults to false, except true for Docker.
-	AllowRedeploy *bool `json:"allowRedeploy,omitempty"`
+	AllowRedeploy *bool              `json:"allowRedeploy,omitempty"`
+	Apt           *AptHostedSettings `json:"apt,omitempty"`
+	Yum           *YumHostedSettings `json:"yum,omitempty"`
 }
 
 // Me defines model for Me.
@@ -398,26 +783,31 @@ type ProxySettings struct {
 	Password                *string `json:"password,omitempty"`
 
 	// RemoteUrl Example: https://registry.npmjs.org
-	RemoteUrl string  `json:"remoteUrl"`
-	Username  *string `json:"username,omitempty"`
+	RemoteUrl string `json:"remoteUrl"`
+
+	// RoutingRule Name of a routing rule that limits which paths/packages are fetched upstream
+	RoutingRule *string `json:"routingRule,omitempty"`
+	Username    *string `json:"username,omitempty"`
 }
 
 // Repository defines model for Repository.
 type Repository struct {
-	AnonymousRead bool            `json:"anonymousRead"`
-	BlobStore     string          `json:"blobStore"`
-	CreatedAt     time.Time       `json:"createdAt"`
-	Description   string          `json:"description"`
-	Format        string          `json:"format"`
-	Group         *GroupSettings  `json:"group,omitempty"`
-	Hosted        *HostedSettings `json:"hosted,omitempty"`
-	Kind          RepositoryKind  `json:"kind"`
-	Name          string          `json:"name"`
-	Online        bool            `json:"online"`
+	AnonymousRead bool             `json:"anonymousRead"`
+	BlobStore     string           `json:"blobStore"`
+	Cleanup       *CleanupSettings `json:"cleanup,omitempty"`
+	CreatedAt     time.Time        `json:"createdAt"`
+	Description   string           `json:"description"`
+	Format        string           `json:"format"`
+	Group         *GroupSettings   `json:"group,omitempty"`
+	Hosted        *HostedSettings  `json:"hosted,omitempty"`
+	Kind          RepositoryKind   `json:"kind"`
+	Name          string           `json:"name"`
+	Online        bool             `json:"online"`
 
 	// Permissions Actions the caller may perform
 	Permissions []string         `json:"permissions"`
 	Proxy       *ProxySettings   `json:"proxy,omitempty"`
+	Scan        *ScanSettings    `json:"scan,omitempty"`
 	Stats       *RepositoryStats `json:"stats,omitempty"`
 	UpdatedAt   time.Time        `json:"updatedAt"`
 
@@ -429,6 +819,7 @@ type Repository struct {
 type RepositoryInput struct {
 	AnonymousRead *bool                 `json:"anonymousRead,omitempty"`
 	BlobStore     string                `json:"blobStore"`
+	Cleanup       *CleanupSettings      `json:"cleanup,omitempty"`
 	Description   *string               `json:"description,omitempty"`
 	Format        RepositoryInputFormat `json:"format"`
 	Group         *GroupSettings        `json:"group,omitempty"`
@@ -437,6 +828,7 @@ type RepositoryInput struct {
 	Name          string                `json:"name"`
 	Online        *bool                 `json:"online,omitempty"`
 	Proxy         *ProxySettings        `json:"proxy,omitempty"`
+	Scan          *ScanSettings         `json:"scan,omitempty"`
 }
 
 // RepositoryInputFormat defines model for RepositoryInput.Format.
@@ -488,6 +880,45 @@ type RoleInput struct {
 	Name        string   `json:"name"`
 }
 
+// RoutingRule defines model for RoutingRule.
+type RoutingRule struct {
+	CreatedAt   time.Time       `json:"createdAt"`
+	Description string          `json:"description"`
+	Matchers    []string        `json:"matchers"`
+	Mode        RoutingRuleMode `json:"mode"`
+	Name        string          `json:"name"`
+
+	// Repositories Proxy repositories using the rule
+	Repositories *[]string `json:"repositories,omitempty"`
+	UpdatedAt    time.Time `json:"updatedAt"`
+}
+
+// RoutingRuleMode defines model for RoutingRule.Mode.
+type RoutingRuleMode string
+
+// RoutingRuleInput defines model for RoutingRuleInput.
+type RoutingRuleInput struct {
+	Description *string `json:"description,omitempty"`
+
+	// Matchers Regular expressions over the request path / package name, e.g. "^@acme/" or "^acme-"
+	Matchers []string `json:"matchers"`
+
+	// Mode allow: only matching requests go upstream; block: matching requests never go upstream
+	Mode RoutingRuleInputMode `json:"mode"`
+	Name string               `json:"name"`
+}
+
+// RoutingRuleInputMode allow: only matching requests go upstream; block: matching requests never go upstream
+type RoutingRuleInputMode string
+
+// RoutingTestResult defines model for RoutingTestResult.
+type RoutingTestResult struct {
+	Allowed bool `json:"allowed"`
+
+	// Matched The matcher that decided
+	Matched *string `json:"matched,omitempty"`
+}
+
 // S3BlobStoreConfig defines model for S3BlobStoreConfig.
 type S3BlobStoreConfig struct {
 	// AccessKeyId Leave empty to use the AWS default chain (IRSA)
@@ -505,10 +936,173 @@ type S3BlobStoreConfig struct {
 	SecretAccessKey   *string `json:"secretAccessKey,omitempty"`
 }
 
+// ScanCallback defines model for ScanCallback.
+type ScanCallback struct {
+	// Document SARIF or CycloneDX document
+	Document *map[string]interface{} `json:"document,omitempty"`
+
+	// Error Report a scan failure instead of results
+	Error    *string    `json:"error,omitempty"`
+	Findings *[]Finding `json:"findings,omitempty"`
+
+	// Format Format of the results: native findings, a SARIF 2.1 log, or a CycloneDX document with vulnerabilities
+	Format *ScanCallbackFormat `json:"format,omitempty"`
+
+	// Unsupported The scanner cannot scan this kind of artifact
+	Unsupported *bool `json:"unsupported,omitempty"`
+}
+
+// ScanCallbackFormat Format of the results: native findings, a SARIF 2.1 log, or a CycloneDX document with vulnerabilities
+type ScanCallbackFormat string
+
+// ScanJob defines model for ScanJob.
+type ScanJob struct {
+	Attempts int `json:"attempts"`
+
+	// Component name@version
+	Component   string        `json:"component"`
+	ComponentId string        `json:"componentId"`
+	CreatedAt   time.Time     `json:"createdAt"`
+	Error       string        `json:"error"`
+	FinishedAt  *time.Time    `json:"finishedAt,omitempty"`
+	Id          string        `json:"id"`
+	Reason      ScanJobReason `json:"reason"`
+	Repository  string        `json:"repository"`
+	RunAfter    *time.Time    `json:"runAfter,omitempty"`
+	Scanner     string        `json:"scanner"`
+	Status      ScanJobStatus `json:"status"`
+	UpdatedAt   time.Time     `json:"updatedAt"`
+}
+
+// ScanJobReason defines model for ScanJob.Reason.
+type ScanJobReason string
+
+// ScanJobStatus defines model for ScanJob.Status.
+type ScanJobStatus string
+
+// ScanRequest defines model for ScanRequest.
+type ScanRequest struct {
+	Scanners *[]string `json:"scanners,omitempty"`
+}
+
+// ScanResult defines model for ScanResult.
+type ScanResult struct {
+	Counts    SeverityCounts   `json:"counts"`
+	Error     *string          `json:"error,omitempty"`
+	Findings  []Finding        `json:"findings"`
+	Id        string           `json:"id"`
+	ScannedAt time.Time        `json:"scannedAt"`
+	Scanner   string           `json:"scanner"`
+	Status    ScanResultStatus `json:"status"`
+
+	// Target What was scanned (purl or image reference)
+	Target *string `json:"target,omitempty"`
+}
+
+// ScanResultStatus defines model for ScanResult.Status.
+type ScanResultStatus string
+
+// ScanSettings defines model for ScanSettings.
+type ScanSettings struct {
+	// BlockUntilScanned quarantine mode: block downloads until the first scan completes
+	BlockUntilScanned *bool `json:"blockUntilScanned,omitempty"`
+
+	// Distro Apt/Yum: distribution for vulnerability matching, e.g. debian-12, ubuntu-24.04, rocky-9
+	Distro *string `json:"distro,omitempty"`
+
+	// Mode warn: record findings only; quarantine: block downloads of components with findings at or above severityThreshold
+	Mode *ScanSettingsMode `json:"mode,omitempty"`
+
+	// OnProxyFetch Scan components when first cached by a proxy (default true)
+	OnProxyFetch *bool `json:"onProxyFetch,omitempty"`
+
+	// OnUpload Scan components when uploaded (default true)
+	OnUpload *bool `json:"onUpload,omitempty"`
+
+	// Scanners Scanners to run (names). Empty disables scanning for the repository.
+	Scanners          *[]string `json:"scanners,omitempty"`
+	SeverityThreshold *Severity `json:"severityThreshold,omitempty"`
+}
+
+// ScanSettingsMode warn: record findings only; quarantine: block downloads of components with findings at or above severityThreshold
+type ScanSettingsMode string
+
+// ScanState defines model for ScanState.
+type ScanState string
+
+// Scanner defines model for Scanner.
+type Scanner struct {
+	CreatedAt           time.Time               `json:"createdAt"`
+	Enabled             bool                    `json:"enabled"`
+	Grype               *GrypeSettings          `json:"grype,omitempty"`
+	Name                string                  `json:"name"`
+	RescanIntervalHours int                     `json:"rescanIntervalHours"`
+	Trivy               *TrivySettings          `json:"trivy,omitempty"`
+	Type                ScannerType             `json:"type"`
+	UpdatedAt           time.Time               `json:"updatedAt"`
+	Webhook             *WebhookScannerSettings `json:"webhook,omitempty"`
+}
+
+// ScannerInput defines model for ScannerInput.
+type ScannerInput struct {
+	Enabled *bool          `json:"enabled,omitempty"`
+	Grype   *GrypeSettings `json:"grype,omitempty"`
+	Name    string         `json:"name"`
+
+	// RescanIntervalHours Re-scan components periodically (0 = never)
+	RescanIntervalHours *int                    `json:"rescanIntervalHours,omitempty"`
+	Trivy               *TrivySettings          `json:"trivy,omitempty"`
+	Type                ScannerType             `json:"type"`
+	Webhook             *WebhookScannerSettings `json:"webhook,omitempty"`
+}
+
+// ScannerTestResult defines model for ScannerTestResult.
+type ScannerTestResult struct {
+	Message string  `json:"message"`
+	Ok      bool    `json:"ok"`
+	Version *string `json:"version,omitempty"`
+}
+
+// ScannerType defines model for ScannerType.
+type ScannerType string
+
 // ServiceAccountInput defines model for ServiceAccountInput.
 type ServiceAccountInput struct {
 	Description *string `json:"description,omitempty"`
 	Name        string  `json:"name"`
+}
+
+// Severity defines model for Severity.
+type Severity string
+
+// SeverityCounts defines model for SeverityCounts.
+type SeverityCounts struct {
+	Critical int `json:"critical"`
+	High     int `json:"high"`
+	Low      int `json:"low"`
+	Medium   int `json:"medium"`
+	Unknown  int `json:"unknown"`
+}
+
+// SigningKey defines model for SigningKey.
+type SigningKey struct {
+	Algorithm   *string   `json:"algorithm,omitempty"`
+	CreatedAt   time.Time `json:"createdAt"`
+	Fingerprint string    `json:"fingerprint"`
+
+	// PublicKey ASCII-armored OpenPGP public key
+	PublicKey string `json:"publicKey"`
+
+	// Url Where package clients download the public key
+	Url string `json:"url"`
+}
+
+// SigningKeyImport defines model for SigningKeyImport.
+type SigningKeyImport struct {
+	Passphrase *string `json:"passphrase,omitempty"`
+
+	// PrivateKey ASCII-armored OpenPGP private key
+	PrivateKey *string `json:"privateKey,omitempty"`
 }
 
 // SubjectType defines model for SubjectType.
@@ -527,6 +1121,18 @@ type SystemInfo struct {
 	Version string `json:"version"`
 }
 
+// TrivySettings defines model for TrivySettings.
+type TrivySettings struct {
+	// Binary Path to the trivy CLI (default "trivy")
+	Binary      *string   `json:"binary,omitempty"`
+	ExtraArgs   *[]string `json:"extraArgs,omitempty"`
+	ServerToken *string   `json:"serverToken,omitempty"`
+
+	// ServerUrl Trivy server for client/server mode (recommended; keeps one vulnerability DB)
+	ServerUrl      *string `json:"serverUrl,omitempty"`
+	TimeoutSeconds *int    `json:"timeoutSeconds,omitempty"`
+}
+
 // User defines model for User.
 type User struct {
 	CreatedAt      time.Time  `json:"createdAt"`
@@ -539,6 +1145,48 @@ type User struct {
 	ServiceAccount bool       `json:"serviceAccount"`
 	Subject        string     `json:"subject"`
 	Username       string     `json:"username"`
+}
+
+// Waiver defines model for Waiver.
+type Waiver struct {
+	ComponentPattern  string     `json:"componentPattern"`
+	CreatedAt         time.Time  `json:"createdAt"`
+	CreatedBy         string     `json:"createdBy"`
+	ExpiresAt         *time.Time `json:"expiresAt,omitempty"`
+	Id                string     `json:"id"`
+	Reason            string     `json:"reason"`
+	RepositoryPattern string     `json:"repositoryPattern"`
+	VulnId            string     `json:"vulnId"`
+}
+
+// WaiverInput defines model for WaiverInput.
+type WaiverInput struct {
+	// ComponentPattern Glob over "name" or "name@version"
+	ComponentPattern  *string    `json:"componentPattern,omitempty"`
+	ExpiresAt         *time.Time `json:"expiresAt,omitempty"`
+	Reason            *string    `json:"reason,omitempty"`
+	RepositoryPattern *string    `json:"repositoryPattern,omitempty"`
+
+	// VulnId Vulnerability ID, or * for any
+	VulnId string `json:"vulnId"`
+}
+
+// WebhookScannerSettings defines model for WebhookScannerSettings.
+type WebhookScannerSettings struct {
+	// Secret HMAC-SHA256 key for the X-Entrepot-Signature header
+	Secret *string `json:"secret,omitempty"`
+
+	// TimeoutSeconds Time allowed for the callback (default 900)
+	TimeoutSeconds *int `json:"timeoutSeconds,omitempty"`
+
+	// Url Endpoint that receives scan requests
+	Url string `json:"url"`
+}
+
+// YumHostedSettings defines model for YumHostedSettings.
+type YumHostedSettings struct {
+	// RepodataDepth Directory depth at which repodata is generated (0 = repository root, 2 = e.g. el9/x86_64/)
+	RepodataDepth *int `json:"repodataDepth,omitempty"`
 }
 
 // ID defines model for ID.
@@ -557,6 +1205,11 @@ type Offset = int
 type ListAuditEventsParams struct {
 	Before *int64 `form:"before,omitempty" json:"before,omitempty"`
 	Limit  *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// PreviewCleanupPolicyParams defines parameters for PreviewCleanupPolicy.
+type PreviewCleanupPolicyParams struct {
+	Repository string `form:"repository" json:"repository"`
 }
 
 // ListRepositoriesParams defines parameters for ListRepositories.
@@ -579,6 +1232,14 @@ type BrowseRepositoryParams struct {
 	Path *string `form:"path,omitempty" json:"path,omitempty"`
 }
 
+// RunRepositoryCleanupParams defines parameters for RunRepositoryCleanup.
+type RunRepositoryCleanupParams struct {
+	DryRun *bool `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// Policy Run only this policy
+	Policy *string `form:"policy,omitempty" json:"policy,omitempty"`
+}
+
 // ListRepositoryComponentsParams defines parameters for ListRepositoryComponents.
 type ListRepositoryComponentsParams struct {
 	Q      *string `form:"q,omitempty" json:"q,omitempty"`
@@ -592,6 +1253,31 @@ type UploadComponentMultipartBody struct {
 
 	// Path raw: destination path
 	Path *string `json:"path,omitempty"`
+}
+
+// TestRoutingRuleJSONBody defines parameters for TestRoutingRule.
+type TestRoutingRuleJSONBody struct {
+	// Path Example: @acme/widgets
+	Path string `json:"path"`
+}
+
+// ListScanJobsParams defines parameters for ListScanJobs.
+type ListScanJobsParams struct {
+	Status *ListScanJobsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+	Limit  *Limit                    `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListScanJobsParamsStatus defines parameters for ListScanJobs.
+type ListScanJobsParamsStatus string
+
+// GetScanJobArtifactParams defines parameters for GetScanJobArtifact.
+type GetScanJobArtifactParams struct {
+	Token *string `form:"token,omitempty" json:"token,omitempty"`
+}
+
+// SubmitScanJobResultParams defines parameters for SubmitScanJobResult.
+type SubmitScanJobResultParams struct {
+	Token *string `form:"token,omitempty" json:"token,omitempty"`
 }
 
 // SearchComponentsParams defines parameters for SearchComponents.
@@ -611,6 +1297,15 @@ type CreateBlobStoreJSONRequestBody = BlobStoreInput
 // UpdateBlobStoreJSONRequestBody defines body for UpdateBlobStore for application/json ContentType.
 type UpdateBlobStoreJSONRequestBody = BlobStoreInput
 
+// CreateCleanupPolicyJSONRequestBody defines body for CreateCleanupPolicy for application/json ContentType.
+type CreateCleanupPolicyJSONRequestBody = CleanupPolicyInput
+
+// UpdateCleanupPolicyJSONRequestBody defines body for UpdateCleanupPolicy for application/json ContentType.
+type UpdateCleanupPolicyJSONRequestBody = CleanupPolicyInput
+
+// ScanComponentJSONRequestBody defines body for ScanComponent for application/json ContentType.
+type ScanComponentJSONRequestBody = ScanRequest
+
 // CreateGitLabTrustPolicyJSONRequestBody defines body for CreateGitLabTrustPolicy for application/json ContentType.
 type CreateGitLabTrustPolicyJSONRequestBody = GitLabTrustPolicyInput
 
@@ -622,6 +1317,9 @@ type CreateRepositoryJSONRequestBody = RepositoryInput
 
 // UpdateRepositoryJSONRequestBody defines body for UpdateRepository for application/json ContentType.
 type UpdateRepositoryJSONRequestBody = RepositoryInput
+
+// ImportSigningKeyJSONRequestBody defines body for ImportSigningKey for application/json ContentType.
+type ImportSigningKeyJSONRequestBody = SigningKeyImport
 
 // UploadComponentMultipartRequestBody defines body for UploadComponent for multipart/form-data ContentType.
 type UploadComponentMultipartRequestBody UploadComponentMultipartBody
@@ -635,6 +1333,24 @@ type CreateRoleJSONRequestBody = RoleInput
 // UpdateRoleJSONRequestBody defines body for UpdateRole for application/json ContentType.
 type UpdateRoleJSONRequestBody = RoleInput
 
+// CreateRoutingRuleJSONRequestBody defines body for CreateRoutingRule for application/json ContentType.
+type CreateRoutingRuleJSONRequestBody = RoutingRuleInput
+
+// UpdateRoutingRuleJSONRequestBody defines body for UpdateRoutingRule for application/json ContentType.
+type UpdateRoutingRuleJSONRequestBody = RoutingRuleInput
+
+// TestRoutingRuleJSONRequestBody defines body for TestRoutingRule for application/json ContentType.
+type TestRoutingRuleJSONRequestBody TestRoutingRuleJSONBody
+
+// SubmitScanJobResultJSONRequestBody defines body for SubmitScanJobResult for application/json ContentType.
+type SubmitScanJobResultJSONRequestBody = ScanCallback
+
+// CreateScannerJSONRequestBody defines body for CreateScanner for application/json ContentType.
+type CreateScannerJSONRequestBody = ScannerInput
+
+// UpdateScannerJSONRequestBody defines body for UpdateScanner for application/json ContentType.
+type UpdateScannerJSONRequestBody = ScannerInput
+
 // CreateServiceAccountJSONRequestBody defines body for CreateServiceAccount for application/json ContentType.
 type CreateServiceAccountJSONRequestBody = ServiceAccountInput
 
@@ -643,6 +1359,12 @@ type CreateServiceAccountTokenJSONRequestBody = ApiTokenInput
 
 // CreateTokenJSONRequestBody defines body for CreateToken for application/json ContentType.
 type CreateTokenJSONRequestBody = ApiTokenInput
+
+// CreateWaiverJSONRequestBody defines body for CreateWaiver for application/json ContentType.
+type CreateWaiverJSONRequestBody = WaiverInput
+
+// UpdateWaiverJSONRequestBody defines body for UpdateWaiver for application/json ContentType.
+type UpdateWaiverJSONRequestBody = WaiverInput
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -674,11 +1396,35 @@ type ServerInterface interface {
 	// (PUT /blob-stores/{name})
 	UpdateBlobStore(w http.ResponseWriter, r *http.Request, name Name)
 
+	// (GET /cleanup-policies)
+	ListCleanupPolicies(w http.ResponseWriter, r *http.Request)
+
+	// (POST /cleanup-policies)
+	CreateCleanupPolicy(w http.ResponseWriter, r *http.Request)
+
+	// (DELETE /cleanup-policies/{name})
+	DeleteCleanupPolicy(w http.ResponseWriter, r *http.Request, name Name)
+
+	// (GET /cleanup-policies/{name})
+	GetCleanupPolicy(w http.ResponseWriter, r *http.Request, name Name)
+
+	// (PUT /cleanup-policies/{name})
+	UpdateCleanupPolicy(w http.ResponseWriter, r *http.Request, name Name)
+	// PreviewCleanupPolicy Dry run of a policy against a repository
+	// (POST /cleanup-policies/{name}/preview)
+	PreviewCleanupPolicy(w http.ResponseWriter, r *http.Request, name Name, params PreviewCleanupPolicyParams)
+
 	// (DELETE /components/{id})
 	DeleteComponent(w http.ResponseWriter, r *http.Request, id ID)
 
 	// (GET /components/{id})
 	GetComponent(w http.ResponseWriter, r *http.Request, id ID)
+	// ScanComponent Queue scans of a component now
+	// (POST /components/{id}/scan)
+	ScanComponent(w http.ResponseWriter, r *http.Request, id ID)
+	// GetComponentScans Latest scan results, findings and recent jobs of a component
+	// (GET /components/{id}/scans)
+	GetComponentScans(w http.ResponseWriter, r *http.Request, id ID)
 
 	// (GET /gitlab-trust-policies)
 	ListGitLabTrustPolicies(w http.ResponseWriter, r *http.Request)
@@ -721,9 +1467,21 @@ type ServerInterface interface {
 
 	// (GET /repositories/{name}/browse)
 	BrowseRepository(w http.ResponseWriter, r *http.Request, name Name, params BrowseRepositoryParams)
+	// RunRepositoryCleanup Run the repository's cleanup policies now (admin)
+	// (POST /repositories/{name}/cleanup)
+	RunRepositoryCleanup(w http.ResponseWriter, r *http.Request, name Name, params RunRepositoryCleanupParams)
 
 	// (GET /repositories/{name}/components)
 	ListRepositoryComponents(w http.ResponseWriter, r *http.Request, name Name, params ListRepositoryComponentsParams)
+	// GetSigningKey Public signing key of an Apt/Yum repository (created on first use)
+	// (GET /repositories/{name}/signing-key)
+	GetSigningKey(w http.ResponseWriter, r *http.Request, name Name)
+	// ImportSigningKey Replace the signing key with an imported OpenPGP private key (admin)
+	// (PUT /repositories/{name}/signing-key)
+	ImportSigningKey(w http.ResponseWriter, r *http.Request, name Name)
+	// RotateSigningKey Generate a new signing key and re-sign metadata (admin)
+	// (POST /repositories/{name}/signing-key/rotate)
+	RotateSigningKey(w http.ResponseWriter, r *http.Request, name Name)
 
 	// (POST /repositories/{name}/upload)
 	UploadComponent(w http.ResponseWriter, r *http.Request, name Name)
@@ -754,6 +1512,51 @@ type ServerInterface interface {
 
 	// (PUT /roles/{name})
 	UpdateRole(w http.ResponseWriter, r *http.Request, name Name)
+
+	// (GET /routing-rules)
+	ListRoutingRules(w http.ResponseWriter, r *http.Request)
+
+	// (POST /routing-rules)
+	CreateRoutingRule(w http.ResponseWriter, r *http.Request)
+
+	// (DELETE /routing-rules/{name})
+	DeleteRoutingRule(w http.ResponseWriter, r *http.Request, name Name)
+
+	// (GET /routing-rules/{name})
+	GetRoutingRule(w http.ResponseWriter, r *http.Request, name Name)
+
+	// (PUT /routing-rules/{name})
+	UpdateRoutingRule(w http.ResponseWriter, r *http.Request, name Name)
+
+	// (POST /routing-rules/{name}/test)
+	TestRoutingRule(w http.ResponseWriter, r *http.Request, name Name)
+	// ListScanJobs Scan queue (admin)
+	// (GET /scan-jobs)
+	ListScanJobs(w http.ResponseWriter, r *http.Request, params ListScanJobsParams)
+	// GetScanJobArtifact Download the artifact of a running webhook scan job
+	// (GET /scan-jobs/{id}/artifact)
+	GetScanJobArtifact(w http.ResponseWriter, r *http.Request, id ID, params GetScanJobArtifactParams)
+	// SubmitScanJobResult Webhook scanner callback with scan results
+	// (POST /scan-jobs/{id}/result)
+	SubmitScanJobResult(w http.ResponseWriter, r *http.Request, id ID, params SubmitScanJobResultParams)
+
+	// (GET /scanners)
+	ListScanners(w http.ResponseWriter, r *http.Request)
+
+	// (POST /scanners)
+	CreateScanner(w http.ResponseWriter, r *http.Request)
+
+	// (DELETE /scanners/{name})
+	DeleteScanner(w http.ResponseWriter, r *http.Request, name Name)
+
+	// (GET /scanners/{name})
+	GetScanner(w http.ResponseWriter, r *http.Request, name Name)
+
+	// (PUT /scanners/{name})
+	UpdateScanner(w http.ResponseWriter, r *http.Request, name Name)
+	// TestScanner Check the scanner is reachable and report its version
+	// (POST /scanners/{name}/test)
+	TestScanner(w http.ResponseWriter, r *http.Request, name Name)
 
 	// (GET /search)
 	SearchComponents(w http.ResponseWriter, r *http.Request, params SearchComponentsParams)
@@ -793,6 +1596,21 @@ type ServerInterface interface {
 	// ListUsers Users seen via OIDC and service accounts (admin)
 	// (GET /users)
 	ListUsers(w http.ResponseWriter, r *http.Request)
+
+	// (GET /waivers)
+	ListWaivers(w http.ResponseWriter, r *http.Request)
+
+	// (POST /waivers)
+	CreateWaiver(w http.ResponseWriter, r *http.Request)
+
+	// (DELETE /waivers/{id})
+	DeleteWaiver(w http.ResponseWriter, r *http.Request, id ID)
+
+	// (GET /waivers/{id})
+	GetWaiver(w http.ResponseWriter, r *http.Request, id ID)
+
+	// (PUT /waivers/{id})
+	UpdateWaiver(w http.ResponseWriter, r *http.Request, id ID)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -845,6 +1663,37 @@ func (_ Unimplemented) UpdateBlobStore(w http.ResponseWriter, r *http.Request, n
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// (GET /cleanup-policies)
+func (_ Unimplemented) ListCleanupPolicies(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /cleanup-policies)
+func (_ Unimplemented) CreateCleanupPolicy(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (DELETE /cleanup-policies/{name})
+func (_ Unimplemented) DeleteCleanupPolicy(w http.ResponseWriter, r *http.Request, name Name) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /cleanup-policies/{name})
+func (_ Unimplemented) GetCleanupPolicy(w http.ResponseWriter, r *http.Request, name Name) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (PUT /cleanup-policies/{name})
+func (_ Unimplemented) UpdateCleanupPolicy(w http.ResponseWriter, r *http.Request, name Name) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PreviewCleanupPolicy Dry run of a policy against a repository
+// (POST /cleanup-policies/{name}/preview)
+func (_ Unimplemented) PreviewCleanupPolicy(w http.ResponseWriter, r *http.Request, name Name, params PreviewCleanupPolicyParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // (DELETE /components/{id})
 func (_ Unimplemented) DeleteComponent(w http.ResponseWriter, r *http.Request, id ID) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -852,6 +1701,18 @@ func (_ Unimplemented) DeleteComponent(w http.ResponseWriter, r *http.Request, i
 
 // (GET /components/{id})
 func (_ Unimplemented) GetComponent(w http.ResponseWriter, r *http.Request, id ID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ScanComponent Queue scans of a component now
+// (POST /components/{id}/scan)
+func (_ Unimplemented) ScanComponent(w http.ResponseWriter, r *http.Request, id ID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetComponentScans Latest scan results, findings and recent jobs of a component
+// (GET /components/{id}/scans)
+func (_ Unimplemented) GetComponentScans(w http.ResponseWriter, r *http.Request, id ID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -927,8 +1788,32 @@ func (_ Unimplemented) BrowseRepository(w http.ResponseWriter, r *http.Request, 
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// RunRepositoryCleanup Run the repository's cleanup policies now (admin)
+// (POST /repositories/{name}/cleanup)
+func (_ Unimplemented) RunRepositoryCleanup(w http.ResponseWriter, r *http.Request, name Name, params RunRepositoryCleanupParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // (GET /repositories/{name}/components)
 func (_ Unimplemented) ListRepositoryComponents(w http.ResponseWriter, r *http.Request, name Name, params ListRepositoryComponentsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetSigningKey Public signing key of an Apt/Yum repository (created on first use)
+// (GET /repositories/{name}/signing-key)
+func (_ Unimplemented) GetSigningKey(w http.ResponseWriter, r *http.Request, name Name) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ImportSigningKey Replace the signing key with an imported OpenPGP private key (admin)
+// (PUT /repositories/{name}/signing-key)
+func (_ Unimplemented) ImportSigningKey(w http.ResponseWriter, r *http.Request, name Name) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RotateSigningKey Generate a new signing key and re-sign metadata (admin)
+// (POST /repositories/{name}/signing-key/rotate)
+func (_ Unimplemented) RotateSigningKey(w http.ResponseWriter, r *http.Request, name Name) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -979,6 +1864,85 @@ func (_ Unimplemented) GetRole(w http.ResponseWriter, r *http.Request, name Name
 
 // (PUT /roles/{name})
 func (_ Unimplemented) UpdateRole(w http.ResponseWriter, r *http.Request, name Name) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /routing-rules)
+func (_ Unimplemented) ListRoutingRules(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /routing-rules)
+func (_ Unimplemented) CreateRoutingRule(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (DELETE /routing-rules/{name})
+func (_ Unimplemented) DeleteRoutingRule(w http.ResponseWriter, r *http.Request, name Name) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /routing-rules/{name})
+func (_ Unimplemented) GetRoutingRule(w http.ResponseWriter, r *http.Request, name Name) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (PUT /routing-rules/{name})
+func (_ Unimplemented) UpdateRoutingRule(w http.ResponseWriter, r *http.Request, name Name) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /routing-rules/{name}/test)
+func (_ Unimplemented) TestRoutingRule(w http.ResponseWriter, r *http.Request, name Name) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListScanJobs Scan queue (admin)
+// (GET /scan-jobs)
+func (_ Unimplemented) ListScanJobs(w http.ResponseWriter, r *http.Request, params ListScanJobsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetScanJobArtifact Download the artifact of a running webhook scan job
+// (GET /scan-jobs/{id}/artifact)
+func (_ Unimplemented) GetScanJobArtifact(w http.ResponseWriter, r *http.Request, id ID, params GetScanJobArtifactParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SubmitScanJobResult Webhook scanner callback with scan results
+// (POST /scan-jobs/{id}/result)
+func (_ Unimplemented) SubmitScanJobResult(w http.ResponseWriter, r *http.Request, id ID, params SubmitScanJobResultParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /scanners)
+func (_ Unimplemented) ListScanners(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /scanners)
+func (_ Unimplemented) CreateScanner(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (DELETE /scanners/{name})
+func (_ Unimplemented) DeleteScanner(w http.ResponseWriter, r *http.Request, name Name) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /scanners/{name})
+func (_ Unimplemented) GetScanner(w http.ResponseWriter, r *http.Request, name Name) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (PUT /scanners/{name})
+func (_ Unimplemented) UpdateScanner(w http.ResponseWriter, r *http.Request, name Name) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// TestScanner Check the scanner is reachable and report its version
+// (POST /scanners/{name}/test)
+func (_ Unimplemented) TestScanner(w http.ResponseWriter, r *http.Request, name Name) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1048,6 +2012,31 @@ func (_ Unimplemented) DeleteToken(w http.ResponseWriter, r *http.Request, id ID
 // ListUsers Users seen via OIDC and service accounts (admin)
 // (GET /users)
 func (_ Unimplemented) ListUsers(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /waivers)
+func (_ Unimplemented) ListWaivers(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /waivers)
+func (_ Unimplemented) CreateWaiver(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (DELETE /waivers/{id})
+func (_ Unimplemented) DeleteWaiver(w http.ResponseWriter, r *http.Request, id ID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /waivers/{id})
+func (_ Unimplemented) GetWaiver(w http.ResponseWriter, r *http.Request, id ID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (PUT /waivers/{id})
+func (_ Unimplemented) UpdateWaiver(w http.ResponseWriter, r *http.Request, id ID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1290,6 +2279,154 @@ func (siw *ServerInterfaceWrapper) UpdateBlobStore(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// ListCleanupPolicies operation middleware
+func (siw *ServerInterfaceWrapper) ListCleanupPolicies(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListCleanupPolicies(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateCleanupPolicy operation middleware
+func (siw *ServerInterfaceWrapper) CreateCleanupPolicy(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateCleanupPolicy(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteCleanupPolicy operation middleware
+func (siw *ServerInterfaceWrapper) DeleteCleanupPolicy(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteCleanupPolicy(w, r, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCleanupPolicy operation middleware
+func (siw *ServerInterfaceWrapper) GetCleanupPolicy(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCleanupPolicy(w, r, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateCleanupPolicy operation middleware
+func (siw *ServerInterfaceWrapper) UpdateCleanupPolicy(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateCleanupPolicy(w, r, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PreviewCleanupPolicy operation middleware
+func (siw *ServerInterfaceWrapper) PreviewCleanupPolicy(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PreviewCleanupPolicyParams
+
+	// ------------- Required query parameter "repository" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "repository", r.URL.Query(), &params.Repository, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "repository"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "repository", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PreviewCleanupPolicy(w, r, name, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // DeleteComponent operation middleware
 func (siw *ServerInterfaceWrapper) DeleteComponent(w http.ResponseWriter, r *http.Request) {
 
@@ -1333,6 +2470,58 @@ func (siw *ServerInterfaceWrapper) GetComponent(w http.ResponseWriter, r *http.R
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetComponent(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ScanComponent operation middleware
+func (siw *ServerInterfaceWrapper) ScanComponent(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ScanComponent(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetComponentScans operation middleware
+func (siw *ServerInterfaceWrapper) GetComponentScans(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetComponentScans(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1711,6 +2900,61 @@ func (siw *ServerInterfaceWrapper) BrowseRepository(w http.ResponseWriter, r *ht
 	handler.ServeHTTP(w, r)
 }
 
+// RunRepositoryCleanup operation middleware
+func (siw *ServerInterfaceWrapper) RunRepositoryCleanup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params RunRepositoryCleanupParams
+
+	// ------------- Optional query parameter "dryRun" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "dryRun", r.URL.Query(), &params.DryRun, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "dryRun"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dryRun", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "policy" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "policy", r.URL.Query(), &params.Policy, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "policy"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "policy", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RunRepositoryCleanup(w, r, name, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListRepositoryComponents operation middleware
 func (siw *ServerInterfaceWrapper) ListRepositoryComponents(w http.ResponseWriter, r *http.Request) {
 
@@ -1770,6 +3014,84 @@ func (siw *ServerInterfaceWrapper) ListRepositoryComponents(w http.ResponseWrite
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListRepositoryComponents(w, r, name, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSigningKey operation middleware
+func (siw *ServerInterfaceWrapper) GetSigningKey(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSigningKey(w, r, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ImportSigningKey operation middleware
+func (siw *ServerInterfaceWrapper) ImportSigningKey(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImportSigningKey(w, r, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RotateSigningKey operation middleware
+func (siw *ServerInterfaceWrapper) RotateSigningKey(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RotateSigningKey(w, r, name)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1982,6 +3304,400 @@ func (siw *ServerInterfaceWrapper) UpdateRole(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateRole(w, r, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListRoutingRules operation middleware
+func (siw *ServerInterfaceWrapper) ListRoutingRules(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListRoutingRules(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateRoutingRule operation middleware
+func (siw *ServerInterfaceWrapper) CreateRoutingRule(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateRoutingRule(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteRoutingRule operation middleware
+func (siw *ServerInterfaceWrapper) DeleteRoutingRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteRoutingRule(w, r, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetRoutingRule operation middleware
+func (siw *ServerInterfaceWrapper) GetRoutingRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetRoutingRule(w, r, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateRoutingRule operation middleware
+func (siw *ServerInterfaceWrapper) UpdateRoutingRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateRoutingRule(w, r, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// TestRoutingRule operation middleware
+func (siw *ServerInterfaceWrapper) TestRoutingRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestRoutingRule(w, r, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListScanJobs operation middleware
+func (siw *ServerInterfaceWrapper) ListScanJobs(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListScanJobsParams
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListScanJobs(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetScanJobArtifact operation middleware
+func (siw *ServerInterfaceWrapper) GetScanJobArtifact(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetScanJobArtifactParams
+
+	// ------------- Optional query parameter "token" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "token", r.URL.Query(), &params.Token, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "token"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetScanJobArtifact(w, r, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SubmitScanJobResult operation middleware
+func (siw *ServerInterfaceWrapper) SubmitScanJobResult(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params SubmitScanJobResultParams
+
+	// ------------- Optional query parameter "token" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "token", r.URL.Query(), &params.Token, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "token"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SubmitScanJobResult(w, r, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListScanners operation middleware
+func (siw *ServerInterfaceWrapper) ListScanners(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListScanners(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateScanner operation middleware
+func (siw *ServerInterfaceWrapper) CreateScanner(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateScanner(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteScanner operation middleware
+func (siw *ServerInterfaceWrapper) DeleteScanner(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteScanner(w, r, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetScanner operation middleware
+func (siw *ServerInterfaceWrapper) GetScanner(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetScanner(w, r, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateScanner operation middleware
+func (siw *ServerInterfaceWrapper) UpdateScanner(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateScanner(w, r, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// TestScanner operation middleware
+func (siw *ServerInterfaceWrapper) TestScanner(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestScanner(w, r, name)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2338,6 +4054,112 @@ func (siw *ServerInterfaceWrapper) ListUsers(w http.ResponseWriter, r *http.Requ
 	handler.ServeHTTP(w, r)
 }
 
+// ListWaivers operation middleware
+func (siw *ServerInterfaceWrapper) ListWaivers(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListWaivers(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateWaiver operation middleware
+func (siw *ServerInterfaceWrapper) CreateWaiver(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateWaiver(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteWaiver operation middleware
+func (siw *ServerInterfaceWrapper) DeleteWaiver(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteWaiver(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetWaiver operation middleware
+func (siw *ServerInterfaceWrapper) GetWaiver(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWaiver(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateWaiver operation middleware
+func (siw *ServerInterfaceWrapper) UpdateWaiver(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateWaiver(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -2598,6 +4420,102 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/gitlab-trust-policies/{name}", wrapper.UpdateGitLabTrustPolicy)
 	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repositories/{name}/signing-key", wrapper.GetSigningKey)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/repositories/{name}/signing-key", wrapper.ImportSigningKey)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repositories/{name}/signing-key/rotate", wrapper.RotateSigningKey)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repositories/{name}/cleanup", wrapper.RunRepositoryCleanup)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/scanners", wrapper.ListScanners)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/scanners", wrapper.CreateScanner)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/scanners/{name}", wrapper.DeleteScanner)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/scanners/{name}", wrapper.GetScanner)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/scanners/{name}", wrapper.UpdateScanner)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/scanners/{name}/test", wrapper.TestScanner)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/components/{id}/scan", wrapper.ScanComponent)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/components/{id}/scans", wrapper.GetComponentScans)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/scan-jobs", wrapper.ListScanJobs)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/scan-jobs/{id}/artifact", wrapper.GetScanJobArtifact)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/scan-jobs/{id}/result", wrapper.SubmitScanJobResult)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/waivers", wrapper.ListWaivers)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/waivers", wrapper.CreateWaiver)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/waivers/{id}", wrapper.DeleteWaiver)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/waivers/{id}", wrapper.GetWaiver)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/waivers/{id}", wrapper.UpdateWaiver)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/cleanup-policies", wrapper.ListCleanupPolicies)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/cleanup-policies", wrapper.CreateCleanupPolicy)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/cleanup-policies/{name}", wrapper.DeleteCleanupPolicy)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/cleanup-policies/{name}", wrapper.GetCleanupPolicy)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/cleanup-policies/{name}", wrapper.UpdateCleanupPolicy)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/cleanup-policies/{name}/preview", wrapper.PreviewCleanupPolicy)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/routing-rules", wrapper.ListRoutingRules)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/routing-rules", wrapper.CreateRoutingRule)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/routing-rules/{name}", wrapper.DeleteRoutingRule)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/routing-rules/{name}", wrapper.GetRoutingRule)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/routing-rules/{name}", wrapper.UpdateRoutingRule)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/routing-rules/{name}/test", wrapper.TestRoutingRule)
+	})
 
 	return r
 }
@@ -2607,86 +4525,147 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"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",
+	"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",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

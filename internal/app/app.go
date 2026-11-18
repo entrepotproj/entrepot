@@ -17,17 +17,25 @@ import (
 	"github.com/geoffo-dev/package-repository/internal/api"
 	"github.com/geoffo-dev/package-repository/internal/auth"
 	"github.com/geoffo-dev/package-repository/internal/authz"
+	"github.com/geoffo-dev/package-repository/internal/cleanup"
 	"github.com/geoffo-dev/package-repository/internal/config"
 	"github.com/geoffo-dev/package-repository/internal/db"
 	"github.com/geoffo-dev/package-repository/internal/format"
+	"github.com/geoffo-dev/package-repository/internal/formats/apt"
 	"github.com/geoffo-dev/package-repository/internal/formats/docker"
+	"github.com/geoffo-dev/package-repository/internal/formats/helm"
 	"github.com/geoffo-dev/package-repository/internal/formats/npm"
 	"github.com/geoffo-dev/package-repository/internal/formats/pypi"
 	"github.com/geoffo-dev/package-repository/internal/formats/raw"
+	"github.com/geoffo-dev/package-repository/internal/formats/yum"
 	"github.com/geoffo-dev/package-repository/internal/httpx"
 	"github.com/geoffo-dev/package-repository/internal/proxy"
 	"github.com/geoffo-dev/package-repository/internal/repo"
+	"github.com/geoffo-dev/package-repository/internal/routing"
+	"github.com/geoffo-dev/package-repository/internal/scan"
+	"github.com/geoffo-dev/package-repository/internal/secrets"
 	"github.com/geoffo-dev/package-repository/internal/server"
+	"github.com/geoffo-dev/package-repository/internal/signing"
 	"github.com/geoffo-dev/package-repository/internal/storage"
 	"github.com/geoffo-dev/package-repository/internal/store"
 	"github.com/geoffo-dev/package-repository/web"
@@ -42,6 +50,10 @@ type App struct {
 	Formats *format.Registry
 	Server  *server.Server
 	Logger  *slog.Logger
+	Secrets *secrets.Box
+	Scan    *scan.Service
+	Cleanup *cleanup.Service
+	Routing *routing.Service
 }
 
 // New connects to the database, runs migrations (if enabled) and builds all
@@ -58,8 +70,15 @@ func New(ctx context.Context, cfg *config.Config, logger *slog.Logger) (*App, er
 		}
 	}
 	st := store.New(pool)
+	box, err := secrets.New(cfg.SecretsKey(), cfg.Secrets.PreviousKeys...)
+	if err != nil {
+		pool.Close()
+		return nil, fmt.Errorf("secrets: %w", err)
+	}
 	blobs := storage.NewRegistry(cfg.Storage.AllowedRoots, cfg.Storage.TempDir)
+	blobs.Open = box.Open
 	repos := repo.NewService(st, blobs, logger)
+	repos.Secrets = box
 	authn, err := auth.NewAuthenticator(cfg, st, logger)
 	if err != nil {
 		pool.Close()
@@ -68,21 +87,32 @@ func New(ctx context.Context, cfg *config.Config, logger *slog.Logger) (*App, er
 	az := authz.New(st, cfg, logger)
 	urls := httpx.URLs{Base: cfg.Server.BaseURL, TrustForwarded: cfg.Server.TrustForwardedHeaders}
 	env := &format.Env{
-		Config: cfg,
-		Repos:  repos,
-		Proxy:  proxy.NewCache(repos, cfg.Proxy.Timeout, cfg.Proxy.UserAgent, logger),
-		Auth:   authn,
-		Authz:  az,
-		URLs:   urls,
-		Logger: logger,
+		Config:  cfg,
+		Repos:   repos,
+		Proxy:   proxy.NewCache(repos, cfg.Proxy.Timeout, cfg.Proxy.UserAgent, logger),
+		Auth:    authn,
+		Authz:   az,
+		URLs:    urls,
+		Logger:  logger,
+		Secrets: box,
+		Signing: signing.New(st, box),
 	}
+	routes := routing.New(st)
+	env.Proxy.Allow = routes.Allowed
 	formats := format.NewRegistry(
 		raw.New(env),
 		pypi.New(env),
 		npm.New(env),
 		docker.New(env),
+		apt.New(env),
+		yum.New(env),
+		helm.New(env),
 	)
-	a := &App{Config: cfg, Pool: pool, Store: st, Repos: repos, Env: env, Formats: formats, Logger: logger}
+	scanner := scan.New(scan.Deps{Config: cfg, Store: st, Repos: repos, Formats: formats, Secrets: box, URLs: urls, Logger: logger})
+	scanner.Attach()
+	cleaner := cleanup.New(cleanup.Deps{Store: st, Repos: repos, Formats: formats, Logger: logger})
+	a := &App{Config: cfg, Pool: pool, Store: st, Repos: repos, Env: env, Formats: formats, Logger: logger,
+		Scan: scanner, Cleanup: cleaner, Routing: routes}
 	a.Server = &server.Server{
 		Env:     env,
 		Store:   st,
@@ -91,8 +121,14 @@ func New(ctx context.Context, cfg *config.Config, logger *slog.Logger) (*App, er
 		Logger:  logger,
 		API: &api.Server{
 			Config: cfg, Store: st, Repos: repos, Blobs: blobs, Auth: authn, Authz: az,
-			Formats: formats, URLs: urls, Logger: logger,
+			Formats: formats, URLs: urls, Logger: logger, Secrets: box,
+			Signing: env.Signing, Scan: scanner, Cleanup: cleaner, Routing: routes,
 		},
+	}
+	a.Secrets = box
+	if err := a.resealSecrets(ctx); err != nil {
+		pool.Close()
+		return nil, fmt.Errorf("re-seal secrets: %w", err)
 	}
 	if err := a.bootstrap(ctx, blobs); err != nil {
 		pool.Close()
@@ -108,6 +144,8 @@ func (a *App) Close() { a.Pool.Close() }
 // RunBackground starts maintenance loops until ctx is cancelled.
 func (a *App) RunBackground(ctx context.Context) {
 	go a.Repos.RunMaintenance(ctx, 15*time.Minute, a.Logger)
+	go a.Scan.Run(ctx)
+	go a.Cleanup.Run(ctx, a.Config.Cleanup.Interval)
 }
 
 // bootstrap creates blob stores declared in configuration, or a "default"
@@ -133,6 +171,9 @@ func (a *App) bootstrap(ctx context.Context, blobs *storage.Registry) error {
 			raw, _ := json.Marshal(spec.S3)
 			if err := json.Unmarshal(normaliseS3(raw), &sc); err != nil {
 				return fmt.Errorf("blobStores[%s]: %w", spec.Name, err)
+			}
+			if sc.SecretAccessKey, err = a.Secrets.Seal(sc.SecretAccessKey); err != nil {
+				return err
 			}
 			cfg, _ = json.Marshal(sc)
 		}
@@ -176,4 +217,63 @@ func normaliseS3(raw []byte) []byte {
 	}
 	out, _ := json.Marshal(m)
 	return out
+}
+
+// resealSecrets encrypts secrets that are still stored in plaintext (from
+// before encryption was introduced) or with a previous key. It is
+// idempotent and runs at every start.
+func (a *App) resealSecrets(ctx context.Context) error {
+	repos, err := a.Store.ListRepositories(ctx)
+	if err != nil {
+		return err
+	}
+	for _, r := range repos {
+		var cfg map[string]json.RawMessage
+		if json.Unmarshal(r.Config, &cfg) != nil || cfg["proxy"] == nil {
+			continue
+		}
+		var px map[string]any
+		if json.Unmarshal(cfg["proxy"], &px) != nil {
+			continue
+		}
+		pw, _ := px["password"].(string)
+		if !a.Secrets.NeedsReseal(pw) {
+			continue
+		}
+		if px["password"], err = a.Secrets.Reseal(pw); err != nil {
+			return fmt.Errorf("repository %s: %w", r.Name, err)
+		}
+		cfg["proxy"], _ = json.Marshal(px)
+		r.Config, _ = json.Marshal(cfg)
+		if _, err := a.Store.UpdateRepository(ctx, r); err != nil {
+			return err
+		}
+		a.Logger.Info("sealed stored secret", "repository", r.Name)
+	}
+	stores, err := a.Store.ListBlobStores(ctx)
+	if err != nil {
+		return err
+	}
+	for _, b := range stores {
+		if b.Type != "s3" {
+			continue
+		}
+		var m map[string]any
+		if json.Unmarshal(b.Config, &m) != nil {
+			continue
+		}
+		key, _ := m["secretAccessKey"].(string)
+		if !a.Secrets.NeedsReseal(key) {
+			continue
+		}
+		if m["secretAccessKey"], err = a.Secrets.Reseal(key); err != nil {
+			return fmt.Errorf("blob store %s: %w", b.Name, err)
+		}
+		raw, _ := json.Marshal(m)
+		if _, err := a.Store.UpdateBlobStore(ctx, b.Name, raw); err != nil {
+			return err
+		}
+		a.Logger.Info("sealed stored secret", "blobStore", b.Name)
+	}
+	return nil
 }

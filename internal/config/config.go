@@ -28,6 +28,9 @@ type Config struct {
 	Storage  Storage  `yaml:"storage"`
 	Proxy    Proxy    `yaml:"proxy"`
 	Log      Log      `yaml:"log"`
+	Secrets  Secrets  `yaml:"secrets"`
+	Scan     Scan     `yaml:"scan"`
+	Cleanup  Cleanup  `yaml:"cleanup"`
 	// BlobStores are created (or updated) at startup. Useful for declaring the
 	// volumes mounted by the Helm chart. Stores can also be managed via the API.
 	BlobStores []BlobStoreSpec `yaml:"blobStores"`
@@ -96,6 +99,73 @@ type GitLabSpec struct {
 	// Audience the id_token must carry (the `aud:` in .gitlab-ci.yml).
 	// Defaults to server.baseURL.
 	Audience string `yaml:"audience"`
+	// API enables feedback (commit statuses, MR notes) for scans of
+	// artifacts published by CI jobs of this instance.
+	API GitLabAPI `yaml:"api"`
+}
+
+// GitLabAPI configures calls to the GitLab REST API.
+type GitLabAPI struct {
+	// URL of the GitLab instance (defaults to issuerURL).
+	URL string `yaml:"url"`
+	// Token is a GitLab access token with the "api" scope. Prefer TokenEnv or
+	// TokenFile so the token is not stored in the config file.
+	Token     string `yaml:"token"`
+	TokenEnv  string `yaml:"tokenEnv"`
+	TokenFile string `yaml:"tokenFile"`
+}
+
+// Secrets configures encryption of secrets stored in the database.
+type Secrets struct {
+	// Key encrypts secrets at rest (>= 32 bytes). Defaults to a key derived
+	// from auth.sessionSecret. Must be identical on all replicas.
+	Key string `yaml:"key"`
+	// PreviousKeys can still decrypt values during a key rotation.
+	PreviousKeys []string `yaml:"previousKeys"`
+}
+
+// Scan configures the scanning pipeline.
+type Scan struct {
+	// Workers is the number of in-process scan workers (0 disables them, e.g.
+	// when a separate `entrepot scan-worker` deployment runs the scanners).
+	Workers int `yaml:"workers"`
+	// WorkDir holds temporary scan inputs (SBOMs, OCI layouts).
+	WorkDir string `yaml:"workDir"`
+	// JobTimeout bounds a single scan (and webhook callbacks).
+	JobTimeout time.Duration `yaml:"jobTimeout"`
+	// PollInterval is how often idle workers look for jobs.
+	PollInterval time.Duration `yaml:"pollInterval"`
+}
+
+// Cleanup configures scheduled cleanup policy runs.
+type Cleanup struct {
+	// Interval between automatic cleanup runs (0 disables the schedule).
+	Interval time.Duration `yaml:"interval"`
+}
+
+// SecretsKey returns the key material for secrets at rest.
+func (c *Config) SecretsKey() string {
+	if c.Secrets.Key != "" {
+		return c.Secrets.Key
+	}
+	return "entrepot-secrets:" + c.Auth.SessionSecret
+}
+
+// Token resolves the GitLab API token from Token, TokenEnv or TokenFile.
+func (g GitLabAPI) ResolveToken() (string, error) {
+	switch {
+	case g.Token != "":
+		return g.Token, nil
+	case g.TokenEnv != "":
+		return os.Getenv(g.TokenEnv), nil
+	case g.TokenFile != "":
+		b, err := os.ReadFile(g.TokenFile)
+		if err != nil {
+			return "", err
+		}
+		return strings.TrimSpace(string(b)), nil
+	}
+	return "", nil
 }
 
 type Storage struct {
@@ -155,6 +225,13 @@ func Default() *Config {
 			UserAgent: "entrepot/1.0",
 		},
 		Log: Log{Level: "info", Format: "json"},
+		Scan: Scan{
+			Workers:      2,
+			WorkDir:      os.TempDir(),
+			JobTimeout:   15 * time.Minute,
+			PollInterval: 2 * time.Second,
+		},
+		Cleanup: Cleanup{Interval: 24 * time.Hour},
 	}
 }
 
@@ -179,6 +256,7 @@ func Load(path string) (*Config, error) {
 		"ENTREPOT_AUTH_BOOTSTRAPTOKEN_FILE":    &cfg.Auth.BootstrapToken,
 		"ENTREPOT_AUTH_OIDC_CLIENTSECRET_FILE": &cfg.Auth.OIDC.ClientSecret,
 		"ENTREPOT_DATABASE_URL_FILE":           &cfg.Database.URL,
+		"ENTREPOT_SECRETS_KEY_FILE":            &cfg.Secrets.Key,
 	} {
 		if p := os.Getenv(env); p != "" {
 			b, err := os.ReadFile(p)
@@ -213,6 +291,9 @@ func (c *Config) Validate() error {
 		if g.Audience == "" && c.Server.BaseURL == "" {
 			errs = append(errs, fmt.Errorf("auth.gitlab[%d]: audience is required when server.baseURL is unset", i))
 		}
+	}
+	if c.Secrets.Key != "" && len(c.Secrets.Key) < 32 {
+		errs = append(errs, errors.New("secrets.key must be at least 32 bytes"))
 	}
 	c.Server.BaseURL = strings.TrimRight(c.Server.BaseURL, "/")
 	return errors.Join(errs...)

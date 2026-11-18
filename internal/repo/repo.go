@@ -14,6 +14,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/geoffo-dev/package-repository/internal/auth"
+	"github.com/geoffo-dev/package-repository/internal/secrets"
 	"github.com/geoffo-dev/package-repository/internal/storage"
 	"github.com/geoffo-dev/package-repository/internal/store"
 )
@@ -26,9 +28,56 @@ const (
 
 // Config is the typed form of repositories.config.
 type Config struct {
-	Proxy  *ProxyConfig  `json:"proxy,omitempty"`
-	Hosted *HostedConfig `json:"hosted,omitempty"`
-	Group  *GroupConfig  `json:"group,omitempty"`
+	Proxy   *ProxyConfig   `json:"proxy,omitempty"`
+	Hosted  *HostedConfig  `json:"hosted,omitempty"`
+	Group   *GroupConfig   `json:"group,omitempty"`
+	Scan    *ScanConfig    `json:"scan,omitempty"`
+	Cleanup *CleanupConfig `json:"cleanup,omitempty"`
+}
+
+// ScanConfig selects scanners and the download policy for a repository.
+type ScanConfig struct {
+	Scanners []string `json:"scanners,omitempty"`
+	// OnUpload / OnProxyFetch default to true when nil.
+	OnUpload     *bool `json:"onUpload,omitempty"`
+	OnProxyFetch *bool `json:"onProxyFetch,omitempty"`
+	// Mode is off, warn or quarantine (default warn when scanners are set).
+	Mode string `json:"mode,omitempty"`
+	// SeverityThreshold for quarantine: critical, high (default), medium, low.
+	SeverityThreshold string `json:"severityThreshold,omitempty"`
+	// BlockUntilScanned blocks downloads until the first scan completes.
+	BlockUntilScanned bool `json:"blockUntilScanned,omitempty"`
+	// Distro qualifies Apt/Yum packages for vulnerability matching (debian-12).
+	Distro string `json:"distro,omitempty"`
+}
+
+// Enabled reports whether any scanner is configured and mode is not off.
+func (c *ScanConfig) Enabled() bool {
+	return c != nil && len(c.Scanners) > 0 && c.EffectiveMode() != "off"
+}
+
+func (c *ScanConfig) EffectiveMode() string {
+	if c == nil || c.Mode == "" {
+		return "warn"
+	}
+	return c.Mode
+}
+
+func (c *ScanConfig) Threshold() string {
+	if c == nil || c.SeverityThreshold == "" {
+		return "high"
+	}
+	return c.SeverityThreshold
+}
+
+func (c *ScanConfig) ScanOnUpload() bool { return c != nil && (c.OnUpload == nil || *c.OnUpload) }
+func (c *ScanConfig) ScanOnProxyFetch() bool {
+	return c != nil && (c.OnProxyFetch == nil || *c.OnProxyFetch)
+}
+
+// CleanupConfig lists the cleanup policies applied to a repository.
+type CleanupConfig struct {
+	Policies []string `json:"policies,omitempty"`
 }
 
 type ProxyConfig struct {
@@ -46,6 +95,8 @@ type ProxyConfig struct {
 	ContentTTLSeconds int `json:"contentTtlSeconds,omitempty"`
 	// NegativeCacheTTLSeconds: how long upstream 404s are remembered. Default 300.
 	NegativeCacheTTLSeconds int `json:"negativeCacheTtlSeconds,omitempty"`
+	// RoutingRule names a routing rule restricting what is fetched upstream.
+	RoutingRule string `json:"routingRule,omitempty"`
 }
 
 func (p *ProxyConfig) MetadataTTL() time.Duration {
@@ -75,11 +126,40 @@ func (p *ProxyConfig) NegativeTTL() time.Duration {
 
 type HostedConfig struct {
 	// AllowRedeploy permits overwriting an existing artifact/version.
-	AllowRedeploy bool `json:"allowRedeploy"`
+	AllowRedeploy bool       `json:"allowRedeploy"`
+	Apt           *AptConfig `json:"apt,omitempty"`
+	Yum           *YumConfig `json:"yum,omitempty"`
+}
+
+// AptConfig describes the distributions a hosted Apt repository publishes.
+type AptConfig struct {
+	Distributions []AptDistribution `json:"distributions,omitempty"`
+}
+
+type AptDistribution struct {
+	Name          string   `json:"name"`
+	Components    []string `json:"components,omitempty"`
+	Architectures []string `json:"architectures,omitempty"`
+	Origin        string   `json:"origin,omitempty"`
+	Label         string   `json:"label,omitempty"`
+}
+
+// YumConfig configures repodata generation for hosted Yum repositories.
+type YumConfig struct {
+	// RepodataDepth is the directory depth at which repodata is generated.
+	RepodataDepth int `json:"repodataDepth"`
 }
 
 type GroupConfig struct {
 	Members []string `json:"members"`
+	// PreferHosted (npm/PyPI; default true when nil): package names present
+	// in any hosted member are never served from proxy members.
+	PreferHosted *bool `json:"preferHosted,omitempty"`
+}
+
+// PrefersHosted reports the effective preferHosted setting.
+func (g *GroupConfig) PrefersHosted() bool {
+	return g != nil && (g.PreferHosted == nil || *g.PreferHosted)
 }
 
 // Repository is a store.Repository with parsed config.
@@ -134,6 +214,15 @@ type Service struct {
 	Store  *store.Store
 	blobs  *storage.Registry
 	logger *slog.Logger
+	// Secrets opens sealed values in repository config (proxy passwords).
+	Secrets *secrets.Box
+
+	// QuarantineCheck, when set, is consulted before serving content. A
+	// blocked asset is answered with 403 and the returned reason.
+	QuarantineCheck func(ctx context.Context, rp *Repository, a *store.Asset) (blocked bool, reason string)
+
+	hooksMu sync.RWMutex
+	stored  []StoredHook
 
 	mu    sync.RWMutex
 	cache map[string]cacheEntry
@@ -147,6 +236,59 @@ type cacheEntry struct {
 
 func NewService(st *store.Store, blobs *storage.Registry, logger *slog.Logger) *Service {
 	return &Service{Store: st, blobs: blobs, logger: logger, cache: map[string]cacheEntry{}, ttl: 5 * time.Second}
+}
+
+// StoredEvent describes an asset linked to a component that was just stored.
+type StoredEvent struct {
+	Repository *Repository
+	Asset      *store.Asset
+	// ComponentID of the asset's component.
+	ComponentID string
+	// Cached is true for content fetched from an upstream by a proxy.
+	Cached bool
+	// Changed is false when identical content was re-stored (no-op upload).
+	Changed bool
+}
+
+// StoredHook is called synchronously after an asset with a component is
+// stored. Hooks must be fast (enqueue work, do not perform it).
+type StoredHook func(ctx context.Context, ev StoredEvent)
+
+// OnComponentStored registers a hook (used by the scanning pipeline).
+func (s *Service) OnComponentStored(h StoredHook) {
+	s.hooksMu.Lock()
+	s.stored = append(s.stored, h)
+	s.hooksMu.Unlock()
+}
+
+func (s *Service) fireStored(ctx context.Context, ev StoredEvent) {
+	s.hooksMu.RLock()
+	hooks := s.stored
+	s.hooksMu.RUnlock()
+	for _, h := range hooks {
+		h(ctx, ev)
+	}
+}
+
+// uploaderJSON describes the request principal for assets.uploader.
+func uploaderJSON(ctx context.Context, rp *Repository, cached bool) json.RawMessage {
+	p := auth.FromContext(ctx)
+	if cached {
+		b, _ := json.Marshal(map[string]any{"kind": "proxy", "name": "proxy:" + rp.Name, "requestedBy": p.Name})
+		return b
+	}
+	u := map[string]any{"kind": p.Kind, "name": p.Name}
+	if p.UserID != "" {
+		u["userId"] = p.UserID
+	}
+	if p.Kind == auth.KindGitLab {
+		u["gitlab"] = p.Instance
+		for k, v := range p.Claims {
+			u[k] = v
+		}
+	}
+	b, _ := json.Marshal(u)
+	return b
 }
 
 // Get returns a repository by name (briefly cached).
@@ -189,6 +331,13 @@ func (s *Service) wrap(r *store.Repository) (*Repository, error) {
 	cfg, err := ParseConfig(r.Kind, r.Config)
 	if err != nil {
 		return nil, fmt.Errorf("repository %s: %w", r.Name, err)
+	}
+	if cfg.Proxy != nil && cfg.Proxy.Password != "" && s.Secrets != nil {
+		pw, err := s.Secrets.Open(cfg.Proxy.Password)
+		if err != nil {
+			return nil, fmt.Errorf("repository %s: proxy password: %w", r.Name, err)
+		}
+		cfg.Proxy.Password = pw
 	}
 	return &Repository{Repository: r, Cfg: cfg}, nil
 }
@@ -255,7 +404,14 @@ func (s *Service) PutStored(ctx context.Context, rp *Repository, d storage.Diges
 		}
 		componentID = &c.ID
 	}
+	var prevDigest string
+	if componentID != nil {
+		if prev, err := s.Store.GetAsset(ctx, rp.ID, o.Path); err == nil {
+			prevDigest = prev.Digest
+		}
+	}
 	a, err := s.Store.PutAsset(ctx, store.PutAssetParams{
+		Uploader:     uploaderJSON(ctx, rp, o.Cached),
 		RepositoryID: rp.ID,
 		StoreID:      rp.BlobStoreID,
 		Path:         o.Path,
@@ -270,6 +426,10 @@ func (s *Service) PutStored(ctx context.Context, rp *Repository, d storage.Diges
 	})
 	if errors.Is(err, store.ErrConflict) {
 		return nil, ErrRedeploy
+	}
+	if err == nil && componentID != nil {
+		s.fireStored(ctx, StoredEvent{Repository: rp, Asset: a, ComponentID: *componentID, Cached: o.Cached,
+			Changed: prevDigest != a.Digest})
 	}
 	return a, err
 }
@@ -347,6 +507,20 @@ func (s *Service) Serve(w http.ResponseWriter, r *http.Request, rp *Repository, 
 	h.Set("X-Checksum-Sha256", storage.Digest(a.Digest).Hex())
 	if o.Filename != "" {
 		h.Set("Content-Disposition", `attachment; filename="`+o.Filename+`"`)
+	}
+	if s.QuarantineCheck != nil {
+		if blocked, reason := s.QuarantineCheck(ctx, rp, a); blocked {
+			h.Del("ETag")
+			h.Del("X-Checksum-Sha256")
+			h.Del("Content-Disposition")
+			h.Set("Content-Type", "text/plain; charset=utf-8")
+			h.Set("X-Entrepot-Quarantined", "true")
+			w.WriteHeader(http.StatusForbidden)
+			if r.Method != http.MethodHead {
+				_, _ = io.WriteString(w, "quarantined by Entrepot: "+reason+"\n")
+			}
+			return
+		}
 	}
 	go s.markDownloaded(a.ID)
 

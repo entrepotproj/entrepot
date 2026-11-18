@@ -11,10 +11,15 @@ import (
 	"github.com/geoffo-dev/package-repository/internal/api/apigen"
 	"github.com/geoffo-dev/package-repository/internal/auth"
 	"github.com/geoffo-dev/package-repository/internal/authz"
+	"github.com/geoffo-dev/package-repository/internal/cleanup"
 	"github.com/geoffo-dev/package-repository/internal/config"
 	"github.com/geoffo-dev/package-repository/internal/format"
 	"github.com/geoffo-dev/package-repository/internal/httpx"
 	"github.com/geoffo-dev/package-repository/internal/repo"
+	"github.com/geoffo-dev/package-repository/internal/routing"
+	"github.com/geoffo-dev/package-repository/internal/scan"
+	"github.com/geoffo-dev/package-repository/internal/secrets"
+	"github.com/geoffo-dev/package-repository/internal/signing"
 	"github.com/geoffo-dev/package-repository/internal/storage"
 	"github.com/geoffo-dev/package-repository/internal/store"
 )
@@ -32,6 +37,11 @@ type Server struct {
 	Formats *format.Registry
 	URLs    httpx.URLs
 	Logger  *slog.Logger
+	Secrets *secrets.Box
+	Signing *signing.Service
+	Scan    *scan.Service
+	Cleanup *cleanup.Service
+	Routing *routing.Service
 }
 
 var _ apigen.ServerInterface = (*Server)(nil)
@@ -242,3 +252,8 @@ func deref[T any](p *T) T {
 }
 
 func ptr[T any](v T) *T { return &v }
+
+// notImplemented answers 501 for endpoints that are not available yet.
+func notImplemented(w http.ResponseWriter) {
+	httpx.WriteError(w, http.StatusNotImplemented, "not_implemented", "not implemented yet")
+}

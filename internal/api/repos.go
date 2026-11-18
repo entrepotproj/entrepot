@@ -14,6 +14,7 @@ import (
 	"github.com/geoffo-dev/package-repository/internal/format"
 	"github.com/geoffo-dev/package-repository/internal/httpx"
 	"github.com/geoffo-dev/package-repository/internal/repo"
+	"github.com/geoffo-dev/package-repository/internal/secrets"
 	"github.com/geoffo-dev/package-repository/internal/storage"
 	"github.com/geoffo-dev/package-repository/internal/store"
 )
@@ -45,7 +46,7 @@ func (s *Server) blobStoreToAPI(ctx context.Context, b *store.BlobStore) apigen.
 
 // blobStoreConfig converts API input to the stored JSON config. For updates
 // of S3 stores, an omitted secret keeps the previous one.
-func blobStoreConfig(in apigen.BlobStoreInput, prev json.RawMessage) (json.RawMessage, error) {
+func blobStoreConfig(box *secrets.Box, in apigen.BlobStoreInput, prev json.RawMessage) (json.RawMessage, error) {
 	switch in.Type {
 	case "file":
 		if in.File == nil || in.File.Path == "" {
@@ -74,6 +75,13 @@ func blobStoreConfig(in apigen.BlobStoreInput, prev json.RawMessage) (json.RawMe
 		}
 		if sc.AccessKeyID != "" && sc.SecretAccessKey == "" {
 			return nil, errBad("s3.secretAccessKey is required with s3.accessKeyId")
+		}
+		if box != nil {
+			sealed, err := box.Seal(sc.SecretAccessKey)
+			if err != nil {
+				return nil, err
+			}
+			sc.SecretAccessKey = sealed
 		}
 		return json.Marshal(sc)
 	default:
@@ -109,7 +117,7 @@ func (s *Server) CreateBlobStore(w http.ResponseWriter, r *http.Request) {
 		s.writeErr(w, errBad("invalid name: use lowercase letters, digits, '.', '_' and '-'"))
 		return
 	}
-	cfg, err := blobStoreConfig(in, nil)
+	cfg, err := blobStoreConfig(s.Secrets, in, nil)
 	if err != nil {
 		s.writeErr(w, err)
 		return
@@ -168,7 +176,7 @@ func (s *Server) UpdateBlobStore(w http.ResponseWriter, r *http.Request, name st
 		s.writeErr(w, errBad("name and type of a blob store cannot be changed"))
 		return
 	}
-	cfg, err := blobStoreConfig(in, prev.Config)
+	cfg, err := blobStoreConfig(s.Secrets, in, prev.Config)
 	if err != nil {
 		s.writeErr(w, err)
 		return
@@ -243,6 +251,7 @@ func (s *Server) repoToAPI(r *http.Request, rp *repo.Repository, withStats bool)
 	if gc := rp.Cfg.Group; gc != nil {
 		out.Group = &apigen.GroupSettings{Members: gc.Members}
 	}
+	phase2ToAPI(rp, &out)
 	if withStats {
 		if st, err := s.Store.RepositoryStats(ctx, rp.ID); err == nil {
 			out.Stats = &apigen.RepositoryStats{Assets: st.Assets, Components: st.Components, TotalBytes: st.TotalBytes}
@@ -311,10 +320,21 @@ func (s *Server) repoConfig(ctx context.Context, in apigen.RepositoryInput, prev
 	default:
 		return nil, errBad("kind must be hosted, proxy or group")
 	}
+	if err := s.phase2Settings(ctx, in, &cfg); err != nil {
+		return nil, err
+	}
 	if v, ok := h.(format.Validator); ok {
 		if err := v.ValidateRepository(string(in.Kind), cfg); err != nil {
 			return nil, errBad(err.Error())
 		}
+	}
+	// Seal the upstream password before it is stored.
+	if cfg.Proxy != nil && cfg.Proxy.Password != "" && s.Secrets != nil {
+		sealed, err := s.Secrets.Seal(cfg.Proxy.Password)
+		if err != nil {
+			return nil, err
+		}
+		cfg.Proxy.Password = sealed
 	}
 	return json.Marshal(cfg)
 }
@@ -459,6 +479,12 @@ func (s *Server) assetToAPI(r *http.Request, a *store.Asset) apigen.Asset {
 	if out.Attrs == nil {
 		out.Attrs = map[string]any{}
 	}
+	if len(a.Uploader) > 2 {
+		var u map[string]any
+		if json.Unmarshal(a.Uploader, &u) == nil {
+			out.Uploader = &u
+		}
+	}
 	return out
 }
 
@@ -466,6 +492,10 @@ func (s *Server) componentToAPI(c *store.Component) apigen.Component {
 	out := apigen.Component{
 		Id: c.ID, Repository: c.Repository, Format: c.Format, Name: c.Name, Version: c.Version,
 		CreatedAt: c.CreatedAt, UpdatedAt: c.UpdatedAt,
+		Quarantined: ptr(c.Quarantined), ScannedAt: c.ScannedAt,
+	}
+	if c.ScanState != "" {
+		out.ScanState = ptr(apigen.ScanState(c.ScanState))
 	}
 	_ = json.Unmarshal(c.Attrs, &out.Attrs)
 	if out.Attrs == nil {
@@ -605,13 +635,16 @@ func (s *Server) GetAsset(w http.ResponseWriter, r *http.Request, id string) {
 }
 
 func (s *Server) DeleteAsset(w http.ResponseWriter, r *http.Request, id string) {
-	a, _, ok := s.assetWithRepo(w, r, id, authz.Delete)
+	a, rp, ok := s.assetWithRepo(w, r, id, authz.Delete)
 	if !ok {
 		return
 	}
 	if _, err := s.Repos.Delete(r.Context(), a.ID); err != nil {
 		s.writeErr(w, err)
 		return
+	}
+	if err := s.Formats.NotifyDeleted(r.Context(), rp, []*store.Asset{a}); err != nil {
+		s.Logger.Error("regenerate metadata after delete", "repository", rp.Name, "err", err)
 	}
 	s.audit(r, "asset.delete", a.Repository+"/"+a.Path, nil)
 	w.WriteHeader(http.StatusNoContent)
@@ -673,6 +706,11 @@ func (s *Server) DeleteComponent(w http.ResponseWriter, r *http.Request, id stri
 		if _, err := s.Repos.Delete(r.Context(), a.ID); err != nil && !errors.Is(err, repo.ErrNotFound) {
 			s.writeErr(w, err)
 			return
+		}
+	}
+	if rp, err := s.Repos.Get(r.Context(), c.Repository); err == nil {
+		if err := s.Formats.NotifyDeleted(r.Context(), rp, as); err != nil {
+			s.Logger.Error("regenerate metadata after delete", "repository", rp.Name, "err", err)
 		}
 	}
 	s.audit(r, "component.delete", c.Repository+"/"+c.Name+"@"+c.Version, nil)

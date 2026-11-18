@@ -40,6 +40,8 @@ type Principal struct {
 	Scopes []string `json:"scopes,omitempty"`
 	// Bootstrap admin.
 	Superuser bool `json:"superuser,omitempty"`
+	// Instance is the trusted GitLab instance name (GitLab principals).
+	Instance string `json:"instance,omitempty"`
 	// Claims holds the verified GitLab id_token claims.
 	Claims map[string]any `json:"claims,omitempty"`
 	// ViaCookie is true when authenticated by session cookie (CSRF checks apply).

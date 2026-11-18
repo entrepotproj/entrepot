@@ -197,3 +197,26 @@ func Expect(t *testing.T, resp *http.Response, want int) string {
 	}
 	return b
 }
+
+// Reopen starts a second app instance on the same database and blob stores
+// (simulating a restart or another replica). It shares the configuration of
+// inst except for the base URL.
+func Reopen(t *testing.T, inst *Instance) *Instance {
+	t.Helper()
+	cfg := *inst.Config
+	var handler http.Handler
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { handler.ServeHTTP(w, r) }))
+	cfg.Server.BaseURL = srv.URL
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	a, err := app.New(context.Background(), &cfg, logger)
+	if err != nil {
+		srv.Close()
+		t.Fatalf("reopen: %v", err)
+	}
+	handler = a.Handler()
+	t.Cleanup(func() {
+		srv.Close()
+		a.Close()
+	})
+	return &Instance{T: t, App: a, Server: srv, URL: srv.URL, Config: &cfg}
+}

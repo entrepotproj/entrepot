@@ -110,22 +110,31 @@ func (e MeKind) Valid() bool {
 
 // Defines values for RepositoryInputFormat.
 const (
+	Apt    RepositoryInputFormat = "apt"
 	Docker RepositoryInputFormat = "docker"
+	Helm   RepositoryInputFormat = "helm"
 	Npm    RepositoryInputFormat = "npm"
 	Pypi   RepositoryInputFormat = "pypi"
 	Raw    RepositoryInputFormat = "raw"
+	Yum    RepositoryInputFormat = "yum"
 )
 
 // Valid indicates whether the value is a known member of the RepositoryInputFormat enum.
 func (e RepositoryInputFormat) Valid() bool {
 	switch e {
+	case Apt:
+		return true
 	case Docker:
+		return true
+	case Helm:
 		return true
 	case Npm:
 		return true
 	case Pypi:
 		return true
 	case Raw:
+		return true
+	case Yum:
 		return true
 	default:
 		return false
@@ -153,6 +162,231 @@ func (e RepositoryKind) Valid() bool {
 	}
 }
 
+// Defines values for RoutingRuleMode.
+const (
+	RoutingRuleModeAllow RoutingRuleMode = "allow"
+	RoutingRuleModeBlock RoutingRuleMode = "block"
+)
+
+// Valid indicates whether the value is a known member of the RoutingRuleMode enum.
+func (e RoutingRuleMode) Valid() bool {
+	switch e {
+	case RoutingRuleModeAllow:
+		return true
+	case RoutingRuleModeBlock:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RoutingRuleInputMode.
+const (
+	RoutingRuleInputModeAllow RoutingRuleInputMode = "allow"
+	RoutingRuleInputModeBlock RoutingRuleInputMode = "block"
+)
+
+// Valid indicates whether the value is a known member of the RoutingRuleInputMode enum.
+func (e RoutingRuleInputMode) Valid() bool {
+	switch e {
+	case RoutingRuleInputModeAllow:
+		return true
+	case RoutingRuleInputModeBlock:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ScanCallbackFormat.
+const (
+	Cyclonedx ScanCallbackFormat = "cyclonedx"
+	Entrepot  ScanCallbackFormat = "entrepot"
+	Sarif     ScanCallbackFormat = "sarif"
+)
+
+// Valid indicates whether the value is a known member of the ScanCallbackFormat enum.
+func (e ScanCallbackFormat) Valid() bool {
+	switch e {
+	case Cyclonedx:
+		return true
+	case Entrepot:
+		return true
+	case Sarif:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ScanJobReason.
+const (
+	ScanJobReasonManual ScanJobReason = "manual"
+	ScanJobReasonProxy  ScanJobReason = "proxy"
+	ScanJobReasonRescan ScanJobReason = "rescan"
+	ScanJobReasonUpload ScanJobReason = "upload"
+)
+
+// Valid indicates whether the value is a known member of the ScanJobReason enum.
+func (e ScanJobReason) Valid() bool {
+	switch e {
+	case ScanJobReasonManual:
+		return true
+	case ScanJobReasonProxy:
+		return true
+	case ScanJobReasonRescan:
+		return true
+	case ScanJobReasonUpload:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ScanJobStatus.
+const (
+	ScanJobStatusDone    ScanJobStatus = "done"
+	ScanJobStatusFailed  ScanJobStatus = "failed"
+	ScanJobStatusQueued  ScanJobStatus = "queued"
+	ScanJobStatusRunning ScanJobStatus = "running"
+)
+
+// Valid indicates whether the value is a known member of the ScanJobStatus enum.
+func (e ScanJobStatus) Valid() bool {
+	switch e {
+	case ScanJobStatusDone:
+		return true
+	case ScanJobStatusFailed:
+		return true
+	case ScanJobStatusQueued:
+		return true
+	case ScanJobStatusRunning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ScanResultStatus.
+const (
+	ScanResultStatusError       ScanResultStatus = "error"
+	ScanResultStatusOk          ScanResultStatus = "ok"
+	ScanResultStatusUnsupported ScanResultStatus = "unsupported"
+)
+
+// Valid indicates whether the value is a known member of the ScanResultStatus enum.
+func (e ScanResultStatus) Valid() bool {
+	switch e {
+	case ScanResultStatusError:
+		return true
+	case ScanResultStatusOk:
+		return true
+	case ScanResultStatusUnsupported:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ScanSettingsMode.
+const (
+	Off        ScanSettingsMode = "off"
+	Quarantine ScanSettingsMode = "quarantine"
+	Warn       ScanSettingsMode = "warn"
+)
+
+// Valid indicates whether the value is a known member of the ScanSettingsMode enum.
+func (e ScanSettingsMode) Valid() bool {
+	switch e {
+	case Off:
+		return true
+	case Quarantine:
+		return true
+	case Warn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ScanState.
+const (
+	ScanStateClean       ScanState = "clean"
+	ScanStateError       ScanState = "error"
+	ScanStatePending     ScanState = "pending"
+	ScanStateUnscanned   ScanState = "unscanned"
+	ScanStateUnsupported ScanState = "unsupported"
+	ScanStateVulnerable  ScanState = "vulnerable"
+)
+
+// Valid indicates whether the value is a known member of the ScanState enum.
+func (e ScanState) Valid() bool {
+	switch e {
+	case ScanStateClean:
+		return true
+	case ScanStateError:
+		return true
+	case ScanStatePending:
+		return true
+	case ScanStateUnscanned:
+		return true
+	case ScanStateUnsupported:
+		return true
+	case ScanStateVulnerable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ScannerType.
+const (
+	Grype   ScannerType = "grype"
+	Trivy   ScannerType = "trivy"
+	Webhook ScannerType = "webhook"
+)
+
+// Valid indicates whether the value is a known member of the ScannerType enum.
+func (e ScannerType) Valid() bool {
+	switch e {
+	case Grype:
+		return true
+	case Trivy:
+		return true
+	case Webhook:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for Severity.
+const (
+	Critical Severity = "critical"
+	High     Severity = "high"
+	Low      Severity = "low"
+	Medium   Severity = "medium"
+	Unknown  Severity = "unknown"
+)
+
+// Valid indicates whether the value is a known member of the Severity enum.
+func (e Severity) Valid() bool {
+	switch e {
+	case Critical:
+		return true
+	case High:
+		return true
+	case Low:
+		return true
+	case Medium:
+		return true
+	case Unknown:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SubjectType.
 const (
 	SubjectTypeAuthenticated SubjectType = "authenticated"
@@ -171,6 +405,30 @@ func (e SubjectType) Valid() bool {
 	case SubjectTypeGroup:
 		return true
 	case SubjectTypeUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListScanJobsParamsStatus.
+const (
+	ListScanJobsParamsStatusDone    ListScanJobsParamsStatus = "done"
+	ListScanJobsParamsStatusFailed  ListScanJobsParamsStatus = "failed"
+	ListScanJobsParamsStatusQueued  ListScanJobsParamsStatus = "queued"
+	ListScanJobsParamsStatusRunning ListScanJobsParamsStatus = "running"
+)
+
+// Valid indicates whether the value is a known member of the ListScanJobsParamsStatus enum.
+func (e ListScanJobsParamsStatus) Valid() bool {
+	switch e {
+	case ListScanJobsParamsStatusDone:
+		return true
+	case ListScanJobsParamsStatusFailed:
+		return true
+	case ListScanJobsParamsStatusQueued:
+		return true
+	case ListScanJobsParamsStatusRunning:
 		return true
 	default:
 		return false
@@ -213,6 +471,26 @@ type ApiTokenInput struct {
 // ApiTokenInputScopes defines model for ApiTokenInput.Scopes.
 type ApiTokenInputScopes string
 
+// AptDistribution defines model for AptDistribution.
+type AptDistribution struct {
+	// Architectures Example: ["amd64","arm64","all"]
+	Architectures *[]string `json:"architectures,omitempty"`
+
+	// Components Example: ["main"]
+	Components *[]string `json:"components,omitempty"`
+	Label      *string   `json:"label,omitempty"`
+
+	// Name Example: stable
+	Name   string  `json:"name"`
+	Origin *string `json:"origin,omitempty"`
+}
+
+// AptHostedSettings defines model for AptHostedSettings.
+type AptHostedSettings struct {
+	// Distributions Distributions to publish (default one "stable" distribution with component "main")
+	Distributions *[]AptDistribution `json:"distributions,omitempty"`
+}
+
 // Asset defines model for Asset.
 type Asset struct {
 	Attrs       map[string]interface{} `json:"attrs"`
@@ -231,6 +509,9 @@ type Asset struct {
 	Repository       string     `json:"repository"`
 	Size             int64      `json:"size"`
 	UpdatedAt        time.Time  `json:"updatedAt"`
+
+	// Uploader Who stored the asset (kind, name; GitLab CI jobs include project_path, ref, sha, pipeline_id)
+	Uploader *map[string]interface{} `json:"uploader,omitempty"`
 }
 
 // AssetPage defines model for AssetPage.
@@ -287,22 +568,98 @@ type BrowseEntry struct {
 	Size    int64   `json:"size"`
 }
 
+// CleanupCriteria All set criteria must match for a component to be removed.
+type CleanupCriteria struct {
+	// KeepLatest Always keep this many newest versions of each component
+	KeepLatest *int `json:"keepLatest,omitempty"`
+
+	// LastDownloadedOlderThanDays Components never downloaded count by their publish date
+	LastDownloadedOlderThanDays *int    `json:"lastDownloadedOlderThanDays,omitempty"`
+	NameRegex                   *string `json:"nameRegex,omitempty"`
+
+	// PrereleaseOnly Only versions with a pre-release part (1.2.0-rc.1
+	PrereleaseOnly         *bool `json:"prereleaseOnly,omitempty"`
+	PublishedOlderThanDays *int  `json:"publishedOlderThanDays,omitempty"`
+
+	// UntaggedOlderThanDays Docker: delete untagged manifests (and unreferenced layers) older than this
+	UntaggedOlderThanDays *int    `json:"untaggedOlderThanDays,omitempty"`
+	VersionRegex          *string `json:"versionRegex,omitempty"`
+}
+
+// CleanupPolicy defines model for CleanupPolicy.
+type CleanupPolicy struct {
+	CreatedAt time.Time `json:"createdAt"`
+
+	// Criteria All set criteria must match for a component to be removed.
+	Criteria    CleanupCriteria `json:"criteria"`
+	Description string          `json:"description"`
+	Format      string          `json:"format"`
+	Name        string          `json:"name"`
+
+	// Repositories Repositories using the policy
+	Repositories *[]string `json:"repositories,omitempty"`
+	UpdatedAt    time.Time `json:"updatedAt"`
+}
+
+// CleanupPolicyInput defines model for CleanupPolicyInput.
+type CleanupPolicyInput struct {
+	// Criteria All set criteria must match for a component to be removed.
+	Criteria    CleanupCriteria `json:"criteria"`
+	Description *string         `json:"description,omitempty"`
+
+	// Format Restrict to one format (empty = any)
+	Format *string `json:"format,omitempty"`
+	Name   string  `json:"name"`
+}
+
+// CleanupRunResult defines model for CleanupRunResult.
+type CleanupRunResult struct {
+	Assets int64 `json:"assets"`
+	Bytes  int64 `json:"bytes"`
+
+	// Components Components deleted (or that would be)
+	Components   []Component `json:"components"`
+	DryRun       bool        `json:"dryRun"`
+	Repositories []string    `json:"repositories"`
+}
+
+// CleanupSettings defines model for CleanupSettings.
+type CleanupSettings struct {
+	Policies *[]string `json:"policies,omitempty"`
+}
+
 // Component defines model for Component.
 type Component struct {
-	Attrs      map[string]interface{} `json:"attrs"`
-	CreatedAt  time.Time              `json:"createdAt"`
-	Format     string                 `json:"format"`
-	Id         string                 `json:"id"`
-	Name       string                 `json:"name"`
-	Repository string                 `json:"repository"`
-	UpdatedAt  time.Time              `json:"updatedAt"`
-	Version    string                 `json:"version"`
+	Attrs       map[string]interface{} `json:"attrs"`
+	CreatedAt   time.Time              `json:"createdAt"`
+	Format      string                 `json:"format"`
+	Id          string                 `json:"id"`
+	Name        string                 `json:"name"`
+	Quarantined *bool                  `json:"quarantined,omitempty"`
+	Repository  string                 `json:"repository"`
+	ScanState   *ScanState             `json:"scanState,omitempty"`
+	ScannedAt   *time.Time             `json:"scannedAt,omitempty"`
+	UpdatedAt   time.Time              `json:"updatedAt"`
+	Version     string                 `json:"version"`
 }
 
 // ComponentDetail defines model for ComponentDetail.
 type ComponentDetail struct {
 	Assets    []Asset   `json:"assets"`
 	Component Component `json:"component"`
+}
+
+// ComponentScans defines model for ComponentScans.
+type ComponentScans struct {
+	// Jobs Recent jobs
+	Jobs             []ScanJob `json:"jobs"`
+	QuarantineReason *string   `json:"quarantineReason,omitempty"`
+	Quarantined      bool      `json:"quarantined"`
+
+	// Results Latest result per scanner
+	Results   []ScanResult `json:"results"`
+	ScanState ScanState    `json:"scanState"`
+	ScannedAt *time.Time   `json:"scannedAt,omitempty"`
 }
 
 // Error defines model for Error.
@@ -318,6 +675,21 @@ type FileBlobStoreConfig struct {
 	//
 	// Example: /data/default
 	Path string `json:"path"`
+}
+
+// Finding defines model for Finding.
+type Finding struct {
+	FixedVersion     string   `json:"fixedVersion"`
+	InstalledVersion string   `json:"installedVersion"`
+	Package          string   `json:"package"`
+	Severity         Severity `json:"severity"`
+	Title            string   `json:"title"`
+	Url              string   `json:"url"`
+
+	// VulnId Example: CVE-2021-23337
+	VulnId   string  `json:"vulnId"`
+	Waived   bool    `json:"waived"`
+	WaiverId *string `json:"waiverId,omitempty"`
 }
 
 // FormatInfo defines model for FormatInfo.
@@ -358,12 +730,25 @@ type GitLabTrustPolicyInput struct {
 type GroupSettings struct {
 	// Members Member repositories, searched in order
 	Members []string `json:"members"`
+
+	// PreferHosted npm/PyPI: never serve a package name from proxy members if any hosted member has it (dependency-confusion protection). Default true.
+	PreferHosted *bool `json:"preferHosted,omitempty"`
+}
+
+// GrypeSettings defines model for GrypeSettings.
+type GrypeSettings struct {
+	// Binary Path to the grype CLI (default "grype")
+	Binary         *string   `json:"binary,omitempty"`
+	ExtraArgs      *[]string `json:"extraArgs,omitempty"`
+	TimeoutSeconds *int      `json:"timeoutSeconds,omitempty"`
 }
 
 // HostedSettings defines model for HostedSettings.
 type HostedSettings struct {
 	// AllowRedeploy Allow overwriting existing artifacts/versions. For Docker it allows moving tags. Defaults to false, except true for Docker.
-	AllowRedeploy *bool `json:"allowRedeploy,omitempty"`
+	AllowRedeploy *bool              `json:"allowRedeploy,omitempty"`
+	Apt           *AptHostedSettings `json:"apt,omitempty"`
+	Yum           *YumHostedSettings `json:"yum,omitempty"`
 }
 
 // Me defines model for Me.
@@ -395,26 +780,31 @@ type ProxySettings struct {
 	Password                *string `json:"password,omitempty"`
 
 	// RemoteUrl Example: https://registry.npmjs.org
-	RemoteUrl string  `json:"remoteUrl"`
-	Username  *string `json:"username,omitempty"`
+	RemoteUrl string `json:"remoteUrl"`
+
+	// RoutingRule Name of a routing rule that limits which paths/packages are fetched upstream
+	RoutingRule *string `json:"routingRule,omitempty"`
+	Username    *string `json:"username,omitempty"`
 }
 
 // Repository defines model for Repository.
 type Repository struct {
-	AnonymousRead bool            `json:"anonymousRead"`
-	BlobStore     string          `json:"blobStore"`
-	CreatedAt     time.Time       `json:"createdAt"`
-	Description   string          `json:"description"`
-	Format        string          `json:"format"`
-	Group         *GroupSettings  `json:"group,omitempty"`
-	Hosted        *HostedSettings `json:"hosted,omitempty"`
-	Kind          RepositoryKind  `json:"kind"`
-	Name          string          `json:"name"`
-	Online        bool            `json:"online"`
+	AnonymousRead bool             `json:"anonymousRead"`
+	BlobStore     string           `json:"blobStore"`
+	Cleanup       *CleanupSettings `json:"cleanup,omitempty"`
+	CreatedAt     time.Time        `json:"createdAt"`
+	Description   string           `json:"description"`
+	Format        string           `json:"format"`
+	Group         *GroupSettings   `json:"group,omitempty"`
+	Hosted        *HostedSettings  `json:"hosted,omitempty"`
+	Kind          RepositoryKind   `json:"kind"`
+	Name          string           `json:"name"`
+	Online        bool             `json:"online"`
 
 	// Permissions Actions the caller may perform
 	Permissions []string         `json:"permissions"`
 	Proxy       *ProxySettings   `json:"proxy,omitempty"`
+	Scan        *ScanSettings    `json:"scan,omitempty"`
 	Stats       *RepositoryStats `json:"stats,omitempty"`
 	UpdatedAt   time.Time        `json:"updatedAt"`
 
@@ -426,6 +816,7 @@ type Repository struct {
 type RepositoryInput struct {
 	AnonymousRead *bool                 `json:"anonymousRead,omitempty"`
 	BlobStore     string                `json:"blobStore"`
+	Cleanup       *CleanupSettings      `json:"cleanup,omitempty"`
 	Description   *string               `json:"description,omitempty"`
 	Format        RepositoryInputFormat `json:"format"`
 	Group         *GroupSettings        `json:"group,omitempty"`
@@ -434,6 +825,7 @@ type RepositoryInput struct {
 	Name          string                `json:"name"`
 	Online        *bool                 `json:"online,omitempty"`
 	Proxy         *ProxySettings        `json:"proxy,omitempty"`
+	Scan          *ScanSettings         `json:"scan,omitempty"`
 }
 
 // RepositoryInputFormat defines model for RepositoryInput.Format.
@@ -485,6 +877,45 @@ type RoleInput struct {
 	Name        string   `json:"name"`
 }
 
+// RoutingRule defines model for RoutingRule.
+type RoutingRule struct {
+	CreatedAt   time.Time       `json:"createdAt"`
+	Description string          `json:"description"`
+	Matchers    []string        `json:"matchers"`
+	Mode        RoutingRuleMode `json:"mode"`
+	Name        string          `json:"name"`
+
+	// Repositories Proxy repositories using the rule
+	Repositories *[]string `json:"repositories,omitempty"`
+	UpdatedAt    time.Time `json:"updatedAt"`
+}
+
+// RoutingRuleMode defines model for RoutingRule.Mode.
+type RoutingRuleMode string
+
+// RoutingRuleInput defines model for RoutingRuleInput.
+type RoutingRuleInput struct {
+	Description *string `json:"description,omitempty"`
+
+	// Matchers Regular expressions over the request path / package name, e.g. "^@acme/" or "^acme-"
+	Matchers []string `json:"matchers"`
+
+	// Mode allow: only matching requests go upstream; block: matching requests never go upstream
+	Mode RoutingRuleInputMode `json:"mode"`
+	Name string               `json:"name"`
+}
+
+// RoutingRuleInputMode allow: only matching requests go upstream; block: matching requests never go upstream
+type RoutingRuleInputMode string
+
+// RoutingTestResult defines model for RoutingTestResult.
+type RoutingTestResult struct {
+	Allowed bool `json:"allowed"`
+
+	// Matched The matcher that decided
+	Matched *string `json:"matched,omitempty"`
+}
+
 // S3BlobStoreConfig defines model for S3BlobStoreConfig.
 type S3BlobStoreConfig struct {
 	// AccessKeyId Leave empty to use the AWS default chain (IRSA)
@@ -502,10 +933,173 @@ type S3BlobStoreConfig struct {
 	SecretAccessKey   *string `json:"secretAccessKey,omitempty"`
 }
 
+// ScanCallback defines model for ScanCallback.
+type ScanCallback struct {
+	// Document SARIF or CycloneDX document
+	Document *map[string]interface{} `json:"document,omitempty"`
+
+	// Error Report a scan failure instead of results
+	Error    *string    `json:"error,omitempty"`
+	Findings *[]Finding `json:"findings,omitempty"`
+
+	// Format Format of the results: native findings, a SARIF 2.1 log, or a CycloneDX document with vulnerabilities
+	Format *ScanCallbackFormat `json:"format,omitempty"`
+
+	// Unsupported The scanner cannot scan this kind of artifact
+	Unsupported *bool `json:"unsupported,omitempty"`
+}
+
+// ScanCallbackFormat Format of the results: native findings, a SARIF 2.1 log, or a CycloneDX document with vulnerabilities
+type ScanCallbackFormat string
+
+// ScanJob defines model for ScanJob.
+type ScanJob struct {
+	Attempts int `json:"attempts"`
+
+	// Component name@version
+	Component   string        `json:"component"`
+	ComponentId string        `json:"componentId"`
+	CreatedAt   time.Time     `json:"createdAt"`
+	Error       string        `json:"error"`
+	FinishedAt  *time.Time    `json:"finishedAt,omitempty"`
+	Id          string        `json:"id"`
+	Reason      ScanJobReason `json:"reason"`
+	Repository  string        `json:"repository"`
+	RunAfter    *time.Time    `json:"runAfter,omitempty"`
+	Scanner     string        `json:"scanner"`
+	Status      ScanJobStatus `json:"status"`
+	UpdatedAt   time.Time     `json:"updatedAt"`
+}
+
+// ScanJobReason defines model for ScanJob.Reason.
+type ScanJobReason string
+
+// ScanJobStatus defines model for ScanJob.Status.
+type ScanJobStatus string
+
+// ScanRequest defines model for ScanRequest.
+type ScanRequest struct {
+	Scanners *[]string `json:"scanners,omitempty"`
+}
+
+// ScanResult defines model for ScanResult.
+type ScanResult struct {
+	Counts    SeverityCounts   `json:"counts"`
+	Error     *string          `json:"error,omitempty"`
+	Findings  []Finding        `json:"findings"`
+	Id        string           `json:"id"`
+	ScannedAt time.Time        `json:"scannedAt"`
+	Scanner   string           `json:"scanner"`
+	Status    ScanResultStatus `json:"status"`
+
+	// Target What was scanned (purl or image reference)
+	Target *string `json:"target,omitempty"`
+}
+
+// ScanResultStatus defines model for ScanResult.Status.
+type ScanResultStatus string
+
+// ScanSettings defines model for ScanSettings.
+type ScanSettings struct {
+	// BlockUntilScanned quarantine mode: block downloads until the first scan completes
+	BlockUntilScanned *bool `json:"blockUntilScanned,omitempty"`
+
+	// Distro Apt/Yum: distribution for vulnerability matching, e.g. debian-12, ubuntu-24.04, rocky-9
+	Distro *string `json:"distro,omitempty"`
+
+	// Mode warn: record findings only; quarantine: block downloads of components with findings at or above severityThreshold
+	Mode *ScanSettingsMode `json:"mode,omitempty"`
+
+	// OnProxyFetch Scan components when first cached by a proxy (default true)
+	OnProxyFetch *bool `json:"onProxyFetch,omitempty"`
+
+	// OnUpload Scan components when uploaded (default true)
+	OnUpload *bool `json:"onUpload,omitempty"`
+
+	// Scanners Scanners to run (names). Empty disables scanning for the repository.
+	Scanners          *[]string `json:"scanners,omitempty"`
+	SeverityThreshold *Severity `json:"severityThreshold,omitempty"`
+}
+
+// ScanSettingsMode warn: record findings only; quarantine: block downloads of components with findings at or above severityThreshold
+type ScanSettingsMode string
+
+// ScanState defines model for ScanState.
+type ScanState string
+
+// Scanner defines model for Scanner.
+type Scanner struct {
+	CreatedAt           time.Time               `json:"createdAt"`
+	Enabled             bool                    `json:"enabled"`
+	Grype               *GrypeSettings          `json:"grype,omitempty"`
+	Name                string                  `json:"name"`
+	RescanIntervalHours int                     `json:"rescanIntervalHours"`
+	Trivy               *TrivySettings          `json:"trivy,omitempty"`
+	Type                ScannerType             `json:"type"`
+	UpdatedAt           time.Time               `json:"updatedAt"`
+	Webhook             *WebhookScannerSettings `json:"webhook,omitempty"`
+}
+
+// ScannerInput defines model for ScannerInput.
+type ScannerInput struct {
+	Enabled *bool          `json:"enabled,omitempty"`
+	Grype   *GrypeSettings `json:"grype,omitempty"`
+	Name    string         `json:"name"`
+
+	// RescanIntervalHours Re-scan components periodically (0 = never)
+	RescanIntervalHours *int                    `json:"rescanIntervalHours,omitempty"`
+	Trivy               *TrivySettings          `json:"trivy,omitempty"`
+	Type                ScannerType             `json:"type"`
+	Webhook             *WebhookScannerSettings `json:"webhook,omitempty"`
+}
+
+// ScannerTestResult defines model for ScannerTestResult.
+type ScannerTestResult struct {
+	Message string  `json:"message"`
+	Ok      bool    `json:"ok"`
+	Version *string `json:"version,omitempty"`
+}
+
+// ScannerType defines model for ScannerType.
+type ScannerType string
+
 // ServiceAccountInput defines model for ServiceAccountInput.
 type ServiceAccountInput struct {
 	Description *string `json:"description,omitempty"`
 	Name        string  `json:"name"`
+}
+
+// Severity defines model for Severity.
+type Severity string
+
+// SeverityCounts defines model for SeverityCounts.
+type SeverityCounts struct {
+	Critical int `json:"critical"`
+	High     int `json:"high"`
+	Low      int `json:"low"`
+	Medium   int `json:"medium"`
+	Unknown  int `json:"unknown"`
+}
+
+// SigningKey defines model for SigningKey.
+type SigningKey struct {
+	Algorithm   *string   `json:"algorithm,omitempty"`
+	CreatedAt   time.Time `json:"createdAt"`
+	Fingerprint string    `json:"fingerprint"`
+
+	// PublicKey ASCII-armored OpenPGP public key
+	PublicKey string `json:"publicKey"`
+
+	// Url Where package clients download the public key
+	Url string `json:"url"`
+}
+
+// SigningKeyImport defines model for SigningKeyImport.
+type SigningKeyImport struct {
+	Passphrase *string `json:"passphrase,omitempty"`
+
+	// PrivateKey ASCII-armored OpenPGP private key
+	PrivateKey *string `json:"privateKey,omitempty"`
 }
 
 // SubjectType defines model for SubjectType.
@@ -524,6 +1118,18 @@ type SystemInfo struct {
 	Version string `json:"version"`
 }
 
+// TrivySettings defines model for TrivySettings.
+type TrivySettings struct {
+	// Binary Path to the trivy CLI (default "trivy")
+	Binary      *string   `json:"binary,omitempty"`
+	ExtraArgs   *[]string `json:"extraArgs,omitempty"`
+	ServerToken *string   `json:"serverToken,omitempty"`
+
+	// ServerUrl Trivy server for client/server mode (recommended; keeps one vulnerability DB)
+	ServerUrl      *string `json:"serverUrl,omitempty"`
+	TimeoutSeconds *int    `json:"timeoutSeconds,omitempty"`
+}
+
 // User defines model for User.
 type User struct {
 	CreatedAt      time.Time  `json:"createdAt"`
@@ -536,6 +1142,48 @@ type User struct {
 	ServiceAccount bool       `json:"serviceAccount"`
 	Subject        string     `json:"subject"`
 	Username       string     `json:"username"`
+}
+
+// Waiver defines model for Waiver.
+type Waiver struct {
+	ComponentPattern  string     `json:"componentPattern"`
+	CreatedAt         time.Time  `json:"createdAt"`
+	CreatedBy         string     `json:"createdBy"`
+	ExpiresAt         *time.Time `json:"expiresAt,omitempty"`
+	Id                string     `json:"id"`
+	Reason            string     `json:"reason"`
+	RepositoryPattern string     `json:"repositoryPattern"`
+	VulnId            string     `json:"vulnId"`
+}
+
+// WaiverInput defines model for WaiverInput.
+type WaiverInput struct {
+	// ComponentPattern Glob over "name" or "name@version"
+	ComponentPattern  *string    `json:"componentPattern,omitempty"`
+	ExpiresAt         *time.Time `json:"expiresAt,omitempty"`
+	Reason            *string    `json:"reason,omitempty"`
+	RepositoryPattern *string    `json:"repositoryPattern,omitempty"`
+
+	// VulnId Vulnerability ID, or * for any
+	VulnId string `json:"vulnId"`
+}
+
+// WebhookScannerSettings defines model for WebhookScannerSettings.
+type WebhookScannerSettings struct {
+	// Secret HMAC-SHA256 key for the X-Entrepot-Signature header
+	Secret *string `json:"secret,omitempty"`
+
+	// TimeoutSeconds Time allowed for the callback (default 900)
+	TimeoutSeconds *int `json:"timeoutSeconds,omitempty"`
+
+	// Url Endpoint that receives scan requests
+	Url string `json:"url"`
+}
+
+// YumHostedSettings defines model for YumHostedSettings.
+type YumHostedSettings struct {
+	// RepodataDepth Directory depth at which repodata is generated (0 = repository root, 2 = e.g. el9/x86_64/)
+	RepodataDepth *int `json:"repodataDepth,omitempty"`
 }
 
 // ID defines model for ID.
@@ -554,6 +1202,11 @@ type Offset = int
 type ListAuditEventsParams struct {
 	Before *int64 `form:"before,omitempty" json:"before,omitempty"`
 	Limit  *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// PreviewCleanupPolicyParams defines parameters for PreviewCleanupPolicy.
+type PreviewCleanupPolicyParams struct {
+	Repository string `form:"repository" json:"repository"`
 }
 
 // ListRepositoriesParams defines parameters for ListRepositories.
@@ -576,6 +1229,14 @@ type BrowseRepositoryParams struct {
 	Path *string `form:"path,omitempty" json:"path,omitempty"`
 }
 
+// RunRepositoryCleanupParams defines parameters for RunRepositoryCleanup.
+type RunRepositoryCleanupParams struct {
+	DryRun *bool `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// Policy Run only this policy
+	Policy *string `form:"policy,omitempty" json:"policy,omitempty"`
+}
+
 // ListRepositoryComponentsParams defines parameters for ListRepositoryComponents.
 type ListRepositoryComponentsParams struct {
 	Q      *string `form:"q,omitempty" json:"q,omitempty"`
@@ -589,6 +1250,31 @@ type UploadComponentMultipartBody struct {
 
 	// Path raw: destination path
 	Path *string `json:"path,omitempty"`
+}
+
+// TestRoutingRuleJSONBody defines parameters for TestRoutingRule.
+type TestRoutingRuleJSONBody struct {
+	// Path Example: @acme/widgets
+	Path string `json:"path"`
+}
+
+// ListScanJobsParams defines parameters for ListScanJobs.
+type ListScanJobsParams struct {
+	Status *ListScanJobsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+	Limit  *Limit                    `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListScanJobsParamsStatus defines parameters for ListScanJobs.
+type ListScanJobsParamsStatus string
+
+// GetScanJobArtifactParams defines parameters for GetScanJobArtifact.
+type GetScanJobArtifactParams struct {
+	Token *string `form:"token,omitempty" json:"token,omitempty"`
+}
+
+// SubmitScanJobResultParams defines parameters for SubmitScanJobResult.
+type SubmitScanJobResultParams struct {
+	Token *string `form:"token,omitempty" json:"token,omitempty"`
 }
 
 // SearchComponentsParams defines parameters for SearchComponents.
@@ -608,6 +1294,15 @@ type CreateBlobStoreJSONRequestBody = BlobStoreInput
 // UpdateBlobStoreJSONRequestBody defines body for UpdateBlobStore for application/json ContentType.
 type UpdateBlobStoreJSONRequestBody = BlobStoreInput
 
+// CreateCleanupPolicyJSONRequestBody defines body for CreateCleanupPolicy for application/json ContentType.
+type CreateCleanupPolicyJSONRequestBody = CleanupPolicyInput
+
+// UpdateCleanupPolicyJSONRequestBody defines body for UpdateCleanupPolicy for application/json ContentType.
+type UpdateCleanupPolicyJSONRequestBody = CleanupPolicyInput
+
+// ScanComponentJSONRequestBody defines body for ScanComponent for application/json ContentType.
+type ScanComponentJSONRequestBody = ScanRequest
+
 // CreateGitLabTrustPolicyJSONRequestBody defines body for CreateGitLabTrustPolicy for application/json ContentType.
 type CreateGitLabTrustPolicyJSONRequestBody = GitLabTrustPolicyInput
 
@@ -619,6 +1314,9 @@ type CreateRepositoryJSONRequestBody = RepositoryInput
 
 // UpdateRepositoryJSONRequestBody defines body for UpdateRepository for application/json ContentType.
 type UpdateRepositoryJSONRequestBody = RepositoryInput
+
+// ImportSigningKeyJSONRequestBody defines body for ImportSigningKey for application/json ContentType.
+type ImportSigningKeyJSONRequestBody = SigningKeyImport
 
 // UploadComponentMultipartRequestBody defines body for UploadComponent for multipart/form-data ContentType.
 type UploadComponentMultipartRequestBody UploadComponentMultipartBody
@@ -632,6 +1330,24 @@ type CreateRoleJSONRequestBody = RoleInput
 // UpdateRoleJSONRequestBody defines body for UpdateRole for application/json ContentType.
 type UpdateRoleJSONRequestBody = RoleInput
 
+// CreateRoutingRuleJSONRequestBody defines body for CreateRoutingRule for application/json ContentType.
+type CreateRoutingRuleJSONRequestBody = RoutingRuleInput
+
+// UpdateRoutingRuleJSONRequestBody defines body for UpdateRoutingRule for application/json ContentType.
+type UpdateRoutingRuleJSONRequestBody = RoutingRuleInput
+
+// TestRoutingRuleJSONRequestBody defines body for TestRoutingRule for application/json ContentType.
+type TestRoutingRuleJSONRequestBody TestRoutingRuleJSONBody
+
+// SubmitScanJobResultJSONRequestBody defines body for SubmitScanJobResult for application/json ContentType.
+type SubmitScanJobResultJSONRequestBody = ScanCallback
+
+// CreateScannerJSONRequestBody defines body for CreateScanner for application/json ContentType.
+type CreateScannerJSONRequestBody = ScannerInput
+
+// UpdateScannerJSONRequestBody defines body for UpdateScanner for application/json ContentType.
+type UpdateScannerJSONRequestBody = ScannerInput
+
 // CreateServiceAccountJSONRequestBody defines body for CreateServiceAccount for application/json ContentType.
 type CreateServiceAccountJSONRequestBody = ServiceAccountInput
 
@@ -640,6 +1356,12 @@ type CreateServiceAccountTokenJSONRequestBody = ApiTokenInput
 
 // CreateTokenJSONRequestBody defines body for CreateToken for application/json ContentType.
 type CreateTokenJSONRequestBody = ApiTokenInput
+
+// CreateWaiverJSONRequestBody defines body for CreateWaiver for application/json ContentType.
+type CreateWaiverJSONRequestBody = WaiverInput
+
+// UpdateWaiverJSONRequestBody defines body for UpdateWaiver for application/json ContentType.
+type UpdateWaiverJSONRequestBody = WaiverInput
 
 // RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -760,6 +1482,36 @@ type ClientInterface interface {
 	// Updates the store configuration. The type cannot change.
 	UpdateBlobStore(ctx context.Context, name Name, body UpdateBlobStoreJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListCleanupPolicies performs a GET /cleanup-policies (the `ListCleanupPolicies` operationId) request.
+	ListCleanupPolicies(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateCleanupPolicyWithBody performs a POST /cleanup-policies (the `CreateCleanupPolicy` operationId) request,
+	// with any type of body and a specified content type.
+	CreateCleanupPolicyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateCleanupPolicy performs a POST /cleanup-policies (the `CreateCleanupPolicy` operationId) request.
+	// Takes a body of the `application/json` content type.
+	CreateCleanupPolicy(ctx context.Context, body CreateCleanupPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteCleanupPolicy performs a DELETE /cleanup-policies/{name} (the `DeleteCleanupPolicy` operationId) request.
+	DeleteCleanupPolicy(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetCleanupPolicy performs a GET /cleanup-policies/{name} (the `GetCleanupPolicy` operationId) request.
+	GetCleanupPolicy(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateCleanupPolicyWithBody performs a PUT /cleanup-policies/{name} (the `UpdateCleanupPolicy` operationId) request,
+	// with any type of body and a specified content type.
+	UpdateCleanupPolicyWithBody(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateCleanupPolicy performs a PUT /cleanup-policies/{name} (the `UpdateCleanupPolicy` operationId) request.
+	// Takes a body of the `application/json` content type.
+	UpdateCleanupPolicy(ctx context.Context, name Name, body UpdateCleanupPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PreviewCleanupPolicy Dry run of a policy against a repository
+	//
+	// Corresponds with POST /cleanup-policies/{name}/preview (the `PreviewCleanupPolicy` operationId).
+	PreviewCleanupPolicy(ctx context.Context, name Name, params *PreviewCleanupPolicyParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// DeleteComponent performs a DELETE /components/{id} (the `DeleteComponent` operationId) request.
 	//
 	// Deletes the component and all of its assets.
@@ -767,6 +1519,29 @@ type ClientInterface interface {
 
 	// GetComponent performs a GET /components/{id} (the `GetComponent` operationId) request.
 	GetComponent(ctx context.Context, id ID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ScanComponentWithBody Queue scans of a component now
+	//
+	// Requires write permission on the repository. Without a body, the repository's configured scanners are used.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /components/{id}/scan (the `ScanComponent` operationId).
+	ScanComponentWithBody(ctx context.Context, id ID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ScanComponent Queue scans of a component now
+	//
+	// Requires write permission on the repository. Without a body, the repository's configured scanners are used.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /components/{id}/scan (the `ScanComponent` operationId).
+	ScanComponent(ctx context.Context, id ID, body ScanComponentJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetComponentScans Latest scan results, findings and recent jobs of a component
+	//
+	// Corresponds with GET /components/{id}/scans (the `GetComponentScans` operationId).
+	GetComponentScans(ctx context.Context, id ID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListGitLabTrustPolicies performs a GET /gitlab-trust-policies (the `ListGitLabTrustPolicies` operationId) request.
 	ListGitLabTrustPolicies(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -844,8 +1619,37 @@ type ClientInterface interface {
 	// BrowseRepository performs a GET /repositories/{name}/browse (the `BrowseRepository` operationId) request.
 	BrowseRepository(ctx context.Context, name Name, params *BrowseRepositoryParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// RunRepositoryCleanup Run the repository's cleanup policies now (admin)
+	//
+	// Corresponds with POST /repositories/{name}/cleanup (the `RunRepositoryCleanup` operationId).
+	RunRepositoryCleanup(ctx context.Context, name Name, params *RunRepositoryCleanupParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListRepositoryComponents performs a GET /repositories/{name}/components (the `ListRepositoryComponents` operationId) request.
 	ListRepositoryComponents(ctx context.Context, name Name, params *ListRepositoryComponentsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetSigningKey Public signing key of an Apt/Yum repository (created on first use)
+	//
+	// Corresponds with GET /repositories/{name}/signing-key (the `GetSigningKey` operationId).
+	GetSigningKey(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ImportSigningKeyWithBody Replace the signing key with an imported OpenPGP private key (admin)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PUT /repositories/{name}/signing-key (the `ImportSigningKey` operationId).
+	ImportSigningKeyWithBody(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ImportSigningKey Replace the signing key with an imported OpenPGP private key (admin)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with PUT /repositories/{name}/signing-key (the `ImportSigningKey` operationId).
+	ImportSigningKey(ctx context.Context, name Name, body ImportSigningKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RotateSigningKey Generate a new signing key and re-sign metadata (admin)
+	//
+	// Corresponds with POST /repositories/{name}/signing-key/rotate (the `RotateSigningKey` operationId).
+	RotateSigningKey(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UploadComponentWithBody performs a POST /repositories/{name}/upload (the `UploadComponent` operationId) request,
 	// with any type of body and a specified content type.
@@ -898,6 +1702,101 @@ type ClientInterface interface {
 	// UpdateRole performs a PUT /roles/{name} (the `UpdateRole` operationId) request.
 	// Takes a body of the `application/json` content type.
 	UpdateRole(ctx context.Context, name Name, body UpdateRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListRoutingRules performs a GET /routing-rules (the `ListRoutingRules` operationId) request.
+	ListRoutingRules(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateRoutingRuleWithBody performs a POST /routing-rules (the `CreateRoutingRule` operationId) request,
+	// with any type of body and a specified content type.
+	CreateRoutingRuleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateRoutingRule performs a POST /routing-rules (the `CreateRoutingRule` operationId) request.
+	// Takes a body of the `application/json` content type.
+	CreateRoutingRule(ctx context.Context, body CreateRoutingRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteRoutingRule performs a DELETE /routing-rules/{name} (the `DeleteRoutingRule` operationId) request.
+	//
+	// Fails with 409 while proxy repositories use the rule.
+	DeleteRoutingRule(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetRoutingRule performs a GET /routing-rules/{name} (the `GetRoutingRule` operationId) request.
+	GetRoutingRule(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateRoutingRuleWithBody performs a PUT /routing-rules/{name} (the `UpdateRoutingRule` operationId) request,
+	// with any type of body and a specified content type.
+	UpdateRoutingRuleWithBody(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateRoutingRule performs a PUT /routing-rules/{name} (the `UpdateRoutingRule` operationId) request.
+	// Takes a body of the `application/json` content type.
+	UpdateRoutingRule(ctx context.Context, name Name, body UpdateRoutingRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TestRoutingRuleWithBody performs a POST /routing-rules/{name}/test (the `TestRoutingRule` operationId) request,
+	// with any type of body and a specified content type.
+	TestRoutingRuleWithBody(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TestRoutingRule performs a POST /routing-rules/{name}/test (the `TestRoutingRule` operationId) request.
+	// Takes a body of the `application/json` content type.
+	TestRoutingRule(ctx context.Context, name Name, body TestRoutingRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListScanJobs Scan queue (admin)
+	//
+	// Corresponds with GET /scan-jobs (the `ListScanJobs` operationId).
+	ListScanJobs(ctx context.Context, params *ListScanJobsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetScanJobArtifact Download the artifact of a running webhook scan job
+	//
+	// Authenticated by the per-job token sent to the webhook (query parameter or Bearer header).
+	//
+	// Corresponds with GET /scan-jobs/{id}/artifact (the `GetScanJobArtifact` operationId).
+	GetScanJobArtifact(ctx context.Context, id ID, params *GetScanJobArtifactParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SubmitScanJobResultWithBody Webhook scanner callback with scan results
+	//
+	// Authenticated by the per-job token (Bearer header or `token` query parameter).
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /scan-jobs/{id}/result (the `SubmitScanJobResult` operationId).
+	SubmitScanJobResultWithBody(ctx context.Context, id ID, params *SubmitScanJobResultParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SubmitScanJobResult Webhook scanner callback with scan results
+	//
+	// Authenticated by the per-job token (Bearer header or `token` query parameter).
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /scan-jobs/{id}/result (the `SubmitScanJobResult` operationId).
+	SubmitScanJobResult(ctx context.Context, id ID, params *SubmitScanJobResultParams, body SubmitScanJobResultJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListScanners performs a GET /scanners (the `ListScanners` operationId) request.
+	ListScanners(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateScannerWithBody performs a POST /scanners (the `CreateScanner` operationId) request,
+	// with any type of body and a specified content type.
+	CreateScannerWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateScanner performs a POST /scanners (the `CreateScanner` operationId) request.
+	// Takes a body of the `application/json` content type.
+	CreateScanner(ctx context.Context, body CreateScannerJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteScanner performs a DELETE /scanners/{name} (the `DeleteScanner` operationId) request.
+	DeleteScanner(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetScanner performs a GET /scanners/{name} (the `GetScanner` operationId) request.
+	GetScanner(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateScannerWithBody performs a PUT /scanners/{name} (the `UpdateScanner` operationId) request,
+	// with any type of body and a specified content type.
+	UpdateScannerWithBody(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateScanner performs a PUT /scanners/{name} (the `UpdateScanner` operationId) request.
+	// Takes a body of the `application/json` content type.
+	UpdateScanner(ctx context.Context, name Name, body UpdateScannerJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TestScanner Check the scanner is reachable and report its version
+	//
+	// Corresponds with POST /scanners/{name}/test (the `TestScanner` operationId).
+	TestScanner(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// SearchComponents performs a GET /search (the `SearchComponents` operationId) request.
 	SearchComponents(ctx context.Context, params *SearchComponentsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -964,6 +1863,31 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /users (the `ListUsers` operationId).
 	ListUsers(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListWaivers performs a GET /waivers (the `ListWaivers` operationId) request.
+	ListWaivers(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateWaiverWithBody performs a POST /waivers (the `CreateWaiver` operationId) request,
+	// with any type of body and a specified content type.
+	CreateWaiverWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateWaiver performs a POST /waivers (the `CreateWaiver` operationId) request.
+	// Takes a body of the `application/json` content type.
+	CreateWaiver(ctx context.Context, body CreateWaiverJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteWaiver performs a DELETE /waivers/{id} (the `DeleteWaiver` operationId) request.
+	DeleteWaiver(ctx context.Context, id ID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetWaiver performs a GET /waivers/{id} (the `GetWaiver` operationId) request.
+	GetWaiver(ctx context.Context, id ID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateWaiverWithBody performs a PUT /waivers/{id} (the `UpdateWaiver` operationId) request,
+	// with any type of body and a specified content type.
+	UpdateWaiverWithBody(ctx context.Context, id ID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateWaiver performs a PUT /waivers/{id} (the `UpdateWaiver` operationId) request.
+	// Takes a body of the `application/json` content type.
+	UpdateWaiver(ctx context.Context, id ID, body UpdateWaiverJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 // DeleteAsset performs a DELETE /assets/{id} (the `DeleteAsset` operationId) request.
@@ -1121,6 +2045,116 @@ func (c *Client) UpdateBlobStore(ctx context.Context, name Name, body UpdateBlob
 	return c.Client.Do(req)
 }
 
+// ListCleanupPolicies performs a GET /cleanup-policies (the `ListCleanupPolicies` operationId) request.
+func (c *Client) ListCleanupPolicies(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListCleanupPoliciesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateCleanupPolicyWithBody performs a POST /cleanup-policies (the `CreateCleanupPolicy` operationId) request,
+// with any type of body and a specified content type.
+func (c *Client) CreateCleanupPolicyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateCleanupPolicyRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateCleanupPolicy performs a POST /cleanup-policies (the `CreateCleanupPolicy` operationId) request.
+// Takes a body of the `application/json` content type.
+func (c *Client) CreateCleanupPolicy(ctx context.Context, body CreateCleanupPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateCleanupPolicyRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DeleteCleanupPolicy performs a DELETE /cleanup-policies/{name} (the `DeleteCleanupPolicy` operationId) request.
+func (c *Client) DeleteCleanupPolicy(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteCleanupPolicyRequest(c.Server, name)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetCleanupPolicy performs a GET /cleanup-policies/{name} (the `GetCleanupPolicy` operationId) request.
+func (c *Client) GetCleanupPolicy(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCleanupPolicyRequest(c.Server, name)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateCleanupPolicyWithBody performs a PUT /cleanup-policies/{name} (the `UpdateCleanupPolicy` operationId) request,
+// with any type of body and a specified content type.
+func (c *Client) UpdateCleanupPolicyWithBody(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCleanupPolicyRequestWithBody(c.Server, name, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateCleanupPolicy performs a PUT /cleanup-policies/{name} (the `UpdateCleanupPolicy` operationId) request.
+// Takes a body of the `application/json` content type.
+func (c *Client) UpdateCleanupPolicy(ctx context.Context, name Name, body UpdateCleanupPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCleanupPolicyRequest(c.Server, name, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// PreviewCleanupPolicy Dry run of a policy against a repository
+//
+// Corresponds with POST /cleanup-policies/{name}/preview (the `PreviewCleanupPolicy` operationId).
+func (c *Client) PreviewCleanupPolicy(ctx context.Context, name Name, params *PreviewCleanupPolicyParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPreviewCleanupPolicyRequest(c.Server, name, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // DeleteComponent performs a DELETE /components/{id} (the `DeleteComponent` operationId) request.
 //
 // Deletes the component and all of its assets.
@@ -1139,6 +2173,59 @@ func (c *Client) DeleteComponent(ctx context.Context, id ID, reqEditors ...Reque
 // GetComponent performs a GET /components/{id} (the `GetComponent` operationId) request.
 func (c *Client) GetComponent(ctx context.Context, id ID, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetComponentRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ScanComponentWithBody Queue scans of a component now
+//
+// Requires write permission on the repository. Without a body, the repository's configured scanners are used.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /components/{id}/scan (the `ScanComponent` operationId).
+func (c *Client) ScanComponentWithBody(ctx context.Context, id ID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScanComponentRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ScanComponent Queue scans of a component now
+//
+// Requires write permission on the repository. Without a body, the repository's configured scanners are used.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /components/{id}/scan (the `ScanComponent` operationId).
+func (c *Client) ScanComponent(ctx context.Context, id ID, body ScanComponentJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScanComponentRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetComponentScans Latest scan results, findings and recent jobs of a component
+//
+// Corresponds with GET /components/{id}/scans (the `GetComponentScans` operationId).
+func (c *Client) GetComponentScans(ctx context.Context, id ID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetComponentScansRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -1405,9 +2492,88 @@ func (c *Client) BrowseRepository(ctx context.Context, name Name, params *Browse
 	return c.Client.Do(req)
 }
 
+// RunRepositoryCleanup Run the repository's cleanup policies now (admin)
+//
+// Corresponds with POST /repositories/{name}/cleanup (the `RunRepositoryCleanup` operationId).
+func (c *Client) RunRepositoryCleanup(ctx context.Context, name Name, params *RunRepositoryCleanupParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRunRepositoryCleanupRequest(c.Server, name, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // ListRepositoryComponents performs a GET /repositories/{name}/components (the `ListRepositoryComponents` operationId) request.
 func (c *Client) ListRepositoryComponents(ctx context.Context, name Name, params *ListRepositoryComponentsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListRepositoryComponentsRequest(c.Server, name, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetSigningKey Public signing key of an Apt/Yum repository (created on first use)
+//
+// Corresponds with GET /repositories/{name}/signing-key (the `GetSigningKey` operationId).
+func (c *Client) GetSigningKey(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetSigningKeyRequest(c.Server, name)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ImportSigningKeyWithBody Replace the signing key with an imported OpenPGP private key (admin)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PUT /repositories/{name}/signing-key (the `ImportSigningKey` operationId).
+func (c *Client) ImportSigningKeyWithBody(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewImportSigningKeyRequestWithBody(c.Server, name, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ImportSigningKey Replace the signing key with an imported OpenPGP private key (admin)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with PUT /repositories/{name}/signing-key (the `ImportSigningKey` operationId).
+func (c *Client) ImportSigningKey(ctx context.Context, name Name, body ImportSigningKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewImportSigningKeyRequest(c.Server, name, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RotateSigningKey Generate a new signing key and re-sign metadata (admin)
+//
+// Corresponds with POST /repositories/{name}/signing-key/rotate (the `RotateSigningKey` operationId).
+func (c *Client) RotateSigningKey(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRotateSigningKeyRequest(c.Server, name)
 	if err != nil {
 		return nil, err
 	}
@@ -1590,6 +2756,311 @@ func (c *Client) UpdateRoleWithBody(ctx context.Context, name Name, contentType 
 // Takes a body of the `application/json` content type.
 func (c *Client) UpdateRole(ctx context.Context, name Name, body UpdateRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateRoleRequest(c.Server, name, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListRoutingRules performs a GET /routing-rules (the `ListRoutingRules` operationId) request.
+func (c *Client) ListRoutingRules(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListRoutingRulesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateRoutingRuleWithBody performs a POST /routing-rules (the `CreateRoutingRule` operationId) request,
+// with any type of body and a specified content type.
+func (c *Client) CreateRoutingRuleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateRoutingRuleRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateRoutingRule performs a POST /routing-rules (the `CreateRoutingRule` operationId) request.
+// Takes a body of the `application/json` content type.
+func (c *Client) CreateRoutingRule(ctx context.Context, body CreateRoutingRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateRoutingRuleRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DeleteRoutingRule performs a DELETE /routing-rules/{name} (the `DeleteRoutingRule` operationId) request.
+//
+// Fails with 409 while proxy repositories use the rule.
+func (c *Client) DeleteRoutingRule(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteRoutingRuleRequest(c.Server, name)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetRoutingRule performs a GET /routing-rules/{name} (the `GetRoutingRule` operationId) request.
+func (c *Client) GetRoutingRule(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetRoutingRuleRequest(c.Server, name)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateRoutingRuleWithBody performs a PUT /routing-rules/{name} (the `UpdateRoutingRule` operationId) request,
+// with any type of body and a specified content type.
+func (c *Client) UpdateRoutingRuleWithBody(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateRoutingRuleRequestWithBody(c.Server, name, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateRoutingRule performs a PUT /routing-rules/{name} (the `UpdateRoutingRule` operationId) request.
+// Takes a body of the `application/json` content type.
+func (c *Client) UpdateRoutingRule(ctx context.Context, name Name, body UpdateRoutingRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateRoutingRuleRequest(c.Server, name, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// TestRoutingRuleWithBody performs a POST /routing-rules/{name}/test (the `TestRoutingRule` operationId) request,
+// with any type of body and a specified content type.
+func (c *Client) TestRoutingRuleWithBody(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestRoutingRuleRequestWithBody(c.Server, name, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// TestRoutingRule performs a POST /routing-rules/{name}/test (the `TestRoutingRule` operationId) request.
+// Takes a body of the `application/json` content type.
+func (c *Client) TestRoutingRule(ctx context.Context, name Name, body TestRoutingRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestRoutingRuleRequest(c.Server, name, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListScanJobs Scan queue (admin)
+//
+// Corresponds with GET /scan-jobs (the `ListScanJobs` operationId).
+func (c *Client) ListScanJobs(ctx context.Context, params *ListScanJobsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListScanJobsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetScanJobArtifact Download the artifact of a running webhook scan job
+//
+// Authenticated by the per-job token sent to the webhook (query parameter or Bearer header).
+//
+// Corresponds with GET /scan-jobs/{id}/artifact (the `GetScanJobArtifact` operationId).
+func (c *Client) GetScanJobArtifact(ctx context.Context, id ID, params *GetScanJobArtifactParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetScanJobArtifactRequest(c.Server, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SubmitScanJobResultWithBody Webhook scanner callback with scan results
+//
+// Authenticated by the per-job token (Bearer header or `token` query parameter).
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /scan-jobs/{id}/result (the `SubmitScanJobResult` operationId).
+func (c *Client) SubmitScanJobResultWithBody(ctx context.Context, id ID, params *SubmitScanJobResultParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSubmitScanJobResultRequestWithBody(c.Server, id, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SubmitScanJobResult Webhook scanner callback with scan results
+//
+// Authenticated by the per-job token (Bearer header or `token` query parameter).
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /scan-jobs/{id}/result (the `SubmitScanJobResult` operationId).
+func (c *Client) SubmitScanJobResult(ctx context.Context, id ID, params *SubmitScanJobResultParams, body SubmitScanJobResultJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSubmitScanJobResultRequest(c.Server, id, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListScanners performs a GET /scanners (the `ListScanners` operationId) request.
+func (c *Client) ListScanners(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListScannersRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateScannerWithBody performs a POST /scanners (the `CreateScanner` operationId) request,
+// with any type of body and a specified content type.
+func (c *Client) CreateScannerWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateScannerRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateScanner performs a POST /scanners (the `CreateScanner` operationId) request.
+// Takes a body of the `application/json` content type.
+func (c *Client) CreateScanner(ctx context.Context, body CreateScannerJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateScannerRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DeleteScanner performs a DELETE /scanners/{name} (the `DeleteScanner` operationId) request.
+func (c *Client) DeleteScanner(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteScannerRequest(c.Server, name)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetScanner performs a GET /scanners/{name} (the `GetScanner` operationId) request.
+func (c *Client) GetScanner(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetScannerRequest(c.Server, name)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateScannerWithBody performs a PUT /scanners/{name} (the `UpdateScanner` operationId) request,
+// with any type of body and a specified content type.
+func (c *Client) UpdateScannerWithBody(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateScannerRequestWithBody(c.Server, name, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateScanner performs a PUT /scanners/{name} (the `UpdateScanner` operationId) request.
+// Takes a body of the `application/json` content type.
+func (c *Client) UpdateScanner(ctx context.Context, name Name, body UpdateScannerJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateScannerRequest(c.Server, name, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// TestScanner Check the scanner is reachable and report its version
+//
+// Corresponds with POST /scanners/{name}/test (the `TestScanner` operationId).
+func (c *Client) TestScanner(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestScannerRequest(c.Server, name)
 	if err != nil {
 		return nil, err
 	}
@@ -1816,6 +3287,101 @@ func (c *Client) DeleteToken(ctx context.Context, id ID, reqEditors ...RequestEd
 // Corresponds with GET /users (the `ListUsers` operationId).
 func (c *Client) ListUsers(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListUsersRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListWaivers performs a GET /waivers (the `ListWaivers` operationId) request.
+func (c *Client) ListWaivers(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListWaiversRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateWaiverWithBody performs a POST /waivers (the `CreateWaiver` operationId) request,
+// with any type of body and a specified content type.
+func (c *Client) CreateWaiverWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateWaiverRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateWaiver performs a POST /waivers (the `CreateWaiver` operationId) request.
+// Takes a body of the `application/json` content type.
+func (c *Client) CreateWaiver(ctx context.Context, body CreateWaiverJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateWaiverRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DeleteWaiver performs a DELETE /waivers/{id} (the `DeleteWaiver` operationId) request.
+func (c *Client) DeleteWaiver(ctx context.Context, id ID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteWaiverRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetWaiver performs a GET /waivers/{id} (the `GetWaiver` operationId) request.
+func (c *Client) GetWaiver(ctx context.Context, id ID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetWaiverRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateWaiverWithBody performs a PUT /waivers/{id} (the `UpdateWaiver` operationId) request,
+// with any type of body and a specified content type.
+func (c *Client) UpdateWaiverWithBody(ctx context.Context, id ID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateWaiverRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateWaiver performs a PUT /waivers/{id} (the `UpdateWaiver` operationId) request.
+// Takes a body of the `application/json` content type.
+func (c *Client) UpdateWaiver(ctx context.Context, id ID, body UpdateWaiverJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateWaiverRequest(c.Server, id, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2176,6 +3742,245 @@ func NewUpdateBlobStoreRequestWithBody(server string, name Name, contentType str
 	return req, nil
 }
 
+// NewListCleanupPoliciesRequest constructs an http.Request for the ListCleanupPolicies method
+func NewListCleanupPoliciesRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cleanup-policies")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateCleanupPolicyRequest calls the generic CreateCleanupPolicy builder with application/json body
+func NewCreateCleanupPolicyRequest(server string, body CreateCleanupPolicyJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateCleanupPolicyRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateCleanupPolicyRequestWithBody constructs an http.Request for the CreateCleanupPolicy method, with any body, and a specified content type
+func NewCreateCleanupPolicyRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cleanup-policies")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteCleanupPolicyRequest constructs an http.Request for the DeleteCleanupPolicy method
+func NewDeleteCleanupPolicyRequest(server string, name Name) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cleanup-policies/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetCleanupPolicyRequest constructs an http.Request for the GetCleanupPolicy method
+func NewGetCleanupPolicyRequest(server string, name Name) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cleanup-policies/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateCleanupPolicyRequest calls the generic UpdateCleanupPolicy builder with application/json body
+func NewUpdateCleanupPolicyRequest(server string, name Name, body UpdateCleanupPolicyJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateCleanupPolicyRequestWithBody(server, name, "application/json", bodyReader)
+}
+
+// NewUpdateCleanupPolicyRequestWithBody constructs an http.Request for the UpdateCleanupPolicy method, with any body, and a specified content type
+func NewUpdateCleanupPolicyRequestWithBody(server string, name Name, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cleanup-policies/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewPreviewCleanupPolicyRequest constructs an http.Request for the PreviewCleanupPolicy method
+func NewPreviewCleanupPolicyRequest(server string, name Name, params *PreviewCleanupPolicyParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cleanup-policies/%s/preview", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "repository", params.Repository, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewDeleteComponentRequest constructs an http.Request for the DeleteComponent method
 func NewDeleteComponentRequest(server string, id ID) (*http.Request, error) {
 	var err error
@@ -2227,6 +4032,87 @@ func NewGetComponentRequest(server string, id ID) (*http.Request, error) {
 	}
 
 	operationPath := fmt.Sprintf("/components/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewScanComponentRequest calls the generic ScanComponent builder with application/json body
+func NewScanComponentRequest(server string, id ID, body ScanComponentJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewScanComponentRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewScanComponentRequestWithBody constructs an http.Request for the ScanComponent method, with any body, and a specified content type
+func NewScanComponentRequestWithBody(server string, id ID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/components/%s/scan", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetComponentScansRequest constructs an http.Request for the GetComponentScans method
+func NewGetComponentScansRequest(server string, id ID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/components/%s/scans", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -2835,6 +4721,79 @@ func NewBrowseRepositoryRequest(server string, name Name, params *BrowseReposito
 	return req, nil
 }
 
+// NewRunRepositoryCleanupRequest constructs an http.Request for the RunRepositoryCleanup method
+func NewRunRepositoryCleanupRequest(server string, name Name, params *RunRepositoryCleanupParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/repositories/%s/cleanup", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Policy != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "policy", *params.Policy, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListRepositoryComponentsRequest constructs an http.Request for the ListRepositoryComponents method
 func NewListRepositoryComponentsRequest(server string, name Name, params *ListRepositoryComponentsParams) (*http.Request, error) {
 	var err error
@@ -2913,6 +4872,121 @@ func NewListRepositoryComponentsRequest(server string, name Name, params *ListRe
 	}
 
 	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetSigningKeyRequest constructs an http.Request for the GetSigningKey method
+func NewGetSigningKeyRequest(server string, name Name) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/repositories/%s/signing-key", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewImportSigningKeyRequest calls the generic ImportSigningKey builder with application/json body
+func NewImportSigningKeyRequest(server string, name Name, body ImportSigningKeyJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewImportSigningKeyRequestWithBody(server, name, "application/json", bodyReader)
+}
+
+// NewImportSigningKeyRequestWithBody constructs an http.Request for the ImportSigningKey method, with any body, and a specified content type
+func NewImportSigningKeyRequestWithBody(server string, name Name, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/repositories/%s/signing-key", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewRotateSigningKeyRequest constructs an http.Request for the RotateSigningKey method
+func NewRotateSigningKeyRequest(server string, name Name) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/repositories/%s/signing-key/rotate", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -3269,6 +5343,652 @@ func NewUpdateRoleRequestWithBody(server string, name Name, contentType string, 
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListRoutingRulesRequest constructs an http.Request for the ListRoutingRules method
+func NewListRoutingRulesRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/routing-rules")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateRoutingRuleRequest calls the generic CreateRoutingRule builder with application/json body
+func NewCreateRoutingRuleRequest(server string, body CreateRoutingRuleJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateRoutingRuleRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateRoutingRuleRequestWithBody constructs an http.Request for the CreateRoutingRule method, with any body, and a specified content type
+func NewCreateRoutingRuleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/routing-rules")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteRoutingRuleRequest constructs an http.Request for the DeleteRoutingRule method
+func NewDeleteRoutingRuleRequest(server string, name Name) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/routing-rules/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetRoutingRuleRequest constructs an http.Request for the GetRoutingRule method
+func NewGetRoutingRuleRequest(server string, name Name) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/routing-rules/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateRoutingRuleRequest calls the generic UpdateRoutingRule builder with application/json body
+func NewUpdateRoutingRuleRequest(server string, name Name, body UpdateRoutingRuleJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateRoutingRuleRequestWithBody(server, name, "application/json", bodyReader)
+}
+
+// NewUpdateRoutingRuleRequestWithBody constructs an http.Request for the UpdateRoutingRule method, with any body, and a specified content type
+func NewUpdateRoutingRuleRequestWithBody(server string, name Name, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/routing-rules/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewTestRoutingRuleRequest calls the generic TestRoutingRule builder with application/json body
+func NewTestRoutingRuleRequest(server string, name Name, body TestRoutingRuleJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewTestRoutingRuleRequestWithBody(server, name, "application/json", bodyReader)
+}
+
+// NewTestRoutingRuleRequestWithBody constructs an http.Request for the TestRoutingRule method, with any body, and a specified content type
+func NewTestRoutingRuleRequestWithBody(server string, name Name, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/routing-rules/%s/test", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListScanJobsRequest constructs an http.Request for the ListScanJobs method
+func NewListScanJobsRequest(server string, params *ListScanJobsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/scan-jobs")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Status != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "status", *params.Status, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetScanJobArtifactRequest constructs an http.Request for the GetScanJobArtifact method
+func NewGetScanJobArtifactRequest(server string, id ID, params *GetScanJobArtifactParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/scan-jobs/%s/artifact", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Token != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "token", *params.Token, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewSubmitScanJobResultRequest calls the generic SubmitScanJobResult builder with application/json body
+func NewSubmitScanJobResultRequest(server string, id ID, params *SubmitScanJobResultParams, body SubmitScanJobResultJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSubmitScanJobResultRequestWithBody(server, id, params, "application/json", bodyReader)
+}
+
+// NewSubmitScanJobResultRequestWithBody constructs an http.Request for the SubmitScanJobResult method, with any body, and a specified content type
+func NewSubmitScanJobResultRequestWithBody(server string, id ID, params *SubmitScanJobResultParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/scan-jobs/%s/result", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Token != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "token", *params.Token, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListScannersRequest constructs an http.Request for the ListScanners method
+func NewListScannersRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/scanners")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateScannerRequest calls the generic CreateScanner builder with application/json body
+func NewCreateScannerRequest(server string, body CreateScannerJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateScannerRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateScannerRequestWithBody constructs an http.Request for the CreateScanner method, with any body, and a specified content type
+func NewCreateScannerRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/scanners")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteScannerRequest constructs an http.Request for the DeleteScanner method
+func NewDeleteScannerRequest(server string, name Name) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/scanners/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetScannerRequest constructs an http.Request for the GetScanner method
+func NewGetScannerRequest(server string, name Name) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/scanners/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateScannerRequest calls the generic UpdateScanner builder with application/json body
+func NewUpdateScannerRequest(server string, name Name, body UpdateScannerJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateScannerRequestWithBody(server, name, "application/json", bodyReader)
+}
+
+// NewUpdateScannerRequestWithBody constructs an http.Request for the UpdateScanner method, with any body, and a specified content type
+func NewUpdateScannerRequestWithBody(server string, name Name, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/scanners/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewTestScannerRequest constructs an http.Request for the TestScanner method
+func NewTestScannerRequest(server string, name Name) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/scanners/%s/test", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -3799,6 +6519,188 @@ func NewListUsersRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewListWaiversRequest constructs an http.Request for the ListWaivers method
+func NewListWaiversRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/waivers")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateWaiverRequest calls the generic CreateWaiver builder with application/json body
+func NewCreateWaiverRequest(server string, body CreateWaiverJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateWaiverRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateWaiverRequestWithBody constructs an http.Request for the CreateWaiver method, with any body, and a specified content type
+func NewCreateWaiverRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/waivers")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteWaiverRequest constructs an http.Request for the DeleteWaiver method
+func NewDeleteWaiverRequest(server string, id ID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/waivers/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetWaiverRequest constructs an http.Request for the GetWaiver method
+func NewGetWaiverRequest(server string, id ID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/waivers/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateWaiverRequest calls the generic UpdateWaiver builder with application/json body
+func NewUpdateWaiverRequest(server string, id ID, body UpdateWaiverJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateWaiverRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewUpdateWaiverRequestWithBody constructs an http.Request for the UpdateWaiver method, with any body, and a specified content type
+func NewUpdateWaiverRequestWithBody(server string, id ID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/waivers/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -3906,6 +6808,48 @@ type ClientWithResponsesInterface interface {
 	// Updates the store configuration. The type cannot change.
 	UpdateBlobStoreWithResponse(ctx context.Context, name Name, body UpdateBlobStoreJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateBlobStoreResponse, error)
 
+	// ListCleanupPoliciesWithResponse performs a GET /cleanup-policies (the `ListCleanupPolicies` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	ListCleanupPoliciesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListCleanupPoliciesResponse, error)
+
+	// CreateCleanupPolicyWithBodyWithResponse performs a POST /cleanup-policies (the `CreateCleanupPolicy` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	CreateCleanupPolicyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateCleanupPolicyResponse, error)
+
+	// CreateCleanupPolicyWithResponse performs a POST /cleanup-policies (the `CreateCleanupPolicy` operationId) request.
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	CreateCleanupPolicyWithResponse(ctx context.Context, body CreateCleanupPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateCleanupPolicyResponse, error)
+
+	// DeleteCleanupPolicyWithResponse performs a DELETE /cleanup-policies/{name} (the `DeleteCleanupPolicy` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	DeleteCleanupPolicyWithResponse(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*DeleteCleanupPolicyResponse, error)
+
+	// GetCleanupPolicyWithResponse performs a GET /cleanup-policies/{name} (the `GetCleanupPolicy` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	GetCleanupPolicyWithResponse(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*GetCleanupPolicyResponse, error)
+
+	// UpdateCleanupPolicyWithBodyWithResponse performs a PUT /cleanup-policies/{name} (the `UpdateCleanupPolicy` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	UpdateCleanupPolicyWithBodyWithResponse(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCleanupPolicyResponse, error)
+
+	// UpdateCleanupPolicyWithResponse performs a PUT /cleanup-policies/{name} (the `UpdateCleanupPolicy` operationId) request.
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	UpdateCleanupPolicyWithResponse(ctx context.Context, name Name, body UpdateCleanupPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCleanupPolicyResponse, error)
+
+	// PreviewCleanupPolicyWithResponse Dry run of a policy against a repository
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /cleanup-policies/{name}/preview (the `PreviewCleanupPolicy` operationId).
+	PreviewCleanupPolicyWithResponse(ctx context.Context, name Name, params *PreviewCleanupPolicyParams, reqEditors ...RequestEditorFn) (*PreviewCleanupPolicyResponse, error)
+
 	// DeleteComponentWithResponse performs a DELETE /components/{id} (the `DeleteComponent` operationId) request.
 	//
 	// Deletes the component and all of its assets.
@@ -3917,6 +6861,31 @@ type ClientWithResponsesInterface interface {
 	//
 	// Returns a wrapper object for the known response body format(s).
 	GetComponentWithResponse(ctx context.Context, id ID, reqEditors ...RequestEditorFn) (*GetComponentResponse, error)
+
+	// ScanComponentWithBodyWithResponse Queue scans of a component now
+	//
+	// Requires write permission on the repository. Without a body, the repository's configured scanners are used.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /components/{id}/scan (the `ScanComponent` operationId).
+	ScanComponentWithBodyWithResponse(ctx context.Context, id ID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScanComponentResponse, error)
+
+	// ScanComponentWithResponse Queue scans of a component now
+	//
+	// Requires write permission on the repository. Without a body, the repository's configured scanners are used.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /components/{id}/scan (the `ScanComponent` operationId).
+	ScanComponentWithResponse(ctx context.Context, id ID, body ScanComponentJSONRequestBody, reqEditors ...RequestEditorFn) (*ScanComponentResponse, error)
+
+	// GetComponentScansWithResponse Latest scan results, findings and recent jobs of a component
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /components/{id}/scans (the `GetComponentScans` operationId).
+	GetComponentScansWithResponse(ctx context.Context, id ID, reqEditors ...RequestEditorFn) (*GetComponentScansResponse, error)
 
 	// ListGitLabTrustPoliciesWithResponse performs a GET /gitlab-trust-policies (the `ListGitLabTrustPolicies` operationId) request.
 	//
@@ -4022,10 +6991,45 @@ type ClientWithResponsesInterface interface {
 	// Returns a wrapper object for the known response body format(s).
 	BrowseRepositoryWithResponse(ctx context.Context, name Name, params *BrowseRepositoryParams, reqEditors ...RequestEditorFn) (*BrowseRepositoryResponse, error)
 
+	// RunRepositoryCleanupWithResponse Run the repository's cleanup policies now (admin)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /repositories/{name}/cleanup (the `RunRepositoryCleanup` operationId).
+	RunRepositoryCleanupWithResponse(ctx context.Context, name Name, params *RunRepositoryCleanupParams, reqEditors ...RequestEditorFn) (*RunRepositoryCleanupResponse, error)
+
 	// ListRepositoryComponentsWithResponse performs a GET /repositories/{name}/components (the `ListRepositoryComponents` operationId) request.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	ListRepositoryComponentsWithResponse(ctx context.Context, name Name, params *ListRepositoryComponentsParams, reqEditors ...RequestEditorFn) (*ListRepositoryComponentsResponse, error)
+
+	// GetSigningKeyWithResponse Public signing key of an Apt/Yum repository (created on first use)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /repositories/{name}/signing-key (the `GetSigningKey` operationId).
+	GetSigningKeyWithResponse(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*GetSigningKeyResponse, error)
+
+	// ImportSigningKeyWithBodyWithResponse Replace the signing key with an imported OpenPGP private key (admin)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /repositories/{name}/signing-key (the `ImportSigningKey` operationId).
+	ImportSigningKeyWithBodyWithResponse(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ImportSigningKeyResponse, error)
+
+	// ImportSigningKeyWithResponse Replace the signing key with an imported OpenPGP private key (admin)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /repositories/{name}/signing-key (the `ImportSigningKey` operationId).
+	ImportSigningKeyWithResponse(ctx context.Context, name Name, body ImportSigningKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*ImportSigningKeyResponse, error)
+
+	// RotateSigningKeyWithResponse Generate a new signing key and re-sign metadata (admin)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /repositories/{name}/signing-key/rotate (the `RotateSigningKey` operationId).
+	RotateSigningKeyWithResponse(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*RotateSigningKeyResponse, error)
 
 	// UploadComponentWithBodyWithResponse performs a POST /repositories/{name}/upload (the `UploadComponent` operationId) request,
 	// with any type of body and a specified content type.
@@ -4098,6 +7102,129 @@ type ClientWithResponsesInterface interface {
 	// UpdateRoleWithResponse performs a PUT /roles/{name} (the `UpdateRole` operationId) request.
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	UpdateRoleWithResponse(ctx context.Context, name Name, body UpdateRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateRoleResponse, error)
+
+	// ListRoutingRulesWithResponse performs a GET /routing-rules (the `ListRoutingRules` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	ListRoutingRulesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListRoutingRulesResponse, error)
+
+	// CreateRoutingRuleWithBodyWithResponse performs a POST /routing-rules (the `CreateRoutingRule` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	CreateRoutingRuleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateRoutingRuleResponse, error)
+
+	// CreateRoutingRuleWithResponse performs a POST /routing-rules (the `CreateRoutingRule` operationId) request.
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	CreateRoutingRuleWithResponse(ctx context.Context, body CreateRoutingRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateRoutingRuleResponse, error)
+
+	// DeleteRoutingRuleWithResponse performs a DELETE /routing-rules/{name} (the `DeleteRoutingRule` operationId) request.
+	//
+	// Fails with 409 while proxy repositories use the rule.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	DeleteRoutingRuleWithResponse(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*DeleteRoutingRuleResponse, error)
+
+	// GetRoutingRuleWithResponse performs a GET /routing-rules/{name} (the `GetRoutingRule` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	GetRoutingRuleWithResponse(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*GetRoutingRuleResponse, error)
+
+	// UpdateRoutingRuleWithBodyWithResponse performs a PUT /routing-rules/{name} (the `UpdateRoutingRule` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	UpdateRoutingRuleWithBodyWithResponse(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateRoutingRuleResponse, error)
+
+	// UpdateRoutingRuleWithResponse performs a PUT /routing-rules/{name} (the `UpdateRoutingRule` operationId) request.
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	UpdateRoutingRuleWithResponse(ctx context.Context, name Name, body UpdateRoutingRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateRoutingRuleResponse, error)
+
+	// TestRoutingRuleWithBodyWithResponse performs a POST /routing-rules/{name}/test (the `TestRoutingRule` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	TestRoutingRuleWithBodyWithResponse(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TestRoutingRuleResponse, error)
+
+	// TestRoutingRuleWithResponse performs a POST /routing-rules/{name}/test (the `TestRoutingRule` operationId) request.
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	TestRoutingRuleWithResponse(ctx context.Context, name Name, body TestRoutingRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*TestRoutingRuleResponse, error)
+
+	// ListScanJobsWithResponse Scan queue (admin)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /scan-jobs (the `ListScanJobs` operationId).
+	ListScanJobsWithResponse(ctx context.Context, params *ListScanJobsParams, reqEditors ...RequestEditorFn) (*ListScanJobsResponse, error)
+
+	// GetScanJobArtifactWithResponse Download the artifact of a running webhook scan job
+	//
+	// Authenticated by the per-job token sent to the webhook (query parameter or Bearer header).
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /scan-jobs/{id}/artifact (the `GetScanJobArtifact` operationId).
+	GetScanJobArtifactWithResponse(ctx context.Context, id ID, params *GetScanJobArtifactParams, reqEditors ...RequestEditorFn) (*GetScanJobArtifactResponse, error)
+
+	// SubmitScanJobResultWithBodyWithResponse Webhook scanner callback with scan results
+	//
+	// Authenticated by the per-job token (Bearer header or `token` query parameter).
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /scan-jobs/{id}/result (the `SubmitScanJobResult` operationId).
+	SubmitScanJobResultWithBodyWithResponse(ctx context.Context, id ID, params *SubmitScanJobResultParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SubmitScanJobResultResponse, error)
+
+	// SubmitScanJobResultWithResponse Webhook scanner callback with scan results
+	//
+	// Authenticated by the per-job token (Bearer header or `token` query parameter).
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /scan-jobs/{id}/result (the `SubmitScanJobResult` operationId).
+	SubmitScanJobResultWithResponse(ctx context.Context, id ID, params *SubmitScanJobResultParams, body SubmitScanJobResultJSONRequestBody, reqEditors ...RequestEditorFn) (*SubmitScanJobResultResponse, error)
+
+	// ListScannersWithResponse performs a GET /scanners (the `ListScanners` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	ListScannersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListScannersResponse, error)
+
+	// CreateScannerWithBodyWithResponse performs a POST /scanners (the `CreateScanner` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	CreateScannerWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateScannerResponse, error)
+
+	// CreateScannerWithResponse performs a POST /scanners (the `CreateScanner` operationId) request.
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	CreateScannerWithResponse(ctx context.Context, body CreateScannerJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateScannerResponse, error)
+
+	// DeleteScannerWithResponse performs a DELETE /scanners/{name} (the `DeleteScanner` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	DeleteScannerWithResponse(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*DeleteScannerResponse, error)
+
+	// GetScannerWithResponse performs a GET /scanners/{name} (the `GetScanner` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	GetScannerWithResponse(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*GetScannerResponse, error)
+
+	// UpdateScannerWithBodyWithResponse performs a PUT /scanners/{name} (the `UpdateScanner` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	UpdateScannerWithBodyWithResponse(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateScannerResponse, error)
+
+	// UpdateScannerWithResponse performs a PUT /scanners/{name} (the `UpdateScanner` operationId) request.
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	UpdateScannerWithResponse(ctx context.Context, name Name, body UpdateScannerJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateScannerResponse, error)
+
+	// TestScannerWithResponse Check the scanner is reachable and report its version
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /scanners/{name}/test (the `TestScanner` operationId).
+	TestScannerWithResponse(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*TestScannerResponse, error)
 
 	// SearchComponentsWithResponse performs a GET /search (the `SearchComponents` operationId) request.
 	//
@@ -4188,6 +7315,41 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /users (the `ListUsers` operationId).
 	ListUsersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListUsersResponse, error)
+
+	// ListWaiversWithResponse performs a GET /waivers (the `ListWaivers` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	ListWaiversWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListWaiversResponse, error)
+
+	// CreateWaiverWithBodyWithResponse performs a POST /waivers (the `CreateWaiver` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	CreateWaiverWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateWaiverResponse, error)
+
+	// CreateWaiverWithResponse performs a POST /waivers (the `CreateWaiver` operationId) request.
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	CreateWaiverWithResponse(ctx context.Context, body CreateWaiverJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateWaiverResponse, error)
+
+	// DeleteWaiverWithResponse performs a DELETE /waivers/{id} (the `DeleteWaiver` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	DeleteWaiverWithResponse(ctx context.Context, id ID, reqEditors ...RequestEditorFn) (*DeleteWaiverResponse, error)
+
+	// GetWaiverWithResponse performs a GET /waivers/{id} (the `GetWaiver` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	GetWaiverWithResponse(ctx context.Context, id ID, reqEditors ...RequestEditorFn) (*GetWaiverResponse, error)
+
+	// UpdateWaiverWithBodyWithResponse performs a PUT /waivers/{id} (the `UpdateWaiver` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	UpdateWaiverWithBodyWithResponse(ctx context.Context, id ID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateWaiverResponse, error)
+
+	// UpdateWaiverWithResponse performs a PUT /waivers/{id} (the `UpdateWaiver` operationId) request.
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	UpdateWaiverWithResponse(ctx context.Context, id ID, body UpdateWaiverJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateWaiverResponse, error)
 }
 
 type DeleteAssetResponse struct {
@@ -4601,6 +7763,287 @@ func (r UpdateBlobStoreResponse) ContentType() string {
 	return ""
 }
 
+type ListCleanupPoliciesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]CleanupPolicy
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListCleanupPoliciesResponse) GetJSON200() *[]CleanupPolicy {
+	return r.JSON200
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r ListCleanupPoliciesResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListCleanupPoliciesResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListCleanupPoliciesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListCleanupPoliciesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListCleanupPoliciesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type CreateCleanupPolicyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *CleanupPolicy
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateCleanupPolicyResponse) GetJSON201() *CleanupPolicy {
+	return r.JSON201
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r CreateCleanupPolicyResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateCleanupPolicyResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateCleanupPolicyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateCleanupPolicyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateCleanupPolicyResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type DeleteCleanupPolicyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r DeleteCleanupPolicyResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r DeleteCleanupPolicyResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteCleanupPolicyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteCleanupPolicyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteCleanupPolicyResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetCleanupPolicyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CleanupPolicy
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetCleanupPolicyResponse) GetJSON200() *CleanupPolicy {
+	return r.JSON200
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r GetCleanupPolicyResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetCleanupPolicyResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCleanupPolicyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCleanupPolicyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetCleanupPolicyResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type UpdateCleanupPolicyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CleanupPolicy
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r UpdateCleanupPolicyResponse) GetJSON200() *CleanupPolicy {
+	return r.JSON200
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r UpdateCleanupPolicyResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdateCleanupPolicyResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateCleanupPolicyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateCleanupPolicyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateCleanupPolicyResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type PreviewCleanupPolicyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CleanupRunResult
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r PreviewCleanupPolicyResponse) GetJSON200() *CleanupRunResult {
+	return r.JSON200
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r PreviewCleanupPolicyResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r PreviewCleanupPolicyResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r PreviewCleanupPolicyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PreviewCleanupPolicyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r PreviewCleanupPolicyResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type DeleteComponentResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -4684,6 +8127,102 @@ func (r GetComponentResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r GetComponentResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ScanComponentResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON202 the response for an HTTP 202 `application/json` response
+	JSON202 *[]ScanJob
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON202 returns the response for an HTTP 202 `application/json` response
+func (r ScanComponentResponse) GetJSON202() *[]ScanJob {
+	return r.JSON202
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r ScanComponentResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ScanComponentResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ScanComponentResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ScanComponentResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ScanComponentResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetComponentScansResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ComponentScans
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetComponentScansResponse) GetJSON200() *ComponentScans {
+	return r.JSON200
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r GetComponentScansResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetComponentScansResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetComponentScansResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetComponentScansResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetComponentScansResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -5345,6 +8884,54 @@ func (r BrowseRepositoryResponse) ContentType() string {
 	return ""
 }
 
+type RunRepositoryCleanupResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CleanupRunResult
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r RunRepositoryCleanupResponse) GetJSON200() *CleanupRunResult {
+	return r.JSON200
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r RunRepositoryCleanupResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r RunRepositoryCleanupResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r RunRepositoryCleanupResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RunRepositoryCleanupResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r RunRepositoryCleanupResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type ListRepositoryComponentsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -5387,6 +8974,150 @@ func (r ListRepositoryComponentsResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r ListRepositoryComponentsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetSigningKeyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *SigningKey
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetSigningKeyResponse) GetJSON200() *SigningKey {
+	return r.JSON200
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r GetSigningKeyResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetSigningKeyResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetSigningKeyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetSigningKeyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetSigningKeyResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ImportSigningKeyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *SigningKey
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ImportSigningKeyResponse) GetJSON200() *SigningKey {
+	return r.JSON200
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r ImportSigningKeyResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ImportSigningKeyResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ImportSigningKeyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ImportSigningKeyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ImportSigningKeyResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type RotateSigningKeyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *SigningKey
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r RotateSigningKeyResponse) GetJSON200() *SigningKey {
+	return r.JSON200
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r RotateSigningKeyResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r RotateSigningKeyResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r RotateSigningKeyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RotateSigningKeyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r RotateSigningKeyResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -5853,6 +9584,698 @@ func (r UpdateRoleResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r UpdateRoleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListRoutingRulesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]RoutingRule
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListRoutingRulesResponse) GetJSON200() *[]RoutingRule {
+	return r.JSON200
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r ListRoutingRulesResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListRoutingRulesResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListRoutingRulesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListRoutingRulesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListRoutingRulesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type CreateRoutingRuleResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *RoutingRule
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateRoutingRuleResponse) GetJSON201() *RoutingRule {
+	return r.JSON201
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r CreateRoutingRuleResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateRoutingRuleResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateRoutingRuleResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateRoutingRuleResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateRoutingRuleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type DeleteRoutingRuleResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r DeleteRoutingRuleResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r DeleteRoutingRuleResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteRoutingRuleResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteRoutingRuleResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteRoutingRuleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetRoutingRuleResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *RoutingRule
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetRoutingRuleResponse) GetJSON200() *RoutingRule {
+	return r.JSON200
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r GetRoutingRuleResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetRoutingRuleResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetRoutingRuleResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetRoutingRuleResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetRoutingRuleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type UpdateRoutingRuleResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *RoutingRule
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r UpdateRoutingRuleResponse) GetJSON200() *RoutingRule {
+	return r.JSON200
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r UpdateRoutingRuleResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdateRoutingRuleResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateRoutingRuleResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateRoutingRuleResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateRoutingRuleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type TestRoutingRuleResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *RoutingTestResult
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r TestRoutingRuleResponse) GetJSON200() *RoutingTestResult {
+	return r.JSON200
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r TestRoutingRuleResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r TestRoutingRuleResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r TestRoutingRuleResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestRoutingRuleResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r TestRoutingRuleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListScanJobsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]ScanJob
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListScanJobsResponse) GetJSON200() *[]ScanJob {
+	return r.JSON200
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r ListScanJobsResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListScanJobsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListScanJobsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListScanJobsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListScanJobsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetScanJobArtifactResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r GetScanJobArtifactResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetScanJobArtifactResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetScanJobArtifactResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetScanJobArtifactResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetScanJobArtifactResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type SubmitScanJobResultResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r SubmitScanJobResultResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r SubmitScanJobResultResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r SubmitScanJobResultResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SubmitScanJobResultResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SubmitScanJobResultResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListScannersResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]Scanner
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListScannersResponse) GetJSON200() *[]Scanner {
+	return r.JSON200
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r ListScannersResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListScannersResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListScannersResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListScannersResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListScannersResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type CreateScannerResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *Scanner
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateScannerResponse) GetJSON201() *Scanner {
+	return r.JSON201
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r CreateScannerResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateScannerResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateScannerResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateScannerResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateScannerResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type DeleteScannerResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r DeleteScannerResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r DeleteScannerResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteScannerResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteScannerResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteScannerResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetScannerResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Scanner
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetScannerResponse) GetJSON200() *Scanner {
+	return r.JSON200
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r GetScannerResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetScannerResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetScannerResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetScannerResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetScannerResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type UpdateScannerResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Scanner
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r UpdateScannerResponse) GetJSON200() *Scanner {
+	return r.JSON200
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r UpdateScannerResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdateScannerResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateScannerResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateScannerResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateScannerResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type TestScannerResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ScannerTestResult
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r TestScannerResponse) GetJSON200() *ScannerTestResult {
+	return r.JSON200
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r TestScannerResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r TestScannerResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r TestScannerResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestScannerResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r TestScannerResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -6455,6 +10878,239 @@ func (r ListUsersResponse) ContentType() string {
 	return ""
 }
 
+type ListWaiversResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]Waiver
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListWaiversResponse) GetJSON200() *[]Waiver {
+	return r.JSON200
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r ListWaiversResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListWaiversResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListWaiversResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListWaiversResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListWaiversResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type CreateWaiverResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *Waiver
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateWaiverResponse) GetJSON201() *Waiver {
+	return r.JSON201
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r CreateWaiverResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateWaiverResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateWaiverResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateWaiverResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateWaiverResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type DeleteWaiverResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r DeleteWaiverResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r DeleteWaiverResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteWaiverResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteWaiverResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteWaiverResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetWaiverResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Waiver
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetWaiverResponse) GetJSON200() *Waiver {
+	return r.JSON200
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r GetWaiverResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetWaiverResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetWaiverResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetWaiverResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetWaiverResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type UpdateWaiverResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Waiver
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r UpdateWaiverResponse) GetJSON200() *Waiver {
+	return r.JSON200
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r UpdateWaiverResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdateWaiverResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateWaiverResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateWaiverResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateWaiverResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // DeleteAssetWithResponse performs a DELETE /assets/{id} (the `DeleteAsset` operationId) request.
 //
 // Returns a wrapper object for the known response body format(s).
@@ -6584,6 +11240,96 @@ func (c *ClientWithResponses) UpdateBlobStoreWithResponse(ctx context.Context, n
 	return ParseUpdateBlobStoreResponse(rsp)
 }
 
+// ListCleanupPoliciesWithResponse performs a GET /cleanup-policies (the `ListCleanupPolicies` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ListCleanupPoliciesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListCleanupPoliciesResponse, error) {
+	rsp, err := c.ListCleanupPolicies(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListCleanupPoliciesResponse(rsp)
+}
+
+// CreateCleanupPolicyWithBodyWithResponse performs a POST /cleanup-policies (the `CreateCleanupPolicy` operationId) request,
+// with any type of body and a specified content type.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) CreateCleanupPolicyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateCleanupPolicyResponse, error) {
+	rsp, err := c.CreateCleanupPolicyWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateCleanupPolicyResponse(rsp)
+}
+
+// CreateCleanupPolicyWithResponse performs a POST /cleanup-policies (the `CreateCleanupPolicy` operationId) request.
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) CreateCleanupPolicyWithResponse(ctx context.Context, body CreateCleanupPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateCleanupPolicyResponse, error) {
+	rsp, err := c.CreateCleanupPolicy(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateCleanupPolicyResponse(rsp)
+}
+
+// DeleteCleanupPolicyWithResponse performs a DELETE /cleanup-policies/{name} (the `DeleteCleanupPolicy` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) DeleteCleanupPolicyWithResponse(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*DeleteCleanupPolicyResponse, error) {
+	rsp, err := c.DeleteCleanupPolicy(ctx, name, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteCleanupPolicyResponse(rsp)
+}
+
+// GetCleanupPolicyWithResponse performs a GET /cleanup-policies/{name} (the `GetCleanupPolicy` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) GetCleanupPolicyWithResponse(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*GetCleanupPolicyResponse, error) {
+	rsp, err := c.GetCleanupPolicy(ctx, name, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCleanupPolicyResponse(rsp)
+}
+
+// UpdateCleanupPolicyWithBodyWithResponse performs a PUT /cleanup-policies/{name} (the `UpdateCleanupPolicy` operationId) request,
+// with any type of body and a specified content type.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) UpdateCleanupPolicyWithBodyWithResponse(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCleanupPolicyResponse, error) {
+	rsp, err := c.UpdateCleanupPolicyWithBody(ctx, name, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateCleanupPolicyResponse(rsp)
+}
+
+// UpdateCleanupPolicyWithResponse performs a PUT /cleanup-policies/{name} (the `UpdateCleanupPolicy` operationId) request.
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) UpdateCleanupPolicyWithResponse(ctx context.Context, name Name, body UpdateCleanupPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCleanupPolicyResponse, error) {
+	rsp, err := c.UpdateCleanupPolicy(ctx, name, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateCleanupPolicyResponse(rsp)
+}
+
+// PreviewCleanupPolicyWithResponse Dry run of a policy against a repository
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /cleanup-policies/{name}/preview (the `PreviewCleanupPolicy` operationId).
+func (c *ClientWithResponses) PreviewCleanupPolicyWithResponse(ctx context.Context, name Name, params *PreviewCleanupPolicyParams, reqEditors ...RequestEditorFn) (*PreviewCleanupPolicyResponse, error) {
+	rsp, err := c.PreviewCleanupPolicy(ctx, name, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePreviewCleanupPolicyResponse(rsp)
+}
+
 // DeleteComponentWithResponse performs a DELETE /components/{id} (the `DeleteComponent` operationId) request.
 //
 // Deletes the component and all of its assets.
@@ -6606,6 +11352,49 @@ func (c *ClientWithResponses) GetComponentWithResponse(ctx context.Context, id I
 		return nil, err
 	}
 	return ParseGetComponentResponse(rsp)
+}
+
+// ScanComponentWithBodyWithResponse Queue scans of a component now
+//
+// Requires write permission on the repository. Without a body, the repository's configured scanners are used.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /components/{id}/scan (the `ScanComponent` operationId).
+func (c *ClientWithResponses) ScanComponentWithBodyWithResponse(ctx context.Context, id ID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScanComponentResponse, error) {
+	rsp, err := c.ScanComponentWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseScanComponentResponse(rsp)
+}
+
+// ScanComponentWithResponse Queue scans of a component now
+//
+// Requires write permission on the repository. Without a body, the repository's configured scanners are used.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /components/{id}/scan (the `ScanComponent` operationId).
+func (c *ClientWithResponses) ScanComponentWithResponse(ctx context.Context, id ID, body ScanComponentJSONRequestBody, reqEditors ...RequestEditorFn) (*ScanComponentResponse, error) {
+	rsp, err := c.ScanComponent(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseScanComponentResponse(rsp)
+}
+
+// GetComponentScansWithResponse Latest scan results, findings and recent jobs of a component
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /components/{id}/scans (the `GetComponentScans` operationId).
+func (c *ClientWithResponses) GetComponentScansWithResponse(ctx context.Context, id ID, reqEditors ...RequestEditorFn) (*GetComponentScansResponse, error) {
+	rsp, err := c.GetComponentScans(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetComponentScansResponse(rsp)
 }
 
 // ListGitLabTrustPoliciesWithResponse performs a GET /gitlab-trust-policies (the `ListGitLabTrustPolicies` operationId) request.
@@ -6820,6 +11609,19 @@ func (c *ClientWithResponses) BrowseRepositoryWithResponse(ctx context.Context, 
 	return ParseBrowseRepositoryResponse(rsp)
 }
 
+// RunRepositoryCleanupWithResponse Run the repository's cleanup policies now (admin)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /repositories/{name}/cleanup (the `RunRepositoryCleanup` operationId).
+func (c *ClientWithResponses) RunRepositoryCleanupWithResponse(ctx context.Context, name Name, params *RunRepositoryCleanupParams, reqEditors ...RequestEditorFn) (*RunRepositoryCleanupResponse, error) {
+	rsp, err := c.RunRepositoryCleanup(ctx, name, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRunRepositoryCleanupResponse(rsp)
+}
+
 // ListRepositoryComponentsWithResponse performs a GET /repositories/{name}/components (the `ListRepositoryComponents` operationId) request.
 //
 // Returns a wrapper object for the known response body format(s).
@@ -6829,6 +11631,58 @@ func (c *ClientWithResponses) ListRepositoryComponentsWithResponse(ctx context.C
 		return nil, err
 	}
 	return ParseListRepositoryComponentsResponse(rsp)
+}
+
+// GetSigningKeyWithResponse Public signing key of an Apt/Yum repository (created on first use)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /repositories/{name}/signing-key (the `GetSigningKey` operationId).
+func (c *ClientWithResponses) GetSigningKeyWithResponse(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*GetSigningKeyResponse, error) {
+	rsp, err := c.GetSigningKey(ctx, name, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetSigningKeyResponse(rsp)
+}
+
+// ImportSigningKeyWithBodyWithResponse Replace the signing key with an imported OpenPGP private key (admin)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /repositories/{name}/signing-key (the `ImportSigningKey` operationId).
+func (c *ClientWithResponses) ImportSigningKeyWithBodyWithResponse(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ImportSigningKeyResponse, error) {
+	rsp, err := c.ImportSigningKeyWithBody(ctx, name, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseImportSigningKeyResponse(rsp)
+}
+
+// ImportSigningKeyWithResponse Replace the signing key with an imported OpenPGP private key (admin)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /repositories/{name}/signing-key (the `ImportSigningKey` operationId).
+func (c *ClientWithResponses) ImportSigningKeyWithResponse(ctx context.Context, name Name, body ImportSigningKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*ImportSigningKeyResponse, error) {
+	rsp, err := c.ImportSigningKey(ctx, name, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseImportSigningKeyResponse(rsp)
+}
+
+// RotateSigningKeyWithResponse Generate a new signing key and re-sign metadata (admin)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /repositories/{name}/signing-key/rotate (the `RotateSigningKey` operationId).
+func (c *ClientWithResponses) RotateSigningKeyWithResponse(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*RotateSigningKeyResponse, error) {
+	rsp, err := c.RotateSigningKey(ctx, name, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRotateSigningKeyResponse(rsp)
 }
 
 // UploadComponentWithBodyWithResponse performs a POST /repositories/{name}/upload (the `UploadComponent` operationId) request,
@@ -6979,6 +11833,255 @@ func (c *ClientWithResponses) UpdateRoleWithResponse(ctx context.Context, name N
 		return nil, err
 	}
 	return ParseUpdateRoleResponse(rsp)
+}
+
+// ListRoutingRulesWithResponse performs a GET /routing-rules (the `ListRoutingRules` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ListRoutingRulesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListRoutingRulesResponse, error) {
+	rsp, err := c.ListRoutingRules(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListRoutingRulesResponse(rsp)
+}
+
+// CreateRoutingRuleWithBodyWithResponse performs a POST /routing-rules (the `CreateRoutingRule` operationId) request,
+// with any type of body and a specified content type.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) CreateRoutingRuleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateRoutingRuleResponse, error) {
+	rsp, err := c.CreateRoutingRuleWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateRoutingRuleResponse(rsp)
+}
+
+// CreateRoutingRuleWithResponse performs a POST /routing-rules (the `CreateRoutingRule` operationId) request.
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) CreateRoutingRuleWithResponse(ctx context.Context, body CreateRoutingRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateRoutingRuleResponse, error) {
+	rsp, err := c.CreateRoutingRule(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateRoutingRuleResponse(rsp)
+}
+
+// DeleteRoutingRuleWithResponse performs a DELETE /routing-rules/{name} (the `DeleteRoutingRule` operationId) request.
+//
+// Fails with 409 while proxy repositories use the rule.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) DeleteRoutingRuleWithResponse(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*DeleteRoutingRuleResponse, error) {
+	rsp, err := c.DeleteRoutingRule(ctx, name, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteRoutingRuleResponse(rsp)
+}
+
+// GetRoutingRuleWithResponse performs a GET /routing-rules/{name} (the `GetRoutingRule` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) GetRoutingRuleWithResponse(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*GetRoutingRuleResponse, error) {
+	rsp, err := c.GetRoutingRule(ctx, name, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetRoutingRuleResponse(rsp)
+}
+
+// UpdateRoutingRuleWithBodyWithResponse performs a PUT /routing-rules/{name} (the `UpdateRoutingRule` operationId) request,
+// with any type of body and a specified content type.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) UpdateRoutingRuleWithBodyWithResponse(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateRoutingRuleResponse, error) {
+	rsp, err := c.UpdateRoutingRuleWithBody(ctx, name, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateRoutingRuleResponse(rsp)
+}
+
+// UpdateRoutingRuleWithResponse performs a PUT /routing-rules/{name} (the `UpdateRoutingRule` operationId) request.
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) UpdateRoutingRuleWithResponse(ctx context.Context, name Name, body UpdateRoutingRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateRoutingRuleResponse, error) {
+	rsp, err := c.UpdateRoutingRule(ctx, name, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateRoutingRuleResponse(rsp)
+}
+
+// TestRoutingRuleWithBodyWithResponse performs a POST /routing-rules/{name}/test (the `TestRoutingRule` operationId) request,
+// with any type of body and a specified content type.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) TestRoutingRuleWithBodyWithResponse(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TestRoutingRuleResponse, error) {
+	rsp, err := c.TestRoutingRuleWithBody(ctx, name, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestRoutingRuleResponse(rsp)
+}
+
+// TestRoutingRuleWithResponse performs a POST /routing-rules/{name}/test (the `TestRoutingRule` operationId) request.
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) TestRoutingRuleWithResponse(ctx context.Context, name Name, body TestRoutingRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*TestRoutingRuleResponse, error) {
+	rsp, err := c.TestRoutingRule(ctx, name, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestRoutingRuleResponse(rsp)
+}
+
+// ListScanJobsWithResponse Scan queue (admin)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /scan-jobs (the `ListScanJobs` operationId).
+func (c *ClientWithResponses) ListScanJobsWithResponse(ctx context.Context, params *ListScanJobsParams, reqEditors ...RequestEditorFn) (*ListScanJobsResponse, error) {
+	rsp, err := c.ListScanJobs(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListScanJobsResponse(rsp)
+}
+
+// GetScanJobArtifactWithResponse Download the artifact of a running webhook scan job
+//
+// Authenticated by the per-job token sent to the webhook (query parameter or Bearer header).
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /scan-jobs/{id}/artifact (the `GetScanJobArtifact` operationId).
+func (c *ClientWithResponses) GetScanJobArtifactWithResponse(ctx context.Context, id ID, params *GetScanJobArtifactParams, reqEditors ...RequestEditorFn) (*GetScanJobArtifactResponse, error) {
+	rsp, err := c.GetScanJobArtifact(ctx, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetScanJobArtifactResponse(rsp)
+}
+
+// SubmitScanJobResultWithBodyWithResponse Webhook scanner callback with scan results
+//
+// Authenticated by the per-job token (Bearer header or `token` query parameter).
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /scan-jobs/{id}/result (the `SubmitScanJobResult` operationId).
+func (c *ClientWithResponses) SubmitScanJobResultWithBodyWithResponse(ctx context.Context, id ID, params *SubmitScanJobResultParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SubmitScanJobResultResponse, error) {
+	rsp, err := c.SubmitScanJobResultWithBody(ctx, id, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSubmitScanJobResultResponse(rsp)
+}
+
+// SubmitScanJobResultWithResponse Webhook scanner callback with scan results
+//
+// Authenticated by the per-job token (Bearer header or `token` query parameter).
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /scan-jobs/{id}/result (the `SubmitScanJobResult` operationId).
+func (c *ClientWithResponses) SubmitScanJobResultWithResponse(ctx context.Context, id ID, params *SubmitScanJobResultParams, body SubmitScanJobResultJSONRequestBody, reqEditors ...RequestEditorFn) (*SubmitScanJobResultResponse, error) {
+	rsp, err := c.SubmitScanJobResult(ctx, id, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSubmitScanJobResultResponse(rsp)
+}
+
+// ListScannersWithResponse performs a GET /scanners (the `ListScanners` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ListScannersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListScannersResponse, error) {
+	rsp, err := c.ListScanners(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListScannersResponse(rsp)
+}
+
+// CreateScannerWithBodyWithResponse performs a POST /scanners (the `CreateScanner` operationId) request,
+// with any type of body and a specified content type.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) CreateScannerWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateScannerResponse, error) {
+	rsp, err := c.CreateScannerWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateScannerResponse(rsp)
+}
+
+// CreateScannerWithResponse performs a POST /scanners (the `CreateScanner` operationId) request.
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) CreateScannerWithResponse(ctx context.Context, body CreateScannerJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateScannerResponse, error) {
+	rsp, err := c.CreateScanner(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateScannerResponse(rsp)
+}
+
+// DeleteScannerWithResponse performs a DELETE /scanners/{name} (the `DeleteScanner` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) DeleteScannerWithResponse(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*DeleteScannerResponse, error) {
+	rsp, err := c.DeleteScanner(ctx, name, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteScannerResponse(rsp)
+}
+
+// GetScannerWithResponse performs a GET /scanners/{name} (the `GetScanner` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) GetScannerWithResponse(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*GetScannerResponse, error) {
+	rsp, err := c.GetScanner(ctx, name, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetScannerResponse(rsp)
+}
+
+// UpdateScannerWithBodyWithResponse performs a PUT /scanners/{name} (the `UpdateScanner` operationId) request,
+// with any type of body and a specified content type.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) UpdateScannerWithBodyWithResponse(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateScannerResponse, error) {
+	rsp, err := c.UpdateScannerWithBody(ctx, name, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateScannerResponse(rsp)
+}
+
+// UpdateScannerWithResponse performs a PUT /scanners/{name} (the `UpdateScanner` operationId) request.
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) UpdateScannerWithResponse(ctx context.Context, name Name, body UpdateScannerJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateScannerResponse, error) {
+	rsp, err := c.UpdateScanner(ctx, name, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateScannerResponse(rsp)
+}
+
+// TestScannerWithResponse Check the scanner is reachable and report its version
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /scanners/{name}/test (the `TestScanner` operationId).
+func (c *ClientWithResponses) TestScannerWithResponse(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*TestScannerResponse, error) {
+	rsp, err := c.TestScanner(ctx, name, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestScannerResponse(rsp)
 }
 
 // SearchComponentsWithResponse performs a GET /search (the `SearchComponents` operationId) request.
@@ -7165,6 +12268,83 @@ func (c *ClientWithResponses) ListUsersWithResponse(ctx context.Context, reqEdit
 		return nil, err
 	}
 	return ParseListUsersResponse(rsp)
+}
+
+// ListWaiversWithResponse performs a GET /waivers (the `ListWaivers` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ListWaiversWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListWaiversResponse, error) {
+	rsp, err := c.ListWaivers(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListWaiversResponse(rsp)
+}
+
+// CreateWaiverWithBodyWithResponse performs a POST /waivers (the `CreateWaiver` operationId) request,
+// with any type of body and a specified content type.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) CreateWaiverWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateWaiverResponse, error) {
+	rsp, err := c.CreateWaiverWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateWaiverResponse(rsp)
+}
+
+// CreateWaiverWithResponse performs a POST /waivers (the `CreateWaiver` operationId) request.
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) CreateWaiverWithResponse(ctx context.Context, body CreateWaiverJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateWaiverResponse, error) {
+	rsp, err := c.CreateWaiver(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateWaiverResponse(rsp)
+}
+
+// DeleteWaiverWithResponse performs a DELETE /waivers/{id} (the `DeleteWaiver` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) DeleteWaiverWithResponse(ctx context.Context, id ID, reqEditors ...RequestEditorFn) (*DeleteWaiverResponse, error) {
+	rsp, err := c.DeleteWaiver(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteWaiverResponse(rsp)
+}
+
+// GetWaiverWithResponse performs a GET /waivers/{id} (the `GetWaiver` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) GetWaiverWithResponse(ctx context.Context, id ID, reqEditors ...RequestEditorFn) (*GetWaiverResponse, error) {
+	rsp, err := c.GetWaiver(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetWaiverResponse(rsp)
+}
+
+// UpdateWaiverWithBodyWithResponse performs a PUT /waivers/{id} (the `UpdateWaiver` operationId) request,
+// with any type of body and a specified content type.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) UpdateWaiverWithBodyWithResponse(ctx context.Context, id ID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateWaiverResponse, error) {
+	rsp, err := c.UpdateWaiverWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateWaiverResponse(rsp)
+}
+
+// UpdateWaiverWithResponse performs a PUT /waivers/{id} (the `UpdateWaiver` operationId) request.
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) UpdateWaiverWithResponse(ctx context.Context, id ID, body UpdateWaiverJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateWaiverResponse, error) {
+	rsp, err := c.UpdateWaiver(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateWaiverResponse(rsp)
 }
 
 // ParseDeleteAssetResponse parses an HTTP response from a DeleteAssetWithResponse call
@@ -7449,6 +12629,200 @@ func ParseUpdateBlobStoreResponse(rsp *http.Response) (*UpdateBlobStoreResponse,
 	return response, nil
 }
 
+// ParseListCleanupPoliciesResponse parses an HTTP response from a ListCleanupPoliciesWithResponse call
+func ParseListCleanupPoliciesResponse(rsp *http.Response) (*ListCleanupPoliciesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListCleanupPoliciesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []CleanupPolicy
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateCleanupPolicyResponse parses an HTTP response from a CreateCleanupPolicyWithResponse call
+func ParseCreateCleanupPolicyResponse(rsp *http.Response) (*CreateCleanupPolicyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateCleanupPolicyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest CleanupPolicy
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteCleanupPolicyResponse parses an HTTP response from a DeleteCleanupPolicyWithResponse call
+func ParseDeleteCleanupPolicyResponse(rsp *http.Response) (*DeleteCleanupPolicyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteCleanupPolicyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetCleanupPolicyResponse parses an HTTP response from a GetCleanupPolicyWithResponse call
+func ParseGetCleanupPolicyResponse(rsp *http.Response) (*GetCleanupPolicyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCleanupPolicyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CleanupPolicy
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateCleanupPolicyResponse parses an HTTP response from a UpdateCleanupPolicyWithResponse call
+func ParseUpdateCleanupPolicyResponse(rsp *http.Response) (*UpdateCleanupPolicyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateCleanupPolicyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CleanupPolicy
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePreviewCleanupPolicyResponse parses an HTTP response from a PreviewCleanupPolicyWithResponse call
+func ParsePreviewCleanupPolicyResponse(rsp *http.Response) (*PreviewCleanupPolicyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PreviewCleanupPolicyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CleanupRunResult
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseDeleteComponentResponse parses an HTTP response from a DeleteComponentWithResponse call
 func ParseDeleteComponentResponse(rsp *http.Response) (*DeleteComponentResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -7494,6 +12868,72 @@ func ParseGetComponentResponse(rsp *http.Response) (*GetComponentResponse, error
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest ComponentDetail
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseScanComponentResponse parses an HTTP response from a ScanComponentWithResponse call
+func ParseScanComponentResponse(rsp *http.Response) (*ScanComponentResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ScanComponentResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 202:
+		var dest []ScanJob
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON202 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetComponentScansResponse parses an HTTP response from a GetComponentScansWithResponse call
+func ParseGetComponentScansResponse(rsp *http.Response) (*GetComponentScansResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetComponentScansResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ComponentScans
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -7960,6 +13400,39 @@ func ParseBrowseRepositoryResponse(rsp *http.Response) (*BrowseRepositoryRespons
 	return response, nil
 }
 
+// ParseRunRepositoryCleanupResponse parses an HTTP response from a RunRepositoryCleanupWithResponse call
+func ParseRunRepositoryCleanupResponse(rsp *http.Response) (*RunRepositoryCleanupResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RunRepositoryCleanupResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CleanupRunResult
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListRepositoryComponentsResponse parses an HTTP response from a ListRepositoryComponentsWithResponse call
 func ParseListRepositoryComponentsResponse(rsp *http.Response) (*ListRepositoryComponentsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -7976,6 +13449,105 @@ func ParseListRepositoryComponentsResponse(rsp *http.Response) (*ListRepositoryC
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest []Component
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetSigningKeyResponse parses an HTTP response from a GetSigningKeyWithResponse call
+func ParseGetSigningKeyResponse(rsp *http.Response) (*GetSigningKeyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetSigningKeyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SigningKey
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseImportSigningKeyResponse parses an HTTP response from a ImportSigningKeyWithResponse call
+func ParseImportSigningKeyResponse(rsp *http.Response) (*ImportSigningKeyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ImportSigningKeyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SigningKey
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseRotateSigningKeyResponse parses an HTTP response from a RotateSigningKeyWithResponse call
+func ParseRotateSigningKeyResponse(rsp *http.Response) (*RotateSigningKeyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RotateSigningKeyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SigningKey
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -8298,6 +13870,482 @@ func ParseUpdateRoleResponse(rsp *http.Response) (*UpdateRoleResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Role
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListRoutingRulesResponse parses an HTTP response from a ListRoutingRulesWithResponse call
+func ParseListRoutingRulesResponse(rsp *http.Response) (*ListRoutingRulesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListRoutingRulesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []RoutingRule
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateRoutingRuleResponse parses an HTTP response from a CreateRoutingRuleWithResponse call
+func ParseCreateRoutingRuleResponse(rsp *http.Response) (*CreateRoutingRuleResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateRoutingRuleResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest RoutingRule
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteRoutingRuleResponse parses an HTTP response from a DeleteRoutingRuleWithResponse call
+func ParseDeleteRoutingRuleResponse(rsp *http.Response) (*DeleteRoutingRuleResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteRoutingRuleResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetRoutingRuleResponse parses an HTTP response from a GetRoutingRuleWithResponse call
+func ParseGetRoutingRuleResponse(rsp *http.Response) (*GetRoutingRuleResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetRoutingRuleResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest RoutingRule
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateRoutingRuleResponse parses an HTTP response from a UpdateRoutingRuleWithResponse call
+func ParseUpdateRoutingRuleResponse(rsp *http.Response) (*UpdateRoutingRuleResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateRoutingRuleResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest RoutingRule
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseTestRoutingRuleResponse parses an HTTP response from a TestRoutingRuleWithResponse call
+func ParseTestRoutingRuleResponse(rsp *http.Response) (*TestRoutingRuleResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestRoutingRuleResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest RoutingTestResult
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListScanJobsResponse parses an HTTP response from a ListScanJobsWithResponse call
+func ParseListScanJobsResponse(rsp *http.Response) (*ListScanJobsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListScanJobsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []ScanJob
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetScanJobArtifactResponse parses an HTTP response from a GetScanJobArtifactWithResponse call
+func ParseGetScanJobArtifactResponse(rsp *http.Response) (*GetScanJobArtifactResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetScanJobArtifactResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSubmitScanJobResultResponse parses an HTTP response from a SubmitScanJobResultWithResponse call
+func ParseSubmitScanJobResultResponse(rsp *http.Response) (*SubmitScanJobResultResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SubmitScanJobResultResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListScannersResponse parses an HTTP response from a ListScannersWithResponse call
+func ParseListScannersResponse(rsp *http.Response) (*ListScannersResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListScannersResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Scanner
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateScannerResponse parses an HTTP response from a CreateScannerWithResponse call
+func ParseCreateScannerResponse(rsp *http.Response) (*CreateScannerResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateScannerResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest Scanner
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteScannerResponse parses an HTTP response from a DeleteScannerWithResponse call
+func ParseDeleteScannerResponse(rsp *http.Response) (*DeleteScannerResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteScannerResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetScannerResponse parses an HTTP response from a GetScannerWithResponse call
+func ParseGetScannerResponse(rsp *http.Response) (*GetScannerResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetScannerResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Scanner
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateScannerResponse parses an HTTP response from a UpdateScannerWithResponse call
+func ParseUpdateScannerResponse(rsp *http.Response) (*UpdateScannerResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateScannerResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Scanner
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseTestScannerResponse parses an HTTP response from a TestScannerWithResponse call
+func ParseTestScannerResponse(rsp *http.Response) (*TestScannerResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestScannerResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ScannerTestResult
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -8708,6 +14756,167 @@ func ParseListUsersResponse(rsp *http.Response) (*ListUsersResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest []User
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListWaiversResponse parses an HTTP response from a ListWaiversWithResponse call
+func ParseListWaiversResponse(rsp *http.Response) (*ListWaiversResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListWaiversResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Waiver
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateWaiverResponse parses an HTTP response from a CreateWaiverWithResponse call
+func ParseCreateWaiverResponse(rsp *http.Response) (*CreateWaiverResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateWaiverResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest Waiver
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteWaiverResponse parses an HTTP response from a DeleteWaiverWithResponse call
+func ParseDeleteWaiverResponse(rsp *http.Response) (*DeleteWaiverResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteWaiverResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetWaiverResponse parses an HTTP response from a GetWaiverWithResponse call
+func ParseGetWaiverResponse(rsp *http.Response) (*GetWaiverResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetWaiverResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Waiver
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateWaiverResponse parses an HTTP response from a UpdateWaiverWithResponse call
+func ParseUpdateWaiverResponse(rsp *http.Response) (*UpdateWaiverResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateWaiverResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Waiver
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

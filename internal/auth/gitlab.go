@@ -119,14 +119,15 @@ func (a *Authenticator) gitlabPrincipal(ctx context.Context, g *gitlabIssuer, ra
 	}
 	// Keep only well-known, non-sensitive claims for display/audit.
 	keep := map[string]any{}
-	for _, k := range []string{"sub", "project_path", "namespace_path", "ref", "ref_type", "ref_protected",
-		"environment", "pipeline_source", "pipeline_id", "job_id", "user_login"} {
+	for _, k := range []string{"sub", "project_id", "project_path", "namespace_id", "namespace_path", "ref", "ref_type",
+		"ref_protected", "sha", "environment", "pipeline_source", "pipeline_id", "job_id", "user_login"} {
 		if v, ok := claims[k]; ok {
 			keep[k] = v
 		}
 	}
 	return &Principal{
 		Kind:     KindGitLab,
+		Instance: g.name,
 		Name:     strings.TrimSuffix(name, "@"),
 		Policies: matched,
 		Claims:   keep,

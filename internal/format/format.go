@@ -11,6 +11,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"sort"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
@@ -20,6 +21,8 @@ import (
 	"github.com/geoffo-dev/package-repository/internal/httpx"
 	"github.com/geoffo-dev/package-repository/internal/proxy"
 	"github.com/geoffo-dev/package-repository/internal/repo"
+	"github.com/geoffo-dev/package-repository/internal/secrets"
+	"github.com/geoffo-dev/package-repository/internal/signing"
 	"github.com/geoffo-dev/package-repository/internal/store"
 )
 
@@ -32,6 +35,10 @@ type Env struct {
 	Authz  *authz.Authorizer
 	URLs   httpx.URLs
 	Logger *slog.Logger
+	// Secrets seals/opens secret values stored in the database.
+	Secrets *secrets.Box
+	// Signing manages repository signing keys (Apt/Yum).
+	Signing *signing.Service
 }
 
 // Handler is implemented by every format.
@@ -62,6 +69,38 @@ type Upload struct {
 	Header   *multipart.FileHeader
 	Fields   map[string]string
 	Uploader *auth.Principal
+}
+
+// DeleteHook is optionally implemented by formats whose metadata is derived
+// from stored assets (Apt Packages, Yum repodata, Helm index.yaml). It is
+// called after assets were deleted by the management API or by cleanup
+// policies, so the format can regenerate its metadata.
+type DeleteHook interface {
+	AfterDelete(ctx context.Context, rp *repo.Repository, deleted []*store.Asset) error
+}
+
+// CleanupCriteria are the format-specific parts of a cleanup policy.
+type CleanupCriteria struct {
+	// UntaggedOlderThan (Docker): untagged manifests older than this.
+	UntaggedOlderThan time.Duration
+}
+
+// Cleaner is optionally implemented by formats that have cleanup
+// candidates beyond whole components (e.g. untagged Docker manifests and
+// blob links no manifest references any more).
+type Cleaner interface {
+	CleanupCandidates(ctx context.Context, rp *repo.Repository, c CleanupCriteria) ([]*store.Asset, error)
+}
+
+// NotifyDeleted calls the format's DeleteHook, if any.
+func (r *Registry) NotifyDeleted(ctx context.Context, rp *repo.Repository, deleted []*store.Asset) error {
+	if len(deleted) == 0 {
+		return nil
+	}
+	if h, ok := r.m[rp.Format].(DeleteHook); ok {
+		return h.AfterDelete(ctx, rp, deleted)
+	}
+	return nil
 }
 
 // RootMounter is optionally implemented by formats that need routes outside

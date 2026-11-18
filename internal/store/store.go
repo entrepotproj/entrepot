@@ -87,3 +87,17 @@ func (s *Store) AdvisoryLock(ctx context.Context, key string) (func(), error) {
 		conn.Release()
 	}, nil
 }
+
+// NamedExists reports whether a row with the given name exists in one of
+// the name-keyed configuration tables (scanners, cleanup_policies,
+// routing_rules).
+func (s *Store) NamedExists(ctx context.Context, table, name string) (bool, error) {
+	switch table {
+	case "scanners", "cleanup_policies", "routing_rules":
+	default:
+		return false, fmt.Errorf("NamedExists: unsupported table %q", table)
+	}
+	var ok bool
+	err := s.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM `+table+` WHERE name=$1)`, name).Scan(&ok)
+	return ok, mapErr(err, table)
+}
