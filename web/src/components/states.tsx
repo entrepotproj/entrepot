@@ -1,5 +1,5 @@
 import { Alert, Button, Center, Group, Skeleton, Stack, Table, Text, ThemeIcon } from '@mantine/core';
-import { IconAlertTriangle, IconLock, IconLogin, IconMoodEmpty } from '@tabler/icons-react';
+import { IconAlertTriangle, IconClockPause, IconLock, IconLogin, IconMoodEmpty } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { ApiError } from '../api/client';
@@ -56,8 +56,38 @@ export function SignInPrompt({ message }: { message?: string }) {
   );
 }
 
-/** Renders a query error: 401 prompts to sign in, 403 shows "not permitted". */
-export function QueryError({ error, retry }: { error: unknown; retry?: () => void }) {
+/** Shown when the server answers 501 Not Implemented for a feature. */
+export function NotAvailable({ feature, compact }: { feature?: string; compact?: boolean }) {
+  const description = `${feature ? feature + ': n' : 'N'}ot implemented by this Entrepot server yet. Upgrade the server to use it.`;
+  if (compact) {
+    return (
+      <Alert color="gray" variant="light" icon={<IconClockPause size={18} />} title="Not available yet" my="xs">
+        <Text size="sm">{description}</Text>
+      </Alert>
+    );
+  }
+  return (
+    <EmptyState
+      icon={<IconClockPause size={28} stroke={1.5} />}
+      title="This feature isn't available on this server yet"
+      description={description}
+    />
+  );
+}
+
+/** Renders a query error: 401 prompts to sign in, 403 shows "not permitted", 501 "not available yet". */
+export function QueryError({
+  error,
+  retry,
+  feature,
+  compact,
+}: {
+  error: unknown;
+  retry?: () => void;
+  feature?: string;
+  compact?: boolean;
+}) {
+  if (error instanceof ApiError && error.notImplemented) return <NotAvailable feature={feature} compact={compact} />;
   if (error instanceof ApiError && error.unauthorized) return <SignInPrompt />;
   if (error instanceof ApiError && error.forbidden) {
     return (

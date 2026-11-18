@@ -18,7 +18,9 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 15_000,
       refetchOnWindowFocus: false,
-      retry: (count, err) => !(err instanceof ApiError && err.status >= 400 && err.status < 500) && count < 2,
+      // Client errors and 501 Not Implemented (feature not on this server) are final.
+      retry: (count, err) =>
+        !(err instanceof ApiError && ((err.status >= 400 && err.status < 500) || err.status === 501)) && count < 2,
     },
   },
   mutationCache: new MutationCache({

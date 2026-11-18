@@ -22,6 +22,16 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Repository, RepositoryInput, RepositoryKind } from '../../api/client';
 import { useBlobStores, useRepositories, useSystemInfo } from '../../api/queries';
 import { formatLabel, KindBadge, kindHelp } from '../../components/badges';
+import {
+  AptDistributionsEditor,
+  CleanupFields,
+  DEFAULT_APT_DIST,
+  PreferHostedField,
+  RoutingRuleField,
+  ScanFields,
+  type AptDist,
+  type ScanForm,
+} from './FormSections';
 
 const NAME_RE = /^[a-z0-9][a-z0-9._-]{0,62}$/;
 
@@ -30,7 +40,13 @@ export const DEFAULT_REMOTES: Record<string, string> = {
   pypi: 'https://pypi.org',
   npm: 'https://registry.npmjs.org',
   docker: 'https://registry-1.docker.io',
+  apt: 'http://deb.debian.org/debian',
+  yum: 'https://dl.rockylinux.org/pub/rocky/9/BaseOS/x86_64/os',
+  helm: 'https://prometheus-community.github.io/helm-charts',
 };
+
+/** Formats whose groups can prefer hosted members (dependency-confusion protection). */
+const PREFER_HOSTED_FORMATS = ['npm', 'pypi', 'helm'];
 
 type Format = RepositoryInput['format'];
 
@@ -50,6 +66,12 @@ type State = {
   contentTtl: number | '';
   negativeTtl: number | '';
   members: string[];
+  preferHosted: boolean;
+  routingRule: string;
+  aptDistributions: AptDist[];
+  repodataDepth: number | '';
+  scan: ScanForm;
+  cleanupPolicies: string[];
 };
 
 function initialState(r?: Repository): State {
@@ -69,10 +91,32 @@ function initialState(r?: Repository): State {
     contentTtl: r?.proxy?.contentTtlSeconds ?? '',
     negativeTtl: r?.proxy?.negativeCacheTtlSeconds ?? '',
     members: r?.group?.members ?? [],
+    preferHosted: r?.group?.preferHosted ?? true,
+    routingRule: r?.proxy?.routingRule ?? '',
+    aptDistributions: r
+      ? (r.hosted?.apt?.distributions ?? []).map((d) => ({
+          name: d.name,
+          components: d.components ?? [],
+          architectures: d.architectures ?? [],
+          origin: d.origin ?? '',
+          label: d.label ?? '',
+        }))
+      : [{ ...DEFAULT_APT_DIST }],
+    repodataDepth: r?.hosted?.yum?.repodataDepth ?? 0,
+    scan: {
+      scanners: r?.scan?.scanners ?? [],
+      mode: r?.scan?.mode ?? 'warn',
+      severityThreshold: r?.scan?.severityThreshold ?? 'high',
+      onUpload: r?.scan?.onUpload ?? true,
+      onProxyFetch: r?.scan?.onProxyFetch ?? true,
+      blockUntilScanned: r?.scan?.blockUntilScanned ?? false,
+      distro: r?.scan?.distro ?? '',
+    },
+    cleanupPolicies: r?.cleanup?.policies ?? [],
   };
 }
 
-function toInput(s: State): RepositoryInput {
+function toInput(s: State, original?: Repository): RepositoryInput {
   const num = (v: number | '') => (v === '' ? undefined : v);
   const input: RepositoryInput = {
     name: s.name.trim(),
@@ -83,7 +127,23 @@ function toInput(s: State): RepositoryInput {
     online: s.online,
     anonymousRead: s.anonymousRead,
   };
-  if (s.kind === 'hosted') input.hosted = { allowRedeploy: s.allowRedeploy };
+  if (s.kind === 'hosted') {
+    input.hosted = { allowRedeploy: s.allowRedeploy };
+    if (s.format === 'apt') {
+      input.hosted.apt = {
+        distributions: s.aptDistributions
+          .filter((d) => d.name.trim())
+          .map((d) => ({
+            name: d.name.trim(),
+            components: d.components,
+            architectures: d.architectures,
+            origin: d.origin.trim() || undefined,
+            label: d.label.trim() || undefined,
+          })),
+      };
+    }
+    if (s.format === 'yum') input.hosted.yum = { repodataDepth: s.repodataDepth === '' ? 0 : s.repodataDepth };
+  }
   if (s.kind === 'proxy') {
     input.proxy = {
       remoteUrl: s.remoteUrl.trim(),
@@ -92,9 +152,27 @@ function toInput(s: State): RepositoryInput {
       metadataTtlSeconds: num(s.metadataTtl),
       contentTtlSeconds: num(s.contentTtl),
       negativeCacheTtlSeconds: num(s.negativeTtl),
+      routingRule: s.routingRule || undefined,
     };
   }
-  if (s.kind === 'group') input.group = { members: s.members };
+  if (s.kind === 'group') {
+    input.group = { members: s.members };
+    if (PREFER_HOSTED_FORMATS.includes(s.format)) input.group.preferHosted = s.preferHosted;
+  }
+  // Only send scan/cleanup settings when they are in use, so servers without
+  // these features keep accepting the request.
+  if (s.scan.scanners.length > 0 || original?.scan) {
+    input.scan = {
+      scanners: s.scan.scanners,
+      mode: s.scan.mode,
+      severityThreshold: s.scan.severityThreshold as NonNullable<RepositoryInput['scan']>['severityThreshold'],
+      onUpload: s.scan.onUpload,
+      onProxyFetch: s.scan.onProxyFetch,
+      blockUntilScanned: s.scan.blockUntilScanned,
+      distro: s.scan.distro || undefined,
+    };
+  }
+  if (s.cleanupPolicies.length > 0 || original?.cleanup) input.cleanup = { policies: s.cleanupPolicies };
   return input;
 }
 
@@ -180,6 +258,13 @@ export function RepositoryForm({
     blobStore: !s.blobStore ? 'Choose a blob store' : null,
     remoteUrl: s.kind === 'proxy' && !/^https?:\/\/.+/.test(s.remoteUrl.trim()) ? 'An http(s) URL is required' : null,
     members: s.kind === 'group' && s.members.length === 0 ? 'Add at least one member' : null,
+    apt:
+      s.kind === 'hosted' &&
+      s.format === 'apt' &&
+      (s.aptDistributions.some((d) => !d.name.trim()) ||
+        new Set(s.aptDistributions.map((d) => d.name.trim())).size !== s.aptDistributions.length)
+        ? 'Check the distributions'
+        : null,
   };
   const valid = Object.values(errors).every((e) => !e);
   const err = (k: keyof typeof errors) => (touched ? errors[k] : null);
@@ -206,7 +291,7 @@ export function RepositoryForm({
       onSubmit={(e) => {
         e.preventDefault();
         setTouched(true);
-        if (valid) onSubmit(toInput(s));
+        if (valid) onSubmit(toInput(s, repository));
       }}
     >
       <Stack gap="md">
@@ -294,6 +379,31 @@ export function RepositoryForm({
               checked={s.allowRedeploy}
               onChange={(e) => set('allowRedeploy', e.currentTarget.checked)}
             />
+            {s.format === 'yum' && (
+              <NumberInput
+                label="Repodata depth"
+                description={
+                  <>
+                    Directory depth at which <code>repodata/</code> is generated. 0 = repository root; 2 = one repodata per
+                    e.g. <code>el9/x86_64/</code> directory.
+                  </>
+                }
+                min={0}
+                max={5}
+                maw={360}
+                value={s.repodataDepth}
+                onChange={(v) => set('repodataDepth', typeof v === 'number' ? v : '')}
+              />
+            )}
+          </Section>
+        )}
+
+        {s.kind === 'hosted' && s.format === 'apt' && (
+          <Section
+            title="Apt distributions"
+            description="Each distribution (suite) gets signed Release/InRelease files listing its components and architectures. Packages are uploaded into a distribution and component."
+          >
+            <AptDistributionsEditor value={s.aptDistributions} onChange={(v) => set('aptDistributions', v)} />
           </Section>
         )}
 
@@ -350,6 +460,8 @@ export function RepositoryForm({
                 onChange={(v) => set('negativeTtl', typeof v === 'number' ? v : '')}
               />
             </SimpleGrid>
+            <Divider label="Routing" labelPosition="left" />
+            <RoutingRuleField value={s.routingRule} onChange={(v) => set('routingRule', v)} />
           </Section>
         )}
 
@@ -417,6 +529,29 @@ export function RepositoryForm({
                 ))}
               </Stack>
             )}
+            {PREFER_HOSTED_FORMATS.includes(s.format) && (
+              <PreferHostedField checked={s.preferHosted} onChange={(v) => set('preferHosted', v)} />
+            )}
+          </Section>
+        )}
+
+        {s.format && s.kind !== 'group' && (
+          <Section
+            title="Vulnerability scanning"
+            description="Scan components for known vulnerabilities, and optionally quarantine vulnerable ones."
+          >
+            <ScanFields
+              value={s.scan}
+              onChange={(patch) => setS((p) => ({ ...p, scan: { ...p.scan, ...patch } }))}
+              format={s.format}
+              kind={s.kind}
+            />
+          </Section>
+        )}
+
+        {s.format && s.kind !== 'group' && (
+          <Section title="Cleanup" description="Delete old or unused components automatically.">
+            <CleanupFields value={s.cleanupPolicies} onChange={(v) => set('cleanupPolicies', v)} format={s.format} />
           </Section>
         )}
 

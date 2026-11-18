@@ -20,6 +20,11 @@ const GitLabPoliciesPage = lazy(() => import('./pages/admin/GitLabPoliciesPage')
 const ServiceAccountsPage = lazy(() => import('./pages/admin/ServiceAccountsPage'));
 const UsersPage = lazy(() => import('./pages/admin/UsersPage'));
 const AuditLogPage = lazy(() => import('./pages/admin/AuditLogPage'));
+const ScannersPage = lazy(() => import('./pages/admin/ScannersPage'));
+const WaiversPage = lazy(() => import('./pages/admin/WaiversPage'));
+const ScanJobsPage = lazy(() => import('./pages/admin/ScanJobsPage'));
+const CleanupPoliciesPage = lazy(() => import('./pages/admin/CleanupPoliciesPage'));
+const RoutingRulesPage = lazy(() => import('./pages/admin/RoutingRulesPage'));
 
 function PageLoader() {
   return (
@@ -74,6 +79,11 @@ function AppRoutes() {
       <Route path="admin/service-accounts/:name" element={<RequireAdmin><ServiceAccountsPage /></RequireAdmin>} />
       <Route path="admin/users" element={<RequireAdmin><UsersPage /></RequireAdmin>} />
       <Route path="admin/audit" element={<RequireAdmin><AuditLogPage /></RequireAdmin>} />
+      <Route path="admin/scanners" element={<RequireAdmin><ScannersPage /></RequireAdmin>} />
+      <Route path="admin/waivers" element={<RequireAdmin><WaiversPage /></RequireAdmin>} />
+      <Route path="admin/scan-jobs" element={<RequireAdmin><ScanJobsPage /></RequireAdmin>} />
+      <Route path="admin/cleanup-policies" element={<RequireAdmin><CleanupPoliciesPage /></RequireAdmin>} />
+      <Route path="admin/routing-rules" element={<RequireAdmin><RoutingRulesPage /></RequireAdmin>} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );

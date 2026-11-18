@@ -309,6 +309,30 @@ func (e ScanSettingsMode) Valid() bool {
 	}
 }
 
+// Defines values for ScanSettingsSeverityThreshold.
+const (
+	ScanSettingsSeverityThresholdCritical ScanSettingsSeverityThreshold = "critical"
+	ScanSettingsSeverityThresholdHigh     ScanSettingsSeverityThreshold = "high"
+	ScanSettingsSeverityThresholdLow      ScanSettingsSeverityThreshold = "low"
+	ScanSettingsSeverityThresholdMedium   ScanSettingsSeverityThreshold = "medium"
+)
+
+// Valid indicates whether the value is a known member of the ScanSettingsSeverityThreshold enum.
+func (e ScanSettingsSeverityThreshold) Valid() bool {
+	switch e {
+	case ScanSettingsSeverityThresholdCritical:
+		return true
+	case ScanSettingsSeverityThresholdHigh:
+		return true
+	case ScanSettingsSeverityThresholdLow:
+		return true
+	case ScanSettingsSeverityThresholdMedium:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ScanState.
 const (
 	ScanStateClean       ScanState = "clean"
@@ -362,25 +386,25 @@ func (e ScannerType) Valid() bool {
 
 // Defines values for Severity.
 const (
-	Critical Severity = "critical"
-	High     Severity = "high"
-	Low      Severity = "low"
-	Medium   Severity = "medium"
-	Unknown  Severity = "unknown"
+	SeverityCritical Severity = "critical"
+	SeverityHigh     Severity = "high"
+	SeverityLow      Severity = "low"
+	SeverityMedium   Severity = "medium"
+	SeverityUnknown  Severity = "unknown"
 )
 
 // Valid indicates whether the value is a known member of the Severity enum.
 func (e Severity) Valid() bool {
 	switch e {
-	case Critical:
+	case SeverityCritical:
 		return true
-	case High:
+	case SeverityHigh:
 		return true
-	case Low:
+	case SeverityLow:
 		return true
-	case Medium:
+	case SeverityMedium:
 		return true
-	case Unknown:
+	case SeverityUnknown:
 		return true
 	default:
 		return false
@@ -1017,12 +1041,17 @@ type ScanSettings struct {
 	OnUpload *bool `json:"onUpload,omitempty"`
 
 	// Scanners Scanners to run (names). Empty disables scanning for the repository.
-	Scanners          *[]string `json:"scanners,omitempty"`
-	SeverityThreshold *Severity `json:"severityThreshold,omitempty"`
+	Scanners *[]string `json:"scanners,omitempty"`
+
+	// SeverityThreshold Lowest severity that quarantines (default high)
+	SeverityThreshold *ScanSettingsSeverityThreshold `json:"severityThreshold,omitempty"`
 }
 
 // ScanSettingsMode warn: record findings only; quarantine: block downloads of components with findings at or above severityThreshold
 type ScanSettingsMode string
+
+// ScanSettingsSeverityThreshold Lowest severity that quarantines (default high)
+type ScanSettingsSeverityThreshold string
 
 // ScanState defines model for ScanState.
 type ScanState string
@@ -1246,10 +1275,18 @@ type ListRepositoryComponentsParams struct {
 
 // UploadComponentMultipartBody defines parameters for UploadComponent.
 type UploadComponentMultipartBody struct {
-	File openapi_types.File `json:"file"`
+	// Component apt: component (default main)
+	Component *string `json:"component,omitempty"`
 
-	// Path raw: destination path
+	// Distribution apt: distribution (default stable)
+	Distribution *string            `json:"distribution,omitempty"`
+	File         openapi_types.File `json:"file"`
+
+	// Path raw: destination path; yum: destination directory
 	Path *string `json:"path,omitempty"`
+
+	// Tag npm: dist-tag to set (default latest)
+	Tag *string `json:"tag,omitempty"`
 }
 
 // TestRoutingRuleJSONBody defines parameters for TestRoutingRule.
@@ -1659,6 +1696,9 @@ type ClientInterface interface {
 	// * **raw**: `file` plus `path` (defaults to the file name).
 	// * **pypi**: `file` is a wheel or sdist; name/version are read from the filename.
 	// * **npm**: `file` is a package tarball (`npm pack`); package.json is read from it.
+	// * **apt**: `file` is a .deb; optional `distribution` and `component`.
+	// * **yum**: `file` is an .rpm; optional `path` (directory).
+	// * **helm**: `file` is a packaged chart (.tgz).
 	UploadComponentWithBody(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListRoleBindings performs a GET /role-bindings (the `ListRoleBindings` operationId) request.
@@ -2594,6 +2634,9 @@ func (c *Client) RotateSigningKey(ctx context.Context, name Name, reqEditors ...
 // * **raw**: `file` plus `path` (defaults to the file name).
 // * **pypi**: `file` is a wheel or sdist; name/version are read from the filename.
 // * **npm**: `file` is a package tarball (`npm pack`); package.json is read from it.
+// * **apt**: `file` is a .deb; optional `distribution` and `component`.
+// * **yum**: `file` is an .rpm; optional `path` (directory).
+// * **helm**: `file` is a packaged chart (.tgz).
 func (c *Client) UploadComponentWithBody(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUploadComponentRequestWithBody(c.Server, name, contentType, body)
 	if err != nil {
@@ -7043,6 +7086,9 @@ type ClientWithResponsesInterface interface {
 	// * **raw**: `file` plus `path` (defaults to the file name).
 	// * **pypi**: `file` is a wheel or sdist; name/version are read from the filename.
 	// * **npm**: `file` is a package tarball (`npm pack`); package.json is read from it.
+	// * **apt**: `file` is a .deb; optional `distribution` and `component`.
+	// * **yum**: `file` is an .rpm; optional `path` (directory).
+	// * **helm**: `file` is a packaged chart (.tgz).
 	//
 	// Returns a wrapper object for the known response body format(s).
 	UploadComponentWithBodyWithResponse(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UploadComponentResponse, error)
@@ -11699,6 +11745,9 @@ func (c *ClientWithResponses) RotateSigningKeyWithResponse(ctx context.Context, 
 // * **raw**: `file` plus `path` (defaults to the file name).
 // * **pypi**: `file` is a wheel or sdist; name/version are read from the filename.
 // * **npm**: `file` is a package tarball (`npm pack`); package.json is read from it.
+// * **apt**: `file` is a .deb; optional `distribution` and `component`.
+// * **yum**: `file` is an .rpm; optional `path` (directory).
+// * **helm**: `file` is a packaged chart (.tgz).
 //
 // Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) UploadComponentWithBodyWithResponse(ctx context.Context, name Name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UploadComponentResponse, error) {

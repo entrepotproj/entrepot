@@ -5,6 +5,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { api, unwrap, type Repository } from '../../api/client';
+import { ScanStateBadge } from '../../components/badges';
 import { EmptyState, QueryError, TableSkeleton } from '../../components/states';
 import { formatDate, formatRelative } from '../../lib/format';
 
@@ -27,6 +28,8 @@ export function ComponentsTab({ repository }: { repository: Repository }) {
       ),
     placeholderData: keepPreviousData,
   });
+
+  const showScan = !!repository.scan?.scanners?.length || !!data?.some((c) => c.scanState && c.scanState !== 'unscanned');
 
   return (
     <Paper p={0}>
@@ -88,6 +91,7 @@ export function ComponentsTab({ repository }: { repository: Repository }) {
             <Table.Tr>
               <Table.Th>Name</Table.Th>
               <Table.Th>Version</Table.Th>
+              {showScan && <Table.Th>Scan</Table.Th>}
               <Table.Th>Updated</Table.Th>
             </Table.Tr>
           </Table.Thead>
@@ -104,6 +108,11 @@ export function ComponentsTab({ repository }: { repository: Repository }) {
                     {c.version || '—'}
                   </Text>
                 </Table.Td>
+                {showScan && (
+                  <Table.Td>
+                    <ScanStateBadge state={c.scanState} quarantined={c.quarantined} size="sm" />
+                  </Table.Td>
+                )}
                 <Table.Td>
                   <Text size="sm" c="dimmed" title={formatDate(c.updatedAt)}>
                     {formatRelative(c.updatedAt)}

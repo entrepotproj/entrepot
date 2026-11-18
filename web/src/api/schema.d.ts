@@ -216,6 +216,9 @@ export interface paths {
          *     * **raw**: `file` plus `path` (defaults to the file name).
          *     * **pypi**: `file` is a wheel or sdist; name/version are read from the filename.
          *     * **npm**: `file` is a package tarball (`npm pack`); package.json is read from it.
+         *     * **apt**: `file` is a .deb; optional `distribution` and `component`.
+         *     * **yum**: `file` is an .rpm; optional `path` (directory).
+         *     * **helm**: `file` is a packaged chart (.tgz).
          */
         post: operations["uploadComponent"];
         delete?: never;
@@ -522,6 +525,360 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/repositories/{name}/signing-key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        /** Public signing key of an Apt/Yum repository (created on first use) */
+        get: operations["getSigningKey"];
+        /** Replace the signing key with an imported OpenPGP private key (admin) */
+        put: operations["importSigningKey"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repositories/{name}/signing-key/rotate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate a new signing key and re-sign metadata (admin) */
+        post: operations["rotateSigningKey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repositories/{name}/cleanup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Run the repository's cleanup policies now (admin) */
+        post: operations["runRepositoryCleanup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scanners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listScanners"];
+        put?: never;
+        post: operations["createScanner"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scanners/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        get: operations["getScanner"];
+        put: operations["updateScanner"];
+        post?: never;
+        /** @description Fails with 409 while repositories use the scanner. */
+        delete: operations["deleteScanner"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scanners/{name}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check the scanner is reachable and report its version */
+        post: operations["testScanner"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/components/{id}/scan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["ID"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Queue scans of a component now
+         * @description Requires write permission on the repository. Without a body, the repository's configured scanners are used.
+         */
+        post: operations["scanComponent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/components/{id}/scans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["ID"];
+            };
+            cookie?: never;
+        };
+        /** Latest scan results, findings and recent jobs of a component */
+        get: operations["getComponentScans"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scan-jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Scan queue (admin) */
+        get: operations["listScanJobs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scan-jobs/{id}/artifact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["ID"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Download the artifact of a running webhook scan job
+         * @description Authenticated by the per-job token sent to the webhook (query parameter or Bearer header).
+         */
+        get: operations["getScanJobArtifact"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scan-jobs/{id}/result": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["ID"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Webhook scanner callback with scan results
+         * @description Authenticated by the per-job token (Bearer header or `token` query parameter).
+         */
+        post: operations["submitScanJobResult"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/waivers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listWaivers"];
+        put?: never;
+        post: operations["createWaiver"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/waivers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["ID"];
+            };
+            cookie?: never;
+        };
+        get: operations["getWaiver"];
+        put: operations["updateWaiver"];
+        post?: never;
+        delete: operations["deleteWaiver"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cleanup-policies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listCleanupPolicies"];
+        put?: never;
+        post: operations["createCleanupPolicy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cleanup-policies/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        get: operations["getCleanupPolicy"];
+        put: operations["updateCleanupPolicy"];
+        post?: never;
+        delete: operations["deleteCleanupPolicy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cleanup-policies/{name}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dry run of a policy against a repository */
+        post: operations["previewCleanupPolicy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/routing-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listRoutingRules"];
+        put?: never;
+        post: operations["createRoutingRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/routing-rules/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        get: operations["getRoutingRule"];
+        put: operations["updateRoutingRule"];
+        post?: never;
+        /** @description Fails with 409 while proxy repositories use the rule. */
+        delete: operations["deleteRoutingRule"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/routing-rules/{name}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["testRoutingRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -633,19 +990,78 @@ export interface components {
             contentTtlSeconds?: number;
             /** @description Default 300; -1 disables */
             negativeCacheTtlSeconds?: number;
+            /** @description Name of a routing rule that limits which paths/packages are fetched upstream */
+            routingRule?: string;
         };
         HostedSettings: {
             /** @description Allow overwriting existing artifacts/versions. For Docker it allows moving tags. Defaults to false, except true for Docker. */
             allowRedeploy?: boolean;
+            apt?: components["schemas"]["AptHostedSettings"];
+            yum?: components["schemas"]["YumHostedSettings"];
+        };
+        AptHostedSettings: {
+            /** @description Distributions to publish (default one "stable" distribution with component "main") */
+            distributions?: components["schemas"]["AptDistribution"][];
+        };
+        AptDistribution: {
+            /** @example stable */
+            name: string;
+            /**
+             * @example [
+             *       "main"
+             *     ]
+             */
+            components?: string[];
+            /**
+             * @example [
+             *       "amd64",
+             *       "arm64",
+             *       "all"
+             *     ]
+             */
+            architectures?: string[];
+            origin?: string;
+            label?: string;
+        };
+        YumHostedSettings: {
+            /** @description Directory depth at which repodata is generated (0 = repository root, 2 = e.g. el9/x86_64/) */
+            repodataDepth?: number;
         };
         GroupSettings: {
             /** @description Member repositories, searched in order */
             members: string[];
+            /** @description npm/PyPI: never serve a package name from proxy members if any hosted member has it (dependency-confusion protection). Default true. */
+            preferHosted?: boolean;
+        };
+        ScanSettings: {
+            /** @description Scanners to run (names). Empty disables scanning for the repository. */
+            scanners?: string[];
+            /** @description Scan components when uploaded (default true) */
+            onUpload?: boolean;
+            /** @description Scan components when first cached by a proxy (default true) */
+            onProxyFetch?: boolean;
+            /**
+             * @description warn: record findings only; quarantine: block downloads of components with findings at or above severityThreshold
+             * @enum {string}
+             */
+            mode?: "off" | "warn" | "quarantine";
+            /**
+             * @description Lowest severity that quarantines (default high)
+             * @enum {string}
+             */
+            severityThreshold?: "critical" | "high" | "medium" | "low";
+            /** @description quarantine mode: block downloads until the first scan completes */
+            blockUntilScanned?: boolean;
+            /** @description Apt/Yum: distribution for vulnerability matching, e.g. debian-12, ubuntu-24.04, rocky-9 */
+            distro?: string;
+        };
+        CleanupSettings: {
+            policies?: string[];
         };
         RepositoryInput: {
             name: string;
             /** @enum {string} */
-            format: "raw" | "pypi" | "npm" | "docker";
+            format: "raw" | "pypi" | "npm" | "docker" | "apt" | "yum" | "helm";
             kind: components["schemas"]["RepositoryKind"];
             blobStore: string;
             description?: string;
@@ -656,6 +1072,8 @@ export interface components {
             proxy?: components["schemas"]["ProxySettings"];
             hosted?: components["schemas"]["HostedSettings"];
             group?: components["schemas"]["GroupSettings"];
+            scan?: components["schemas"]["ScanSettings"];
+            cleanup?: components["schemas"]["CleanupSettings"];
         };
         Repository: {
             name: string;
@@ -670,6 +1088,8 @@ export interface components {
             proxy?: components["schemas"]["ProxySettings"];
             hosted?: components["schemas"]["HostedSettings"];
             group?: components["schemas"]["GroupSettings"];
+            scan?: components["schemas"]["ScanSettings"];
+            cleanup?: components["schemas"]["CleanupSettings"];
             /** @description Actions the caller may perform */
             permissions: string[];
             stats?: components["schemas"]["RepositoryStats"];
@@ -709,6 +1129,10 @@ export interface components {
             attrs: {
                 [key: string]: unknown;
             };
+            /** @description Who stored the asset (kind, name; GitLab CI jobs include project_path, ref, sha, pipeline_id) */
+            uploader?: {
+                [key: string]: unknown;
+            };
         };
         AssetPage: {
             items: components["schemas"]["Asset"][];
@@ -736,6 +1160,10 @@ export interface components {
             attrs: {
                 [key: string]: unknown;
             };
+            scanState?: components["schemas"]["ScanState"];
+            quarantined?: boolean;
+            /** Format: date-time */
+            scannedAt?: string;
         };
         ComponentDetail: {
             component: components["schemas"]["Component"];
@@ -848,6 +1276,261 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        /** @enum {string} */
+        Severity: "critical" | "high" | "medium" | "low" | "unknown";
+        /** @enum {string} */
+        ScanState: "unscanned" | "pending" | "clean" | "vulnerable" | "error" | "unsupported";
+        SigningKey: {
+            fingerprint: string;
+            algorithm?: string;
+            /** @description ASCII-armored OpenPGP public key */
+            publicKey: string;
+            /** @description Where package clients download the public key */
+            url: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        SigningKeyImport: {
+            /** @description ASCII-armored OpenPGP private key */
+            privateKey: string;
+            passphrase?: string;
+        };
+        /** @enum {string} */
+        ScannerType: "trivy" | "grype" | "webhook";
+        TrivySettings: {
+            /** @description Path to the trivy CLI (default "trivy") */
+            binary?: string;
+            /** @description Trivy server for client/server mode (recommended; keeps one vulnerability DB) */
+            serverUrl?: string;
+            serverToken?: string;
+            timeoutSeconds?: number;
+            extraArgs?: string[];
+        };
+        GrypeSettings: {
+            /** @description Path to the grype CLI (default "grype") */
+            binary?: string;
+            timeoutSeconds?: number;
+            extraArgs?: string[];
+        };
+        WebhookScannerSettings: {
+            /** @description Endpoint that receives scan requests */
+            url: string;
+            /** @description HMAC-SHA256 key for the X-Entrepot-Signature header */
+            secret?: string;
+            /** @description Time allowed for the callback (default 900) */
+            timeoutSeconds?: number;
+        };
+        ScannerInput: {
+            name: string;
+            type: components["schemas"]["ScannerType"];
+            /** @default true */
+            enabled: boolean;
+            /** @description Re-scan components periodically (0 = never) */
+            rescanIntervalHours?: number;
+            trivy?: components["schemas"]["TrivySettings"];
+            grype?: components["schemas"]["GrypeSettings"];
+            webhook?: components["schemas"]["WebhookScannerSettings"];
+        };
+        Scanner: {
+            name: string;
+            type: components["schemas"]["ScannerType"];
+            enabled: boolean;
+            rescanIntervalHours: number;
+            trivy?: components["schemas"]["TrivySettings"];
+            grype?: components["schemas"]["GrypeSettings"];
+            webhook?: components["schemas"]["WebhookScannerSettings"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ScannerTestResult: {
+            ok: boolean;
+            message: string;
+            version?: string;
+        };
+        ScanRequest: {
+            scanners?: string[];
+        };
+        ScanJob: {
+            id: string;
+            componentId: string;
+            /** @description name@version */
+            component: string;
+            repository: string;
+            scanner: string;
+            /** @enum {string} */
+            status: "queued" | "running" | "done" | "failed";
+            /** @enum {string} */
+            reason: "upload" | "proxy" | "manual" | "rescan";
+            attempts: number;
+            error: string;
+            /** Format: date-time */
+            runAfter?: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: date-time */
+            finishedAt?: string;
+        };
+        Finding: {
+            /** @example CVE-2021-23337 */
+            vulnId: string;
+            severity: components["schemas"]["Severity"];
+            package: string;
+            installedVersion: string;
+            fixedVersion: string;
+            title: string;
+            url: string;
+            waived: boolean;
+            waiverId?: string;
+        };
+        SeverityCounts: {
+            critical: number;
+            high: number;
+            medium: number;
+            low: number;
+            unknown: number;
+        };
+        ScanResult: {
+            id: string;
+            scanner: string;
+            /** @enum {string} */
+            status: "ok" | "error" | "unsupported";
+            /** Format: date-time */
+            scannedAt: string;
+            counts: components["schemas"]["SeverityCounts"];
+            /** @description What was scanned (purl or image reference) */
+            target?: string;
+            error?: string;
+            findings: components["schemas"]["Finding"][];
+        };
+        ComponentScans: {
+            scanState: components["schemas"]["ScanState"];
+            quarantined: boolean;
+            quarantineReason?: string;
+            /** Format: date-time */
+            scannedAt?: string;
+            /** @description Latest result per scanner */
+            results: components["schemas"]["ScanResult"][];
+            /** @description Recent jobs */
+            jobs: components["schemas"]["ScanJob"][];
+        };
+        ScanCallback: {
+            /**
+             * @description Format of the results: native findings, a SARIF 2.1 log, or a CycloneDX document with vulnerabilities
+             * @enum {string}
+             */
+            format?: "entrepot" | "sarif" | "cyclonedx";
+            findings?: components["schemas"]["Finding"][];
+            /** @description SARIF or CycloneDX document */
+            document?: {
+                [key: string]: unknown;
+            };
+            /** @description Report a scan failure instead of results */
+            error?: string;
+            /** @description The scanner cannot scan this kind of artifact */
+            unsupported?: boolean;
+        };
+        WaiverInput: {
+            /** @description Vulnerability ID, or * for any */
+            vulnId: string;
+            /** @default * */
+            repositoryPattern: string;
+            /**
+             * @description Glob over "name" or "name@version"
+             * @default *
+             */
+            componentPattern: string;
+            reason?: string;
+            /** Format: date-time */
+            expiresAt?: string;
+        };
+        Waiver: {
+            id: string;
+            vulnId: string;
+            repositoryPattern: string;
+            componentPattern: string;
+            reason: string;
+            /** Format: date-time */
+            expiresAt?: string;
+            createdBy: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        /** @description All set criteria must match for a component to be removed. */
+        CleanupCriteria: {
+            publishedOlderThanDays?: number;
+            /** @description Components never downloaded count by their publish date */
+            lastDownloadedOlderThanDays?: number;
+            nameRegex?: string;
+            versionRegex?: string;
+            /** @description Only versions with a pre-release part (1.2.0-rc.1 */
+            prereleaseOnly?: boolean;
+            /** @description Always keep this many newest versions of each component */
+            keepLatest?: number;
+            /** @description Docker: delete untagged manifests (and unreferenced layers) older than this */
+            untaggedOlderThanDays?: number;
+        };
+        CleanupPolicyInput: {
+            name: string;
+            description?: string;
+            /** @description Restrict to one format (empty = any) */
+            format?: string;
+            criteria: components["schemas"]["CleanupCriteria"];
+        };
+        CleanupPolicy: {
+            name: string;
+            description: string;
+            format: string;
+            criteria: components["schemas"]["CleanupCriteria"];
+            /** @description Repositories using the policy */
+            repositories?: string[];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        CleanupRunResult: {
+            dryRun: boolean;
+            repositories: string[];
+            /** @description Components deleted (or that would be) */
+            components: components["schemas"]["Component"][];
+            /** Format: int64 */
+            assets: number;
+            /** Format: int64 */
+            bytes: number;
+        };
+        RoutingRuleInput: {
+            name: string;
+            description?: string;
+            /**
+             * @description allow: only matching requests go upstream; block: matching requests never go upstream
+             * @enum {string}
+             */
+            mode: "allow" | "block";
+            /** @description Regular expressions over the request path / package name, e.g. "^@acme/" or "^acme-" */
+            matchers: string[];
+        };
+        RoutingRule: {
+            name: string;
+            description: string;
+            /** @enum {string} */
+            mode: "allow" | "block";
+            matchers: string[];
+            /** @description Proxy repositories using the rule */
+            repositories?: string[];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        RoutingTestResult: {
+            allowed: boolean;
+            /** @description The matcher that decided */
+            matched?: string;
         };
     };
     responses: {
@@ -1291,8 +1974,14 @@ export interface operations {
                 "multipart/form-data": {
                     /** Format: binary */
                     file: string;
-                    /** @description raw: destination path */
+                    /** @description raw: destination path; yum: destination directory */
                     path?: string;
+                    /** @description apt: distribution (default stable) */
+                    distribution?: string;
+                    /** @description apt: component (default main) */
+                    component?: string;
+                    /** @description npm: dist-tag to set (default latest) */
+                    tag?: string;
                 };
             };
         };
@@ -2019,6 +2708,778 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getSigningKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SigningKey"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    importSigningKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SigningKeyImport"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SigningKey"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    rotateSigningKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SigningKey"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    runRepositoryCleanup: {
+        parameters: {
+            query?: {
+                dryRun?: boolean;
+                /** @description Run only this policy */
+                policy?: string;
+            };
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CleanupRunResult"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    listScanners: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Scanner"][];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    createScanner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScannerInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Scanner"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getScanner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Scanner"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    updateScanner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScannerInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Scanner"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    deleteScanner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    testScanner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScannerTestResult"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    scanComponent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["ID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ScanRequest"];
+            };
+        };
+        responses: {
+            /** @description Queued */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScanJob"][];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getComponentScans: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["ID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComponentScans"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    listScanJobs: {
+        parameters: {
+            query?: {
+                status?: "queued" | "running" | "done" | "failed";
+                limit?: components["parameters"]["Limit"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScanJob"][];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getScanJobArtifact: {
+        parameters: {
+            query?: {
+                token?: string;
+            };
+            header?: never;
+            path: {
+                id: components["parameters"]["ID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Artifact content (an OCI image layout tar for Docker images) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/octet-stream": string;
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    submitScanJobResult: {
+        parameters: {
+            query?: {
+                token?: string;
+            };
+            header?: never;
+            path: {
+                id: components["parameters"]["ID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScanCallback"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    listWaivers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Waiver"][];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    createWaiver: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WaiverInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Waiver"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getWaiver: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["ID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Waiver"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    updateWaiver: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["ID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WaiverInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Waiver"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    deleteWaiver: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["ID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    listCleanupPolicies: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CleanupPolicy"][];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    createCleanupPolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CleanupPolicyInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CleanupPolicy"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getCleanupPolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CleanupPolicy"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    updateCleanupPolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CleanupPolicyInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CleanupPolicy"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    deleteCleanupPolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    previewCleanupPolicy: {
+        parameters: {
+            query: {
+                repository: string;
+            };
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CleanupRunResult"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    listRoutingRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutingRule"][];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    createRoutingRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoutingRuleInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutingRule"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getRoutingRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutingRule"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    updateRoutingRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoutingRuleInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutingRule"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    deleteRoutingRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    testRoutingRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @example @acme/widgets */
+                    path: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutingTestResult"];
+                };
             };
             default: components["responses"]["Error"];
         };

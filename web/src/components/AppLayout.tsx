@@ -25,15 +25,20 @@ import {
   IconBrandGitlab,
   IconChevronDown,
   IconDatabase,
+  IconEraser,
   IconHistory,
   IconKey,
+  IconListCheck,
   IconLogin,
   IconLogout,
   IconMoon,
   IconPackages,
+  IconRadar2,
   IconRobot,
+  IconRoute,
   IconSearch,
   IconShieldLock,
+  IconShieldOff,
   IconSun,
   IconUsers,
   type Icon,
@@ -54,11 +59,19 @@ const browseNav: NavItem[] = [
 
 const adminNav: NavItem[] = [
   { to: '/admin/blob-stores', label: 'Blob stores', icon: IconDatabase },
+  { to: '/admin/cleanup-policies', label: 'Cleanup policies', icon: IconEraser },
+  { to: '/admin/routing-rules', label: 'Routing rules', icon: IconRoute },
   { to: '/admin/roles', label: 'Roles & bindings', icon: IconShieldLock },
   { to: '/admin/gitlab', label: 'GitLab trust', icon: IconBrandGitlab },
   { to: '/admin/service-accounts', label: 'Service accounts', icon: IconRobot },
   { to: '/admin/users', label: 'Users', icon: IconUsers },
   { to: '/admin/audit', label: 'Audit log', icon: IconHistory },
+];
+
+const securityNav: NavItem[] = [
+  { to: '/admin/scanners', label: 'Scanners', icon: IconRadar2 },
+  { to: '/admin/waivers', label: 'Waivers', icon: IconShieldOff },
+  { to: '/admin/scan-jobs', label: 'Scan jobs', icon: IconListCheck },
 ];
 
 export function Logo() {
@@ -285,6 +298,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
             <NavSection title="Account" items={[{ to: '/tokens', label: 'API tokens', icon: IconKey }]} onNavigate={close} />
           )}
           {admin && <NavSection title="Administration" items={adminNav} onNavigate={close} />}
+          {admin && <NavSection title="Security scanning" items={securityNav} onNavigate={close} />}
         </AppShell.Section>
         <AppShell.Section>
           <Text size="xs" c="dimmed" px="sm">

@@ -4,8 +4,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { api, unwrap, unwrapVoid } from '../api/client';
-import { qk, useRepository } from '../api/queries';
-import { FormatBadge } from '../components/badges';
+import { qk, useComponentScans, useRepository } from '../api/queries';
+import { FormatBadge, ScanStateBadge } from '../components/badges';
 import { ConfirmDelete } from '../components/ConfirmDelete';
 import { DetailList } from '../components/DetailList';
 import { JsonView } from '../components/JsonView';
@@ -13,6 +13,7 @@ import { PageHeader } from '../components/PageHeader';
 import { QueryError } from '../components/states';
 import { formatBytes, formatDate } from '../lib/format';
 import { notifySuccess } from '../lib/notify';
+import { QuarantineBanner, ScanPanel } from './repository/ScanPanel';
 
 export function ComponentPage() {
   const { id = '' } = useParams();
@@ -26,6 +27,7 @@ export function ComponentPage() {
   const c = data?.component;
   const repo = useRepository(c?.repository ?? '');
   const canDelete = !!repo.data?.permissions.includes('delete');
+  const scans = useComponentScans(c?.id ?? '');
 
   const del = useMutation({
     mutationFn: () => unwrapVoid(api.DELETE('/components/{id}', { params: { path: { id } } })),
@@ -73,6 +75,13 @@ export function ComponentPage() {
         actions={
           <>
             <FormatBadge format={c.format} size="lg" />
+            {(scans.data || c.scanState) && (
+              <ScanStateBadge
+                state={scans.data?.scanState ?? c.scanState}
+                quarantined={scans.data?.quarantined ?? c.quarantined}
+                size="lg"
+              />
+            )}
             {canDelete && (
               <Button color="red" variant="light" leftSection={<IconTrash size={16} />} onClick={() => setConfirm(true)}>
                 Delete
@@ -81,6 +90,7 @@ export function ComponentPage() {
           </>
         }
       />
+      <QuarantineBanner scans={scans.data ?? (c.quarantined ? { scanState: c.scanState ?? 'vulnerable', quarantined: true, results: [], jobs: [] } : undefined)} />
       <Grid>
         <Grid.Col span={{ base: 12, md: 5 }}>
           <Paper p="lg">
@@ -157,6 +167,9 @@ export function ComponentPage() {
           </Paper>
         </Grid.Col>
       </Grid>
+      <div style={{ marginTop: 'var(--mantine-spacing-md)' }}>
+        <ScanPanel component={c} repository={repo.data} />
+      </div>
       <ConfirmDelete
         opened={confirm}
         onClose={() => setConfirm(false)}

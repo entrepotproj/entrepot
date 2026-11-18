@@ -107,7 +107,7 @@ func (s *Server) phase2Settings(ctx context.Context, in apigen.RepositoryInput, 
 func phase2ToAPI(rp *repo.Repository, out *apigen.Repository) {
 	if c := rp.Cfg.Scan; c != nil {
 		mode := apigen.ScanSettingsMode(c.EffectiveMode())
-		thr := apigen.Severity(c.Threshold())
+		thr := apigen.ScanSettingsSeverityThreshold(c.Threshold())
 		up, px := c.ScanOnUpload(), c.ScanOnProxyFetch()
 		out.Scan = &apigen.ScanSettings{
 			Scanners: ptr(nonNil(c.Scanners)), Mode: &mode, SeverityThreshold: &thr,

@@ -3,7 +3,7 @@ import { IconBrandGitlab, IconInfoCircle, IconTerminal2 } from '@tabler/icons-re
 import { useState } from 'react';
 import { Link } from 'react-router';
 import type { Repository } from '../../api/client';
-import { useSystemInfo } from '../../api/queries';
+import { useSigningKey, useSystemInfo } from '../../api/queries';
 import { CodeBlock } from '../../components/CodeBlock';
 
 type Snippet = { title: string; code: string };
@@ -35,7 +35,144 @@ function ciJob(name: string, image: string, aud: string, script: string[], extra
     .join('\n');
 }
 
-function snippets(r: Repository, baseUrl: string): { cli: Snippet[]; ci: Snippet[] } {
+/** A sample upload directory for a Yum repository whose repodata is generated at the given depth. */
+function yumDir(depth: number): string {
+  const parts = ['el9', 'x86_64', 'extras', 'a', 'b'];
+  return parts.slice(0, Math.max(0, Math.min(depth, 5))).map((p) => p + '/').join('');
+}
+
+function aptSnippets(r: Repository, baseUrl: string): { cli: Snippet[]; ci: Snippet[] } {
+  const url = r.url;
+  const hosted = r.kind === 'hosted';
+  const auth = !r.anonymousRead;
+  const { host, path } = hostPath(url);
+  const dist = r.hosted?.apt?.distributions?.[0];
+  const suite = hosted ? (dist?.name ?? 'stable') : 'bookworm';
+  const comp = hosted ? (dist?.components?.[0] ?? 'main') : 'main';
+  const keyring = hosted ? `/etc/apt/keyrings/entrepot-${r.name}.gpg` : '/usr/share/keyrings/debian-archive-keyring.gpg';
+  const curlAuth = auth ? '-u x:<TOKEN> ' : '';
+  const cli: Snippet[] = [];
+  if (hosted) {
+    cli.push({
+      title: 'Trust the repository signing key',
+      code: `sudo install -d -m 0755 /etc/apt/keyrings\nsudo curl -fsSL ${curlAuth}${url}public.gpg -o ${keyring}`,
+    });
+  }
+  if (auth) {
+    cli.push({
+      title: `Credentials (/etc/apt/auth.conf.d/${r.name}.conf)`,
+      code: `machine ${host}${path}\nlogin x\npassword <TOKEN>`,
+    });
+  }
+  cli.push({
+    title: 'Add the source',
+    code: `echo "deb [signed-by=${keyring}] ${url} ${suite} ${comp}" \\\n  | sudo tee /etc/apt/sources.list.d/${r.name}.list\nsudo apt-get update && sudo apt-get install <package>`,
+  });
+  if (hosted) {
+    cli.push({
+      title: 'Upload a package',
+      code: `curl -fu x:<TOKEN> -T ./pkg_1.0_amd64.deb \\\n  "${url}pkg_1.0_amd64.deb?distribution=${suite}&component=${comp}"`,
+    });
+  }
+  const ci: Snippet[] = [
+    {
+      title: '.gitlab-ci.yml',
+      code: hosted
+        ? ciJob('publish-deb', 'curlimages/curl:latest', baseUrl, [
+            `'curl -f -H "Authorization: Bearer $ENTREPOT_ID_TOKEN" -T dist/$CI_PROJECT_NAME.deb "${url}$CI_PROJECT_NAME.deb?distribution=${suite}&component=${comp}"'`,
+          ])
+        : ciJob('build', 'debian:12', baseUrl, [
+            `printf 'machine ${host}${path}\\nlogin gitlab-ci\\npassword %s\\n' "$ENTREPOT_ID_TOKEN" > /etc/apt/auth.conf.d/entrepot.conf`,
+            `echo "deb [signed-by=${keyring}] ${url} ${suite} ${comp}" > /etc/apt/sources.list.d/${r.name}.list`,
+            'apt-get update && apt-get install -y <package>',
+          ]),
+    },
+  ];
+  return { cli, ci };
+}
+
+function yumSnippets(r: Repository, baseUrl: string, keyUrl: string): { cli: Snippet[]; ci: Snippet[] } {
+  const url = r.url;
+  const hosted = r.kind === 'hosted';
+  const auth = !r.anonymousRead;
+  const dir = yumDir(r.hosted?.yum?.repodataDepth ?? 0);
+  const repoFile = [
+    `[${r.name}]`,
+    `name=${r.name}`,
+    `baseurl=${url}${hosted ? dir : ''}`,
+    'enabled=1',
+    ...(hosted ? ['gpgcheck=0', 'repo_gpgcheck=1', `gpgkey=${keyUrl}`] : ['gpgcheck=1']),
+    ...(auth ? ['username=x', 'password=<TOKEN>'] : []),
+  ].join('\n');
+  const cli: Snippet[] = [];
+  if (hosted && !auth) {
+    cli.push({
+      title: 'Add the repository',
+      code: `sudo curl -fsSL -o /etc/yum.repos.d/${r.name}.repo ${url}${dir}entrepot.repo\nsudo dnf install <package>`,
+    });
+  } else {
+    cli.push({ title: `/etc/yum.repos.d/${r.name}.repo`, code: repoFile });
+    cli.push({ title: 'Install', code: 'sudo dnf install <package>' });
+  }
+  if (hosted) {
+    cli.push({
+      title: 'Upload a package',
+      code: `curl -fu x:<TOKEN> -T ./pkg-1.0-1.el9.x86_64.rpm \\\n  ${url}${dir}pkg-1.0-1.el9.x86_64.rpm`,
+    });
+  }
+  const ci: Snippet[] = [
+    {
+      title: '.gitlab-ci.yml',
+      code: hosted
+        ? ciJob('publish-rpm', 'curlimages/curl:latest', baseUrl, [
+            `'curl -f -H "Authorization: Bearer $ENTREPOT_ID_TOKEN" -T dist/$CI_PROJECT_NAME.rpm "${url}${dir}$CI_PROJECT_NAME.rpm"'`,
+          ])
+        : ciJob('build', 'rockylinux:9', baseUrl, [
+            `printf '[${r.name}]\\nname=${r.name}\\nbaseurl=${url}\\ngpgcheck=1\\nusername=gitlab-ci\\npassword=%s\\n' "$ENTREPOT_ID_TOKEN" > /etc/yum.repos.d/${r.name}.repo`,
+            'dnf install -y <package>',
+          ]),
+    },
+  ];
+  return { cli, ci };
+}
+
+function helmSnippets(r: Repository, baseUrl: string): { cli: Snippet[]; ci: Snippet[] } {
+  const url = r.url;
+  const hosted = r.kind === 'hosted';
+  const auth = !r.anonymousRead;
+  const creds = auth ? ' --username x --password <TOKEN>' : '';
+  const cli: Snippet[] = [
+    { title: 'Add the repository', code: `helm repo add ${r.name} ${url}${creds}\nhelm repo update` },
+    { title: 'Install a chart', code: `helm search repo ${r.name}/\nhelm install my-release ${r.name}/<chart>` },
+  ];
+  if (hosted) {
+    cli.push({
+      title: 'Publish a chart',
+      code: `helm package ./mychart\ncurl -f --data-binary @mychart-0.1.0.tgz \\\n  -H "Authorization: Bearer <TOKEN>" ${url}api/charts`,
+    });
+    cli.push({
+      title: 'Or with the helm-push plugin (ChartMuseum API)',
+      code: `helm plugin install https://github.com/chartmuseum/helm-push\nhelm cm-push mychart-0.1.0.tgz ${r.name}`,
+    });
+  }
+  const ci: Snippet[] = [
+    {
+      title: '.gitlab-ci.yml',
+      code: hosted
+        ? ciJob('publish-chart', 'alpine/helm:3', baseUrl, [
+            'helm package ./chart --version "$CI_COMMIT_TAG"',
+            `'curl -f --data-binary @$(ls *.tgz) -H "Authorization: Bearer $ENTREPOT_ID_TOKEN" ${url}api/charts'`,
+          ])
+        : ciJob('deploy', 'alpine/helm:3', baseUrl, [
+            `helm repo add ${r.name} ${url} --username gitlab-ci --password "$ENTREPOT_ID_TOKEN"`,
+            `helm upgrade --install my-release ${r.name}/<chart>`,
+          ]),
+    },
+  ];
+  return { cli, ci };
+}
+
+function snippets(r: Repository, baseUrl: string, keyUrl: string): { cli: Snippet[]; ci: Snippet[] } {
   const url = r.url;
   const hosted = r.kind === 'hosted';
   const auth = !r.anonymousRead;
@@ -43,6 +180,12 @@ function snippets(r: Repository, baseUrl: string): { cli: Snippet[]; ci: Snippet
   const scheme = url.startsWith('https://') ? 'https://' : 'http://';
 
   switch (r.format) {
+    case 'apt':
+      return aptSnippets(r, baseUrl);
+    case 'yum':
+      return yumSnippets(r, baseUrl, keyUrl);
+    case 'helm':
+      return helmSnippets(r, baseUrl);
     case 'pypi': {
       const simple = `${url}simple/`;
       const authed = `${scheme}token:<TOKEN>@${host}${path}simple/`;
@@ -159,7 +302,10 @@ export function ClientSetup({ repository }: { repository: Repository }) {
   const { data: info } = useSystemInfo();
   const [mode, setMode] = useState<'cli' | 'ci'>('cli');
   const baseUrl = (info?.baseUrl || window.location.origin).replace(/\/+$/, '');
-  const s = snippets(repository, baseUrl);
+  const signed = repository.kind === 'hosted' && (repository.format === 'apt' || repository.format === 'yum');
+  const key = useSigningKey(repository.name, signed);
+  const keyUrl = key.data?.url || `${repository.url}public.key`;
+  const s = snippets(repository, baseUrl, keyUrl);
   const list = mode === 'cli' ? s.cli : s.ci;
 
   return (

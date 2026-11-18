@@ -8,7 +8,7 @@ import {
   IconUpload,
   IconWorld,
 } from '@tabler/icons-react';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useRepository } from '../api/queries';
 import { FormatBadge, FormatIcon, KindBadge, OnlineBadge } from '../components/badges';
@@ -21,9 +21,10 @@ import { ClientSetup } from './repository/ClientSetup';
 import { ComponentsTab } from './repository/ComponentsTab';
 import { SettingsTab } from './repository/SettingsTab';
 import { UploadTab } from './repository/UploadTab';
+import { RunCleanupModal, settingsRows, SigningKeyPanel } from './repository/RepositoryExtras';
 import { ApiError } from '../api/client';
 
-const UPLOAD_FORMATS = ['raw', 'pypi', 'npm'];
+const UPLOAD_FORMATS = ['raw', 'pypi', 'npm', 'apt', 'yum', 'helm'];
 
 function Stat({ label, value, icon }: { label: string; value: ReactNode; icon: ReactNode }) {
   return (
@@ -58,6 +59,7 @@ export function RepositoryPage() {
   const { name = '', tab = 'browse' } = useParams();
   const navigate = useNavigate();
   const { data: r, isPending, error, refetch } = useRepository(name);
+  const [cleanupOpen, setCleanupOpen] = useState(false);
 
   if (error) {
     if (error instanceof ApiError && error.notFound) {
@@ -86,6 +88,7 @@ export function RepositoryPage() {
 
   const canUpload = r.permissions.includes('write') && r.kind === 'hosted' && UPLOAD_FORMATS.includes(r.format);
   const canAdmin = r.permissions.includes('admin');
+  const signed = r.kind === 'hosted' && (r.format === 'apt' || r.format === 'yum');
   const tabs = ['browse', 'components', ...(canUpload ? ['upload'] : []), ...(canAdmin ? ['settings'] : [])];
   const active = tabs.includes(tab) ? tab : 'browse';
 
@@ -174,6 +177,11 @@ export function RepositoryPage() {
                   </Group>
                 </Row>
               )}
+              {settingsRows(r, canAdmin, () => setCleanupOpen(true)).map(([label, node]) => (
+                <Row key={label} label={label}>
+                  {node}
+                </Row>
+              ))}
               <Row label="Your permissions">
                 <Group gap={4} justify="flex-end">
                   {r.permissions.length === 0 && (
@@ -192,9 +200,15 @@ export function RepositoryPage() {
           </Paper>
         </Grid.Col>
         <Grid.Col span={{ base: 12, lg: 7 }}>
-          <ClientSetup repository={r} />
+          <Stack gap="md" h="100%">
+            {signed && <SigningKeyPanel repository={r} />}
+            <div style={{ flex: 1 }}>
+              <ClientSetup repository={r} />
+            </div>
+          </Stack>
         </Grid.Col>
       </Grid>
+      {cleanupOpen && <RunCleanupModal repository={r} onClose={() => setCleanupOpen(false)} />}
 
       <Tabs value={active} onChange={(v) => navigate(`/repositories/${r.name}/${v}`)} keepMounted={false}>
         <Tabs.List mb="md">

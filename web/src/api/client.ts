@@ -26,6 +26,30 @@ export type SubjectType = Schemas['SubjectType'];
 export type GitLabTrustPolicy = Schemas['GitLabTrustPolicy'];
 export type GitLabTrustPolicyInput = Schemas['GitLabTrustPolicyInput'];
 export type AuditEvent = Schemas['AuditEvent'];
+export type ScanSettings = Schemas['ScanSettings'];
+export type AptDistribution = Schemas['AptDistribution'];
+export type Severity = Schemas['Severity'];
+export type ScanState = Schemas['ScanState'];
+export type SigningKey = Schemas['SigningKey'];
+export type SigningKeyImport = Schemas['SigningKeyImport'];
+export type Scanner = Schemas['Scanner'];
+export type ScannerInput = Schemas['ScannerInput'];
+export type ScannerType = Schemas['ScannerType'];
+export type ScannerTestResult = Schemas['ScannerTestResult'];
+export type ScanJob = Schemas['ScanJob'];
+export type Finding = Schemas['Finding'];
+export type SeverityCounts = Schemas['SeverityCounts'];
+export type ScanResult = Schemas['ScanResult'];
+export type ComponentScans = Schemas['ComponentScans'];
+export type Waiver = Schemas['Waiver'];
+export type WaiverInput = Schemas['WaiverInput'];
+export type CleanupCriteria = Schemas['CleanupCriteria'];
+export type CleanupPolicy = Schemas['CleanupPolicy'];
+export type CleanupPolicyInput = Schemas['CleanupPolicyInput'];
+export type CleanupRunResult = Schemas['CleanupRunResult'];
+export type RoutingRule = Schemas['RoutingRule'];
+export type RoutingRuleInput = Schemas['RoutingRuleInput'];
+export type RoutingTestResult = Schemas['RoutingTestResult'];
 
 /** Header required on state-changing requests authenticated by the session cookie. */
 export const CSRF_HEADER = { 'X-Entrepot-CSRF': '1' } as const;
@@ -59,6 +83,15 @@ export class ApiError extends Error {
   get notFound() {
     return this.status === 404;
   }
+
+  /** The server does not implement this endpoint (yet). */
+  get notImplemented() {
+    return this.status === 501;
+  }
+
+  get conflict() {
+    return this.status === 409;
+  }
 }
 
 function toApiError(response: Response, error: unknown): ApiError {
@@ -87,6 +120,11 @@ export async function unwrap<T>(p: Promise<FetchResult<T>>): Promise<T> {
     throw toApiError(res.response, res.error);
   }
   return res.data as T;
+}
+
+/** True when err is a 501 Not Implemented response. */
+export function isNotImplemented(err: unknown): boolean {
+  return err instanceof ApiError && err.notImplemented;
 }
 
 /** Like unwrap, for endpoints that return 204 No Content. */

@@ -1,4 +1,4 @@
-import { Alert, Anchor, Box, Button, Group, Paper, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Alert, Anchor, Box, Button, Group, Paper, Select, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
 import { IconCircleCheck, IconFileUpload, IconUpload } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
@@ -12,6 +12,12 @@ const hints: Record<string, { accept: string; help: string }> = {
   raw: { accept: '', help: 'Any file. Choose the destination path inside the repository.' },
   pypi: { accept: '.whl,.tar.gz,.zip', help: 'A wheel (.whl) or source distribution (.tar.gz). Name and version are read from the file name.' },
   npm: { accept: '.tgz', help: 'A package tarball created with npm pack. package.json is read from the tarball.' },
+  apt: {
+    accept: '.deb',
+    help: 'A Debian package (.deb). It is added to the chosen distribution and component, and the signed indexes are regenerated.',
+  },
+  yum: { accept: '.rpm', help: 'An RPM package. Choose the directory; repodata is regenerated and signed.' },
+  helm: { accept: '.tgz', help: 'A packaged chart (helm package). Chart.yaml is read from the archive and index.yaml is updated.' },
 };
 
 export function UploadTab({ repository }: { repository: Repository }) {
@@ -24,6 +30,16 @@ export function UploadTab({ repository }: { repository: Repository }) {
   const input = useRef<HTMLInputElement>(null);
   const qc = useQueryClient();
   const raw = repository.format === 'raw';
+  const yum = repository.format === 'yum';
+  const depth = repository.hosted?.yum?.repodataDepth ?? 0;
+  const [dir, setDir] = useState(['el9', 'x86_64', 'extras', 'a', 'b'].slice(0, depth).join('/'));
+  const apt = repository.format === 'apt';
+  const dists = repository.hosted?.apt?.distributions?.length
+    ? repository.hosted.apt.distributions
+    : [{ name: 'stable', components: ['main'] }];
+  const [dist, setDist] = useState(dists[0].name);
+  const comps = dists.find((d) => d.name === dist)?.components?.length ? dists.find((d) => d.name === dist)!.components! : ['main'];
+  const [component, setComponent] = useState(comps[0]);
 
   const choose = (f: File | null) => {
     setFile(f);
@@ -39,11 +55,15 @@ export function UploadTab({ repository }: { repository: Repository }) {
       unwrap(
         api.POST('/repositories/{name}/upload', {
           params: { path: { name } },
-          body: { file: '', path: raw && path.trim() ? path.trim() : undefined },
+          body: { file: '', path: raw && path.trim() ? path.trim() : yum && dir.trim() ? dir.trim() : undefined },
           bodySerializer: (b) => {
             const fd = new FormData();
             fd.append('file', f, f.name);
             if (b.path) fd.append('path', b.path);
+            if (apt) {
+              fd.append('distribution', dist);
+              fd.append('component', component);
+            }
             return fd;
           },
         }),
@@ -114,6 +134,43 @@ export function UploadTab({ repository }: { repository: Repository }) {
               onChange={(e) => choose(e.currentTarget.files?.[0] ?? null)}
             />
           </Box>
+          {apt && (
+            <SimpleGrid cols={{ base: 1, sm: 2 }}>
+              <Select
+                label="Distribution"
+                data={dists.map((d) => d.name)}
+                value={dist}
+                onChange={(v) => {
+                  if (!v) return;
+                  setDist(v);
+                  const c = dists.find((d) => d.name === v)?.components ?? [];
+                  setComponent(c[0] ?? 'main');
+                }}
+                allowDeselect={false}
+              />
+              <Select
+                label="Component"
+                data={comps}
+                value={comps.includes(component) ? component : comps[0]}
+                onChange={(v) => v && setComponent(v)}
+                allowDeselect={false}
+              />
+            </SimpleGrid>
+          )}
+          {yum && (
+            <TextInput
+              label="Directory"
+              description={
+                depth > 0
+                  ? `Repodata is generated ${depth} director${depth === 1 ? 'y' : 'ies'} deep, so packages must be in a directory like this.`
+                  : 'Optional sub-directory; repodata is generated at the repository root.'
+              }
+              placeholder={depth > 0 ? 'el9/x86_64' : ''}
+              value={dir}
+              onChange={(e) => setDir(e.currentTarget.value)}
+              styles={{ input: { fontFamily: 'var(--mantine-font-family-monospace)' } }}
+            />
+          )}
           {raw && (
             <TextInput
               label="Destination path"
