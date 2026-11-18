@@ -69,3 +69,21 @@ func isNotNullViolation(err error) bool {
 	var pgErr *pgconn.PgError
 	return errors.As(err, &pgErr) && pgErr.Code == "23502"
 }
+
+// AdvisoryLock takes a cluster-wide Postgres advisory lock for key, so
+// read-modify-write sequences (e.g. npm packument updates) are serialised
+// across replicas. The returned function releases it.
+func (s *Store) AdvisoryLock(ctx context.Context, key string) (func(), error) {
+	conn, err := s.pool.Acquire(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := conn.Exec(ctx, `SELECT pg_advisory_lock(hashtextextended($1, 0))`, key); err != nil {
+		conn.Release()
+		return nil, err
+	}
+	return func() {
+		_, _ = conn.Exec(context.Background(), `SELECT pg_advisory_unlock(hashtextextended($1, 0))`, key)
+		conn.Release()
+	}, nil
+}
