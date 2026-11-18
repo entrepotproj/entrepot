@@ -1,10 +1,10 @@
 // Package match implements the glob syntax used by role binding repository
 // patterns and GitLab trust policy conditions. In patterns:
 //
-//	*     matches any sequence of characters except '/'
-//	**    matches any sequence of characters including '/'
-//	?     matches a single character except '/'
-//	a|b   alternatives (top level): matches if any alternative matches
+//   - "*" matches any sequence of characters except '/'
+//   - "**" matches any sequence of characters including '/'
+//   - "?" matches a single character except '/'
+//   - "a|b" (top level) matches if any alternative matches
 //
 // Matching is case-sensitive and anchored at both ends.
 package match
