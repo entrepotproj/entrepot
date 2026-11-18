@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { api, ApiError, unwrap, type ComponentScans, type Me } from './client';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { api, ApiError, unwrap, type ComponentScans, type Me, type UsageRange } from './client';
 
 export const qk = {
   systemInfo: ['system-info'] as const,
@@ -122,5 +122,32 @@ export function useComponentScans(
     queryFn: () => unwrap(api.GET('/components/{id}/scans', { params: { path: { id } } })),
     enabled: !!id,
     refetchInterval,
+  });
+}
+
+// ---- Usage metrics ----
+
+/** Dashboard refresh period; TanStack Query pauses interval refetches while the tab is hidden. */
+export const USAGE_REFRESH_MS = 30_000;
+
+export function useMetricsOverview(range: UsageRange, enabled = true) {
+  return useQuery({
+    queryKey: ['metrics-overview', range],
+    queryFn: () => unwrap(api.GET('/metrics/overview', { params: { query: { range } } })),
+    refetchInterval: USAGE_REFRESH_MS,
+    placeholderData: keepPreviousData,
+    enabled,
+  });
+}
+
+export function useRepositoryMetrics(name: string, range: UsageRange) {
+  return useQuery({
+    queryKey: ['repository-metrics', name, range],
+    queryFn: () =>
+      unwrap(api.GET('/repositories/{name}/metrics', { params: { path: { name }, query: { range } } })),
+    refetchInterval: USAGE_REFRESH_MS,
+    // Keep the previous range's data while switching ranges, but never show another repository's.
+    placeholderData: (prev, prevQuery) => (prevQuery?.queryKey[1] === name ? prev : undefined),
+    enabled: !!name,
   });
 }

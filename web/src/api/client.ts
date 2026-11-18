@@ -50,6 +50,17 @@ export type CleanupRunResult = Schemas['CleanupRunResult'];
 export type RoutingRule = Schemas['RoutingRule'];
 export type RoutingRuleInput = Schemas['RoutingRuleInput'];
 export type RoutingTestResult = Schemas['RoutingTestResult'];
+export type UsageCounts = Schemas['UsageCounts'];
+export type UsagePoint = Schemas['UsagePoint'];
+export type UsageOverview = Schemas['UsageOverview'];
+export type RepositoryUsage = Schemas['RepositoryUsage'];
+export type RepositoryUsageReport = Schemas['RepositoryUsageReport'];
+export type FormatInventory = Schemas['FormatInventory'];
+export type BlobStoreSummary = Schemas['BlobStoreSummary'];
+export type ActivityEvent = Schemas['ActivityEvent'];
+export type UsageRange = NonNullable<NonNullable<paths['/metrics/overview']['get']['parameters']['query']>['range']>;
+export type ActivityQuery = NonNullable<paths['/activity']['get']['parameters']['query']>;
+export type AuditQuery = NonNullable<paths['/audit-events']['get']['parameters']['query']>;
 
 /** Header required on state-changing requests authenticated by the session cookie. */
 export const CSRF_HEADER = { 'X-Entrepot-CSRF': '1' } as const;
@@ -154,6 +165,19 @@ export async function tokenLogin(token: string): Promise<void> {
 /** POST /auth/logout: clears the session cookie without leaving the app. */
 export async function sessionLogout(): Promise<void> {
   await fetch('/auth/logout', { method: 'POST', credentials: 'same-origin', headers: CSRF_HEADER });
+}
+
+/**
+ * A same-origin URL for a GET endpoint with query parameters (empty values
+ * dropped), e.g. for CSV export links that rely on the session cookie.
+ */
+export function apiUrl(path: string, query: Record<string, string | number | undefined | null>): string {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(query)) {
+    if (v !== undefined && v !== null && v !== '') q.set(k, String(v));
+  }
+  const qs = q.toString();
+  return '/api/v1' + path + (qs ? '?' + qs : '');
 }
 
 export function loginUrl(returnTo: string): string {

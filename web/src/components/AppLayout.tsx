@@ -21,6 +21,7 @@ import {
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
+  IconActivity,
   IconBook2,
   IconBrandGitlab,
   IconChevronDown,
@@ -28,6 +29,7 @@ import {
   IconEraser,
   IconHistory,
   IconKey,
+  IconLayoutDashboard,
   IconListCheck,
   IconLogin,
   IconLogout,
@@ -53,6 +55,7 @@ import { useAuth } from '../lib/auth';
 type NavItem = { to: string; label: string; icon: Icon };
 
 const browseNav: NavItem[] = [
+  { to: '/', label: 'Dashboard', icon: IconLayoutDashboard },
   { to: '/repositories', label: 'Repositories', icon: IconPackages },
   { to: '/search', label: 'Search', icon: IconSearch },
 ];
@@ -65,6 +68,7 @@ const adminNav: NavItem[] = [
   { to: '/admin/gitlab', label: 'GitLab trust', icon: IconBrandGitlab },
   { to: '/admin/service-accounts', label: 'Service accounts', icon: IconRobot },
   { to: '/admin/users', label: 'Users', icon: IconUsers },
+  { to: '/admin/activity', label: 'Activity', icon: IconActivity },
   { to: '/admin/audit', label: 'Audit log', icon: IconHistory },
 ];
 
@@ -141,7 +145,7 @@ function UserMenu() {
       return;
     }
     await sessionLogout();
-    navigate('/repositories');
+    navigate('/');
     // Reset (not just clear) so mounted observers drop the signed-in data.
     await qc.resetQueries();
   };
@@ -230,7 +234,7 @@ function NavSection({ title, items, onNavigate }: { title?: string; items: NavIt
         </Text>
       )}
       {items.map((it) => {
-        const active = location.pathname === it.to || location.pathname.startsWith(it.to + '/');
+        const active = location.pathname === it.to || (it.to !== '/' && location.pathname.startsWith(it.to + '/'));
         return (
           <NavLink
             key={it.to}
@@ -264,7 +268,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
         <Group h="100%" px="md" justify="space-between" wrap="nowrap">
           <Group gap="sm" wrap="nowrap">
             <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-            <UnstyledButton component={Link} to="/repositories" aria-label="Entrepot home">
+            <UnstyledButton component={Link} to="/" aria-label="Entrepot home">
               <Logo />
             </UnstyledButton>
           </Group>

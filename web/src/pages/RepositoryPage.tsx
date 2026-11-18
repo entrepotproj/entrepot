@@ -1,5 +1,7 @@
 import { Badge, Divider, Grid, Group, Paper, SimpleGrid, Skeleton, Stack, Tabs, Text, ThemeIcon, Tooltip } from '@mantine/core';
 import {
+  IconActivity,
+  IconChartAreaLine,
   IconFolder,
   IconLock,
   IconPackage,
@@ -21,6 +23,8 @@ import { ClientSetup } from './repository/ClientSetup';
 import { ComponentsTab } from './repository/ComponentsTab';
 import { SettingsTab } from './repository/SettingsTab';
 import { UploadTab } from './repository/UploadTab';
+import { UsageTab } from './repository/UsageTab';
+import { ActivityTab } from './repository/ActivityTab';
 import { RunCleanupModal, settingsRows, SigningKeyPanel } from './repository/RepositoryExtras';
 import { ApiError } from '../api/client';
 
@@ -89,7 +93,14 @@ export function RepositoryPage() {
   const canUpload = r.permissions.includes('write') && r.kind === 'hosted' && UPLOAD_FORMATS.includes(r.format);
   const canAdmin = r.permissions.includes('admin');
   const signed = r.kind === 'hosted' && (r.format === 'apt' || r.format === 'yum');
-  const tabs = ['browse', 'components', ...(canUpload ? ['upload'] : []), ...(canAdmin ? ['settings'] : [])];
+  const tabs = [
+    'browse',
+    'components',
+    'usage',
+    ...(canAdmin ? ['activity'] : []),
+    ...(canUpload ? ['upload'] : []),
+    ...(canAdmin ? ['settings'] : []),
+  ];
   const active = tabs.includes(tab) ? tab : 'browse';
 
   return (
@@ -218,6 +229,14 @@ export function RepositoryPage() {
           <Tabs.Tab value="components" leftSection={<IconPackage size={16} />}>
             Components
           </Tabs.Tab>
+          <Tabs.Tab value="usage" leftSection={<IconChartAreaLine size={16} />}>
+            Usage
+          </Tabs.Tab>
+          {canAdmin && (
+            <Tabs.Tab value="activity" leftSection={<IconActivity size={16} />}>
+              Activity
+            </Tabs.Tab>
+          )}
           {canUpload && (
             <Tabs.Tab value="upload" leftSection={<IconUpload size={16} />}>
               Upload
@@ -235,6 +254,14 @@ export function RepositoryPage() {
         <Tabs.Panel value="components">
           <ComponentsTab repository={r} />
         </Tabs.Panel>
+        <Tabs.Panel value="usage">
+          <UsageTab repository={r} />
+        </Tabs.Panel>
+        {canAdmin && (
+          <Tabs.Panel value="activity">
+            <ActivityTab repository={r} />
+          </Tabs.Panel>
+        )}
         {canUpload && (
           <Tabs.Panel value="upload">
             <UploadTab repository={r} />

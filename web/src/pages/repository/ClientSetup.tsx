@@ -298,6 +298,19 @@ function snippets(r: Repository, baseUrl: string, keyUrl: string): { cli: Snippe
   }
 }
 
+/**
+ * The most useful single command for a repository (install / pull / download),
+ * for compact "get started" hints such as the dashboard's repository cards.
+ */
+export function quickCommand(r: Repository, baseUrl: string): Snippet {
+  const { cli } = snippets(r, baseUrl, `${r.url}public.key`);
+  const pick =
+    cli.find((s) => /^(install|pull|download|add)/i.test(s.title)) ??
+    cli.find((s) => !s.code.includes('\n')) ??
+    cli[0] ?? { title: 'URL', code: r.url };
+  return { title: pick.title, code: pick.code.split('\n')[0] };
+}
+
 export function ClientSetup({ repository }: { repository: Repository }) {
   const { data: info } = useSystemInfo();
   const [mode, setMode] = useState<'cli' | 'ci'>('cli');

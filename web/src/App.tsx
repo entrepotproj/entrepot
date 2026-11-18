@@ -5,6 +5,7 @@ import { AppLayout } from './components/AppLayout';
 import { RequireAdmin } from './components/RequireAdmin';
 import { AssetPage } from './pages/AssetPage';
 import { ComponentPage } from './pages/ComponentPage';
+import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { RepositoriesPage } from './pages/RepositoriesPage';
@@ -20,6 +21,7 @@ const GitLabPoliciesPage = lazy(() => import('./pages/admin/GitLabPoliciesPage')
 const ServiceAccountsPage = lazy(() => import('./pages/admin/ServiceAccountsPage'));
 const UsersPage = lazy(() => import('./pages/admin/UsersPage'));
 const AuditLogPage = lazy(() => import('./pages/admin/AuditLogPage'));
+const ActivityLogPage = lazy(() => import('./pages/admin/ActivityLogPage'));
 const ScannersPage = lazy(() => import('./pages/admin/ScannersPage'));
 const WaiversPage = lazy(() => import('./pages/admin/WaiversPage'));
 const ScanJobsPage = lazy(() => import('./pages/admin/ScanJobsPage'));
@@ -55,7 +57,8 @@ export function App() {
 function AppRoutes() {
   return (
     <Routes>
-      <Route index element={<Navigate to="/repositories" replace />} />
+      <Route index element={<DashboardPage />} />
+      <Route path="dashboard" element={<Navigate to="/" replace />} />
       <Route path="repositories" element={<RepositoriesPage />} />
       <Route
         path="repositories/new"
@@ -78,6 +81,7 @@ function AppRoutes() {
       <Route path="admin/service-accounts" element={<RequireAdmin><ServiceAccountsPage /></RequireAdmin>} />
       <Route path="admin/service-accounts/:name" element={<RequireAdmin><ServiceAccountsPage /></RequireAdmin>} />
       <Route path="admin/users" element={<RequireAdmin><UsersPage /></RequireAdmin>} />
+      <Route path="admin/activity" element={<RequireAdmin><ActivityLogPage /></RequireAdmin>} />
       <Route path="admin/audit" element={<RequireAdmin><AuditLogPage /></RequireAdmin>} />
       <Route path="admin/scanners" element={<RequireAdmin><ScannersPage /></RequireAdmin>} />
       <Route path="admin/waivers" element={<RequireAdmin><WaiversPage /></RequireAdmin>} />

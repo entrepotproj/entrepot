@@ -23,7 +23,7 @@ import { Logo } from '../components/AppLayout';
 import { describeError } from '../lib/notify';
 
 function safeReturn(p: string | null): string {
-  if (!p || !p.startsWith('/') || p.startsWith('//') || p.startsWith('/\\') || p.startsWith('/login')) return '/repositories';
+  if (!p || !p.startsWith('/') || p.startsWith('//') || p.startsWith('/\\') || p.startsWith('/login')) return '/';
   return p;
 }
 

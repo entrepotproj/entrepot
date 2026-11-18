@@ -62,7 +62,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Audit log, newest first (admin) */
+        /**
+         * Audit log, newest first (admin)
+         * @description Configuration changes, logins and other administrative events. Use `format=csv` to export.
+         */
         get: operations["listAuditEvents"];
         put?: never;
         post?: never;
@@ -879,6 +882,68 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/metrics/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Usage dashboard data
+         * @description Requests, downloads, uploads, traffic and cache efficiency over time, plus
+         *     content inventory and scan status. Scoped to the repositories the caller
+         *     can read (administrators see everything, plus storage per blob store).
+         */
+        get: operations["getMetricsOverview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repositories/{name}/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        /** Usage of one repository */
+        get: operations["getRepositoryMetrics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Activity log of downloads, uploads and deletes
+         * @description Administrators see all repositories; repository administrators can query
+         *     their repositories with `repository=`. Use `format=csv` to export.
+         */
+        get: operations["listActivity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1532,6 +1597,130 @@ export interface components {
             /** @description The matcher that decided */
             matched?: string;
         };
+        UsageCounts: {
+            /** Format: int64 */
+            requests: number;
+            /**
+             * Format: int64
+             * @description Server errors (5xx)
+             */
+            errors: number;
+            /** Format: int64 */
+            downloads: number;
+            /** Format: int64 */
+            uploads: number;
+            /** Format: int64 */
+            bytesOut: number;
+            /** Format: int64 */
+            bytesIn: number;
+            /**
+             * Format: int64
+             * @description Proxy requests served from cache
+             */
+            cacheHits: number;
+            /**
+             * Format: int64
+             * @description Proxy requests fetched from the upstream
+             */
+            cacheMisses: number;
+        };
+        UsagePoint: {
+            /** Format: date-time */
+            t: string;
+            /** Format: int64 */
+            requests: number;
+            /** Format: int64 */
+            errors: number;
+            /** Format: int64 */
+            downloads: number;
+            /** Format: int64 */
+            uploads: number;
+            /** Format: int64 */
+            bytesOut: number;
+            /** Format: int64 */
+            bytesIn: number;
+        };
+        RepositoryUsage: {
+            repository: string;
+            format: string;
+            kind: string;
+            counts: components["schemas"]["UsageCounts"];
+        };
+        FormatInventory: {
+            format: string;
+            /** Format: int64 */
+            repositories: number;
+            /** Format: int64 */
+            components: number;
+            /** Format: int64 */
+            assets: number;
+            /** Format: int64 */
+            totalBytes: number;
+        };
+        BlobStoreSummary: {
+            name: string;
+            type: string;
+            /** Format: int64 */
+            blobCount: number;
+            /** Format: int64 */
+            totalBytes: number;
+            /** Format: int64 */
+            repositories: number;
+        };
+        UsageOverview: {
+            range: string;
+            /** Format: date-time */
+            from: string;
+            bucketSeconds: number;
+            /**
+             * @description readable: only repositories the caller can read
+             * @enum {string}
+             */
+            scope: "readable" | "all";
+            totals: components["schemas"]["UsageCounts"];
+            /** @description Requests per second over the last 5 minutes */
+            requestRate: number;
+            series: components["schemas"]["UsagePoint"][];
+            topRepositories: components["schemas"]["RepositoryUsage"][];
+            /** @description Repositories and content per format */
+            inventory: components["schemas"]["FormatInventory"][];
+            /** @description Components by scan state (plus quarantined) */
+            scan: {
+                [key: string]: number;
+            };
+            /** @description Blob store usage (administrators only) */
+            storage?: components["schemas"]["BlobStoreSummary"][];
+        };
+        RepositoryUsageReport: {
+            repository: string;
+            range: string;
+            /** Format: date-time */
+            from: string;
+            bucketSeconds: number;
+            totals: components["schemas"]["UsageCounts"];
+            requestRate: number;
+            series: components["schemas"]["UsagePoint"][];
+        };
+        ActivityEvent: {
+            /** Format: int64 */
+            id: number;
+            /** Format: date-time */
+            at: string;
+            repository: string;
+            format: string;
+            /** @enum {string} */
+            kind: "download" | "upload" | "delete";
+            path: string;
+            componentId?: string;
+            /** @description name@version */
+            component?: string;
+            actor: string;
+            actorKind: string;
+            remoteIp: string;
+            userAgent: string;
+            /** Format: int64 */
+            bytes: number;
+        };
     };
     responses: {
         /** @description Error */
@@ -1548,6 +1737,14 @@ export interface components {
         Name: string;
         ID: string;
         Limit: number;
+        /** @description Time window (default 24h) */
+        UsageRange: "1h" | "24h" | "7d" | "30d";
+        /** @description Only events at or after this time */
+        From: string;
+        /** @description Only events before this time */
+        To: string;
+        /** @description json (default) or csv */
+        ExportFormat: "json" | "csv";
         Offset: number;
     };
     requestBodies: never;
@@ -1624,6 +1821,18 @@ export interface operations {
             query?: {
                 before?: number;
                 limit?: components["parameters"]["Limit"];
+                /** @description Substring of the actor */
+                actor?: string;
+                /** @description Action prefix */
+                action?: string;
+                /** @description Substring of the target */
+                target?: string;
+                /** @description Only events at or after this time */
+                from?: components["parameters"]["From"];
+                /** @description Only events before this time */
+                to?: components["parameters"]["To"];
+                /** @description json (default) or csv */
+                format?: components["parameters"]["ExportFormat"];
             };
             header?: never;
             path?: never;
@@ -1638,6 +1847,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AuditEvent"][];
+                    "text/csv": string;
                 };
             };
             default: components["responses"]["Error"];
@@ -3479,6 +3689,94 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RoutingTestResult"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getMetricsOverview: {
+        parameters: {
+            query?: {
+                /** @description Time window (default 24h) */
+                range?: components["parameters"]["UsageRange"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsageOverview"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getRepositoryMetrics: {
+        parameters: {
+            query?: {
+                /** @description Time window (default 24h) */
+                range?: components["parameters"]["UsageRange"];
+            };
+            header?: never;
+            path: {
+                name: components["parameters"]["Name"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepositoryUsageReport"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    listActivity: {
+        parameters: {
+            query?: {
+                repository?: string;
+                kind?: "download" | "upload" | "delete";
+                /** @description Substring of the actor */
+                actor?: string;
+                /** @description Substring of the asset path */
+                path?: string;
+                /** @description Only events at or after this time */
+                from?: components["parameters"]["From"];
+                /** @description Only events before this time */
+                to?: components["parameters"]["To"];
+                /** @description Return events with a smaller id (paging) */
+                before?: number;
+                limit?: components["parameters"]["Limit"];
+                /** @description json (default) or csv */
+                format?: components["parameters"]["ExportFormat"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityEvent"][];
+                    "text/csv": string;
                 };
             };
             default: components["responses"]["Error"];
