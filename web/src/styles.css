@@ -1,0 +1,13 @@
+html,
+body {
+  margin: 0;
+}
+
+/* Clickable table rows. */
+.row-link {
+  cursor: pointer;
+}
+
+.mono {
+  font-family: var(--mantine-font-family-monospace);
+}
