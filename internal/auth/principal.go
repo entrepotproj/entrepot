@@ -43,7 +43,7 @@ type Principal struct {
 	// Claims holds the verified GitLab id_token claims.
 	Claims map[string]any `json:"claims,omitempty"`
 	// ViaCookie is true when authenticated by session cookie (CSRF checks apply).
-	ViaCookie bool `json:"-"`
+	ViaCookie bool   `json:"-"`
 	TokenID   string `json:"-"`
 }
 

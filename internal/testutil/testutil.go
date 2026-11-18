@@ -197,4 +197,3 @@ func Expect(t *testing.T, resp *http.Response, want int) string {
 	}
 	return b
 }
-
