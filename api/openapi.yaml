@@ -809,6 +809,7 @@ paths:
     delete:
       tags: [scanning]
       operationId: deleteScanner
+      description: Fails with 409 while repositories use the scanner.
       responses:
         "204": { description: Deleted }
         default: { $ref: "#/components/responses/Error" }

@@ -12,7 +12,9 @@ behind single sign-on.
 | PyPI | ✅ | ✅ | ✅ | pip, twine, uv, poetry |
 | npm | ✅ | ✅ | ✅ | npm, yarn, pnpm |
 | Docker / OCI | ✅ | ✅ | ✅ | docker, podman, crane, helm (OCI) |
-| Apt, Yum, Helm (HTTP) | Phase 2 | | | |
+| Apt (signed) | ✅ | ✅ | | apt-get |
+| Yum / RPM (signed) | ✅ | ✅ | | dnf, yum |
+| Helm (HTTP) | ✅ | ✅ | ✅ | helm, helm cm-push |
 
 **Highlights**
 
@@ -32,6 +34,12 @@ behind single sign-on.
   Phase 3.
 * **Kubernetes-native**: one static binary, stateless pods, Postgres for
   metadata, a Helm chart, Prometheus metrics and health probes.
+* **Vulnerability scanning**: Trivy, Grype or any scanner via a signed
+  webhook. Scans run on upload, proxy fetch, on demand or on a schedule.
+  Repositories can warn or **quarantine**, with waivers, and results are
+  posted back to GitLab as commit statuses and MR notes.
+* **Hygiene**: cleanup policies, routing rules, and groups that prefer hosted
+  packages to defeat dependency confusion. Secrets are encrypted at rest.
 * **Web UI**: browse, search, upload, manage repositories, tokens and access
   control.
 
@@ -99,7 +107,9 @@ are included. See [docs/storage.md](docs/storage.md) for the trade-offs.
 * [Authentication & authorization](docs/authentication.md) — Keycloak, GitLab CI id_tokens, RBAC, tokens
 * [Storage](docs/storage.md) — PVC / EBS / EFS / S3
 * [Client setup](docs/clients.md)
-* [Roadmap](docs/roadmap.md) — Apt/Yum/Helm, scanning pipeline, Terraform provider
+* [Vulnerability scanning](docs/scanning.md)
+* [Cleanup, routing & dependency confusion](docs/cleanup-and-routing.md)
+* [Roadmap](docs/roadmap.md) — Terraform provider next
 
 ## Development
 
@@ -119,7 +129,10 @@ cmd/entrepot/          server binary
 api/openapi.yaml       API contract (source of truth)
 internal/api/          management API handlers (+ generated apigen)
 internal/auth|authz/   authentication chain, OIDC, GitLab id_tokens, RBAC
-internal/formats/      raw, pypi, npm, docker
+internal/formats/      raw, pypi, npm, docker, apt, yum, helm
+internal/scan/         scanning pipeline (queue, drivers, policy, GitLab feedback)
+internal/cleanup|routing/  cleanup policies, routing rules
+internal/signing|secrets/  repository signing keys, secrets at rest
 internal/proxy/        pull-through cache
 internal/repo/         repository/asset service
 internal/storage/      blob store drivers (file, s3)

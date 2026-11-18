@@ -1780,6 +1780,8 @@ type ClientInterface interface {
 	CreateScanner(ctx context.Context, body CreateScannerJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteScanner performs a DELETE /scanners/{name} (the `DeleteScanner` operationId) request.
+	//
+	// Fails with 409 while repositories use the scanner.
 	DeleteScanner(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetScanner performs a GET /scanners/{name} (the `GetScanner` operationId) request.
@@ -3003,6 +3005,8 @@ func (c *Client) CreateScanner(ctx context.Context, body CreateScannerJSONReques
 }
 
 // DeleteScanner performs a DELETE /scanners/{name} (the `DeleteScanner` operationId) request.
+//
+// Fails with 409 while repositories use the scanner.
 func (c *Client) DeleteScanner(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeleteScannerRequest(c.Server, name)
 	if err != nil {
@@ -7200,6 +7204,8 @@ type ClientWithResponsesInterface interface {
 	CreateScannerWithResponse(ctx context.Context, body CreateScannerJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateScannerResponse, error)
 
 	// DeleteScannerWithResponse performs a DELETE /scanners/{name} (the `DeleteScanner` operationId) request.
+	//
+	// Fails with 409 while repositories use the scanner.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	DeleteScannerWithResponse(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*DeleteScannerResponse, error)
@@ -12028,6 +12034,8 @@ func (c *ClientWithResponses) CreateScannerWithResponse(ctx context.Context, bod
 }
 
 // DeleteScannerWithResponse performs a DELETE /scanners/{name} (the `DeleteScanner` operationId) request.
+//
+// Fails with 409 while repositories use the scanner.
 //
 // Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) DeleteScannerWithResponse(ctx context.Context, name Name, reqEditors ...RequestEditorFn) (*DeleteScannerResponse, error) {

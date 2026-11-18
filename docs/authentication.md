@@ -156,6 +156,10 @@ pypi:
     - twine upload --repository-url https://entrepot.example.com/repository/pypi-internal/ -u gitlab-ci -p "$ENTREPOT_TOKEN" dist/*
 ```
 
+Artifacts published by CI jobs record the job's project, ref, commit and
+pipeline. With a GitLab API token configured, scan results are posted back
+as commit statuses and MR notes (see [scanning](scanning.md#gitlab-feedback)).
+
 Jobs whose claims match no policy authenticate but get no permissions beyond
 anonymous access. Tokens with the wrong audience, an unknown issuer or an
 expired signature get `401`. Audit records show the job as

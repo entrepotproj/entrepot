@@ -132,6 +132,66 @@ server = "https://registry-1.docker.io"
   override_path = true
 ```
 
+## Apt (Debian / Ubuntu)
+
+Hosted Apt repositories sign their metadata with a key Entrepot generates per
+repository:
+
+```bash
+sudo install -d -m 0755 /etc/apt/keyrings
+curl -fsSL https://entrepot.example.com/repository/apt-internal/public.gpg \
+  | sudo tee /etc/apt/keyrings/entrepot-apt-internal.gpg >/dev/null
+echo "deb [signed-by=/etc/apt/keyrings/entrepot-apt-internal.gpg] https://entrepot.example.com/repository/apt-internal stable main" \
+  | sudo tee /etc/apt/sources.list.d/entrepot.list
+sudo apt-get update && sudo apt-get install mypkg
+
+# private repositories: /etc/apt/auth.conf.d/entrepot.conf
+#   machine entrepot.example.com/repository/apt-internal/ login token password <TOKEN>
+
+# upload (hosted)
+curl -fu token:$TOKEN -T mypkg_1.0_amd64.deb \
+  "https://entrepot.example.com/repository/apt-internal/mypkg_1.0_amd64.deb?distribution=stable&component=main"
+```
+
+* Proxies (e.g. of `http://archive.ubuntu.com/ubuntu`) serve upstream metadata
+  byte for byte, so keep using the upstream keyring in `signed-by`.
+* Rotate or import the signing key with `/api/v1/repositories/{name}/signing-key`.
+  After a rotation apt clients must fetch the new `public.gpg`.
+
+## Yum / dnf (RHEL, Rocky, Fedora, Amazon Linux)
+
+```bash
+sudo curl -fsSL -o /etc/yum.repos.d/entrepot.repo \
+  https://entrepot.example.com/repository/yum-internal/entrepot.repo
+sudo dnf install mypkg
+
+# upload (hosted); repodata is generated at hosted.yum.repodataDepth (0 = root)
+curl -fu token:$TOKEN -T mypkg-1.0-1.el9.x86_64.rpm \
+  https://entrepot.example.com/repository/yum-internal/mypkg-1.0-1.el9.x86_64.rpm
+```
+
+The generated `.repo` file enables `repo_gpgcheck=1` with the repository's
+key. Entrepot signs `repomd.xml` but not the packages themselves, so the file
+sets `gpgcheck=0`. For private repositories add `username=`/`password=` to the
+`.repo` file.
+
+## Helm
+
+```bash
+helm repo add internal https://entrepot.example.com/repository/helm-internal/ --username token --password "$TOKEN"
+helm repo update && helm install my-release internal/mychart
+
+# upload: ChartMuseum API (works with the helm cm-push plugin) or PUT
+curl --data-binary @mychart-0.1.0.tgz -H "Authorization: Bearer $TOKEN" \
+  https://entrepot.example.com/repository/helm-internal/api/charts
+helm cm-push mychart/ internal
+```
+
+Proxies rewrite chart URLs in the upstream `index.yaml` so downloads are
+cached. Groups merge indexes and prefer hosted charts. OCI charts
+(`helm push oci://entrepot.example.com/docker-internal/charts`) go to Docker
+repositories.
+
 ## GitLab CI
 
 See [authentication.md](authentication.md#gitlab-cicd-id_tokens). In short,

@@ -16,35 +16,32 @@ Entrepot is being built in phases. Phase 1 is the core and has shipped.
 * Helm chart (EBS / EFS / S3 examples, IRSA), Dockerfile, docker compose dev
   stack with Keycloak and MinIO, CI with a kind smoke test.
 
-## Phase 2 — more formats and the scanning pipeline
+## Phase 2: more formats and the scanning pipeline (done)
 
-* **Formats**
-  * Apt: proxy, plus hosted with generated, GPG-signed `Release`/`InRelease`.
-  * Yum/RPM: proxy, plus hosted with `repodata` generation.
-  * Helm: HTTP `index.yaml` repositories, hosted and proxy. OCI charts already
-    work through Docker repositories.
-* **Scanning**
-  * Scanner drivers configured through the API:
-    * `trivy` (Trivy server mode),
-    * `grype`,
-    * `http-webhook`: Entrepot POSTs the asset's coordinates and a
-      short-lived download URL, and the scanner calls back with SARIF or
-      CycloneDX VEX,
-    * `k8s-job`: runs any scanner image as a Kubernetes Job.
-  * Triggers: on upload, on first proxy fetch, on demand
-    (`POST /api/v1/assets/{id}/scan`), and scheduled rescans.
-  * The job queue is a Postgres table read with `FOR UPDATE SKIP LOCKED`, so
-    no extra infrastructure is needed.
-  * Normalised findings, a per-repository policy (*warn* or *quarantine*: block
-    downloads until the asset is clean or waived), waivers, and findings in the UI.
-* **Dependency-confusion protection** for groups. Today npm and PyPI groups
-  merge versions from all members (the first member wins per version). Add
-  routing rules, such as "names in `@acme/*` or present in hosted members
-  never come from proxies", and per-repository allow/deny lists.
-* **Cleanup policies**: by age, last download or regex. Docker untagged
-  manifest cleanup.
-* **Secrets at rest**: encrypt proxy passwords and S3 keys stored in Postgres.
-* GitLab feedback: commit statuses and MR comments with scan results.
+* **Apt**: hosted, with generated `Packages`/`Release` and a signed
+  `InRelease`/`Release.gpg`; proxy.
+* **Yum/RPM**: hosted, with createrepo-compatible repodata and a signed
+  `repomd.xml`; proxy.
+* **Helm**: HTTP repositories (hosted with the ChartMuseum API, proxy, group).
+* **Signing keys** per repository, managed by Entrepot, with rotation and
+  import.
+* **Scanning pipeline**: Trivy, Grype and webhook scanners; a Postgres job
+  queue; warn or quarantine policies with waivers; scheduled rescans; a
+  separate scan-worker image and Deployment; GitLab commit statuses and MR
+  notes.
+* **Cleanup policies** (age, downloads, regex, prerelease, keep-latest,
+  untagged Docker manifests) with preview and a scheduled run.
+* **Routing rules** for proxies, and **prefer-hosted** groups against
+  dependency confusion.
+* **Secrets at rest**: AES-GCM encryption of proxy passwords, S3 keys,
+  scanner secrets and signing keys, with key rotation.
+
+### Follow-ups
+
+* Apt/Yum group repositories (these need re-signing of merged metadata).
+* Signing individual RPM packages, not just repository metadata.
+* Kubernetes Job scanner driver (one Job per scan).
+* Filtering npm/PyPI search results by prefer-hosted.
 
 ## Phase 3 — Terraform provider
 

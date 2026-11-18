@@ -24,6 +24,12 @@ followed by its upper-cased path joined with `_`:
 | `proxy.timeout` | `ENTREPOT_PROXY_TIMEOUT` | `60s` (time to response headers) |
 | `blobStores` | `ENTREPOT_BLOBSTORES` (JSON/YAML list) | none (a `default` file store is created when no stores exist) |
 | `log.level` / `log.format` | `ENTREPOT_LOG_LEVEL` / `ENTREPOT_LOG_FORMAT` | `info` / `json` |
+| `secrets.key` | `ENTREPOT_SECRETS_KEY` (`_FILE`) | derived from `auth.sessionSecret`. Encrypts secrets stored in Postgres; same on all replicas |
+| `secrets.previousKeys` | comma-separated | none. Old keys that can still decrypt during a rotation; values are re-encrypted with the current key at startup |
+| `scan.workers` | `ENTREPOT_SCAN_WORKERS` | `2` in-process scan workers (`0` when a separate `entrepot scan-worker` runs them) |
+| `scan.workDir` / `scan.jobTimeout` / `scan.pollInterval` | `ENTREPOT_SCAN_*` | temp dir / `15m` / `2s` |
+| `cleanup.interval` | `ENTREPOT_CLEANUP_INTERVAL` | `24h` (`0` disables scheduled cleanup) |
+| `auth.gitlab[].api` | — | `{url, token \| tokenEnv \| tokenFile}`: a GitLab API token for scan feedback |
 
 Validate a configuration with `entrepot check-config -config file.yaml`. It
 prints the effective configuration with secrets redacted.
@@ -62,7 +68,7 @@ blobStores:
 
 | Field | Meaning |
 |---|---|
-| `format` | `raw`, `pypi`, `npm`, `docker` (immutable) |
+| `format` | `raw`, `pypi`, `npm`, `docker`, `apt`, `yum`, `helm` (immutable) |
 | `kind` | `hosted`, `proxy`, `group` (immutable) |
 | `blobStore` | store for this repository's content (immutable) |
 | `online` | offline proxies serve only cached content |
@@ -74,3 +80,9 @@ blobStores:
 | `proxy.contentTtlSeconds` | cache time for artifacts (default 0 = immutable) |
 | `proxy.negativeCacheTtlSeconds` | cache time for upstream 404s (default 300, -1 disables) |
 | `group.members` | ordered member repositories of the same format |
+| `group.preferHosted` | npm/PyPI/Helm: never take a name from proxies if a hosted member has it (default true) |
+| `proxy.routingRule` | routing rule restricting what is fetched upstream |
+| `hosted.apt.distributions` | Apt: `[{name, components, architectures, origin, label}]` (default `stable`/`main`) |
+| `hosted.yum.repodataDepth` | Yum: directory depth for repodata (default 0) |
+| `scan` | `{scanners, mode: off\|warn\|quarantine, severityThreshold, onUpload, onProxyFetch, blockUntilScanned, distro}`. See [scanning](scanning.md) |
+| `cleanup.policies` | cleanup policies to apply. See [cleanup](cleanup-and-routing.md) |
