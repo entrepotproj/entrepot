@@ -451,7 +451,7 @@ func TestBlobUploads(t *testing.T) {
 
 func TestManifestValidation(t *testing.T) {
 	inst := testutil.New(t)
-	inst.CreateRepo("h", "docker", "hosted", nil)
+	inst.CreateRepo("h", "docker", "hosted", map[string]any{"hosted": map[string]any{"allowRedeploy": false}}) // immutable tags
 	inst.CreateRepo("mutable", "docker", "hosted", map[string]any{"hosted": map[string]any{"allowRedeploy": true}})
 	tok := testutil.BootstrapToken
 
@@ -514,7 +514,7 @@ func TestManifestValidation(t *testing.T) {
 	testutil.Expect(t, inst.Do("PUT", "/v2/h/app/manifests/old", tok, strings.NewReader(`{"schemaVersion":1,"fsLayers":[]}`),
 		"Content-Type", "application/vnd.docker.distribution.manifest.v1+prettyjws"), http.StatusBadRequest)
 
-	// Tags are immutable unless the repository allows redeploys.
+	// Tags are immutable when the repository disables redeploys (Docker defaults to mutable tags).
 	m2 := []byte(strings.Replace(string(m), `"layers":[]`, `"layers":[],"annotations":{"v":"2"}`, 1))
 	testutil.Expect(t, inst.Do("PUT", "/v2/h/app/manifests/v1", tok, bytes.NewReader(m), "Content-Type", ct), http.StatusCreated) // same content: ok
 	testutil.Expect(t, inst.Do("PUT", "/v2/h/app/manifests/v1", tok, bytes.NewReader(m2), "Content-Type", ct), http.StatusConflict)

@@ -265,3 +265,20 @@ func toJSON(v any) string {
 	b, _ := json.Marshal(v)
 	return string(b)
 }
+
+func TestHostedRedeployDefaults(t *testing.T) {
+	inst := testutil.New(t)
+	inst.CreateRepo("img", "docker", "hosted", nil)
+	inst.CreateRepo("libs", "npm", "hosted", nil)
+	var img, libs struct {
+		Hosted struct {
+			AllowRedeploy bool `json:"allowRedeploy"`
+		} `json:"hosted"`
+	}
+	inst.JSON("GET", "/repositories/img", nil, http.StatusOK, &img)
+	inst.JSON("GET", "/repositories/libs", nil, http.StatusOK, &libs)
+	if !img.Hosted.AllowRedeploy || libs.Hosted.AllowRedeploy {
+		t.Fatalf("docker should default to movable tags, others to immutable: docker=%v npm=%v",
+			img.Hosted.AllowRedeploy, libs.Hosted.AllowRedeploy)
+	}
+}

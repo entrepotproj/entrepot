@@ -362,7 +362,7 @@ type GroupSettings struct {
 
 // HostedSettings defines model for HostedSettings.
 type HostedSettings struct {
-	// AllowRedeploy Allow overwriting existing artifacts/versions
+	// AllowRedeploy Allow overwriting existing artifacts/versions. For Docker it allows moving tags. Defaults to false, except true for Docker.
 	AllowRedeploy *bool `json:"allowRedeploy,omitempty"`
 }
 

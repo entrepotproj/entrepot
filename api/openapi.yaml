@@ -852,7 +852,7 @@ components:
     HostedSettings:
       type: object
       properties:
-        allowRedeploy: { type: boolean, description: Allow overwriting existing artifacts/versions }
+        allowRedeploy: { type: boolean, description: "Allow overwriting existing artifacts/versions. For Docker it allows moving tags. Defaults to false, except true for Docker." }
     GroupSettings:
       type: object
       required: [members]

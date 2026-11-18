@@ -284,8 +284,12 @@ func (s *Server) repoConfig(ctx context.Context, in apigen.RepositoryInput, prev
 		}
 	case repo.KindHosted:
 		cfg.Hosted = &repo.HostedConfig{}
-		if in.Hosted != nil {
-			cfg.Hosted.AllowRedeploy = deref(in.Hosted.AllowRedeploy)
+		if in.Hosted != nil && in.Hosted.AllowRedeploy != nil {
+			cfg.Hosted.AllowRedeploy = *in.Hosted.AllowRedeploy
+		} else if in.Format == "docker" {
+			// For Docker, "redeploy" means moving tags (latest, main, ...),
+			// which registries normally allow.
+			cfg.Hosted.AllowRedeploy = true
 		}
 	case repo.KindGroup:
 		if in.Group == nil || len(in.Group.Members) == 0 {
