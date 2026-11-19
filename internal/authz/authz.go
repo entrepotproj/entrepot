@@ -14,10 +14,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/geoffo-dev/package-repository/internal/auth"
-	"github.com/geoffo-dev/package-repository/internal/config"
-	"github.com/geoffo-dev/package-repository/internal/match"
-	"github.com/geoffo-dev/package-repository/internal/store"
+	"github.com/entrepotproj/entrepot/internal/auth"
+	"github.com/entrepotproj/entrepot/internal/config"
+	"github.com/entrepotproj/entrepot/internal/match"
+	"github.com/entrepotproj/entrepot/internal/store"
 )
 
 type Action string

@@ -8,12 +8,12 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/geoffo-dev/package-repository/internal/api/apigen"
-	"github.com/geoffo-dev/package-repository/internal/authz"
-	"github.com/geoffo-dev/package-repository/internal/httpx"
-	"github.com/geoffo-dev/package-repository/internal/scan"
-	"github.com/geoffo-dev/package-repository/internal/scan/drivers"
-	"github.com/geoffo-dev/package-repository/internal/store"
+	"github.com/entrepotproj/entrepot/internal/api/apigen"
+	"github.com/entrepotproj/entrepot/internal/authz"
+	"github.com/entrepotproj/entrepot/internal/httpx"
+	"github.com/entrepotproj/entrepot/internal/scan"
+	"github.com/entrepotproj/entrepot/internal/scan/drivers"
+	"github.com/entrepotproj/entrepot/internal/store"
 )
 
 // ---- scanners ---------------------------------------------------------------

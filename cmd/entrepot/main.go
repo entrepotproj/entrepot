@@ -21,10 +21,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/geoffo-dev/package-repository/internal/api"
-	"github.com/geoffo-dev/package-repository/internal/app"
-	"github.com/geoffo-dev/package-repository/internal/config"
-	"github.com/geoffo-dev/package-repository/internal/db"
+	"github.com/entrepotproj/entrepot/internal/api"
+	"github.com/entrepotproj/entrepot/internal/app"
+	"github.com/entrepotproj/entrepot/internal/config"
+	"github.com/entrepotproj/entrepot/internal/db"
 	"gopkg.in/yaml.v3"
 )
 

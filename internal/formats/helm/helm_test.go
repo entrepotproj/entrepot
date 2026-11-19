@@ -17,7 +17,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/geoffo-dev/package-repository/internal/testutil"
+	"github.com/entrepotproj/entrepot/internal/testutil"
 )
 
 // chart builds a packaged chart like `helm package` does.

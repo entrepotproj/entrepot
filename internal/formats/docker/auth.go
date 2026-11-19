@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/geoffo-dev/package-repository/internal/auth"
-	"github.com/geoffo-dev/package-repository/internal/authz"
-	"github.com/geoffo-dev/package-repository/internal/format"
-	"github.com/geoffo-dev/package-repository/internal/repo"
+	"github.com/entrepotproj/entrepot/internal/auth"
+	"github.com/entrepotproj/entrepot/internal/authz"
+	"github.com/entrepotproj/entrepot/internal/format"
+	"github.com/entrepotproj/entrepot/internal/repo"
 )
 
 // TokenTTL is the lifetime of registry tokens issued by /v2/token.

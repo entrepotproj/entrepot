@@ -21,9 +21,9 @@ import (
 
 	"golang.org/x/sync/singleflight"
 
-	"github.com/geoffo-dev/package-repository/internal/repo"
-	"github.com/geoffo-dev/package-repository/internal/store"
-	"github.com/geoffo-dev/package-repository/internal/usage"
+	"github.com/entrepotproj/entrepot/internal/repo"
+	"github.com/entrepotproj/entrepot/internal/store"
+	"github.com/entrepotproj/entrepot/internal/usage"
 )
 
 var (

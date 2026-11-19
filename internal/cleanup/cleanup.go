@@ -34,9 +34,9 @@ import (
 	"sort"
 	"time"
 
-	"github.com/geoffo-dev/package-repository/internal/format"
-	"github.com/geoffo-dev/package-repository/internal/repo"
-	"github.com/geoffo-dev/package-repository/internal/store"
+	"github.com/entrepotproj/entrepot/internal/format"
+	"github.com/entrepotproj/entrepot/internal/repo"
+	"github.com/entrepotproj/entrepot/internal/store"
 )
 
 type Deps struct {

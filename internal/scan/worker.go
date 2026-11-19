@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/geoffo-dev/package-repository/internal/repo"
-	"github.com/geoffo-dev/package-repository/internal/scan/drivers"
-	"github.com/geoffo-dev/package-repository/internal/store"
+	"github.com/entrepotproj/entrepot/internal/repo"
+	"github.com/entrepotproj/entrepot/internal/scan/drivers"
+	"github.com/entrepotproj/entrepot/internal/store"
 )
 
 // summary is stored in scan_results.summary.

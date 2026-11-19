@@ -5,6 +5,6 @@ type: application
 version: 0.1.0
 appVersion: "0.1.0"
 keywords: [artifact, repository, registry, proxy, docker, npm, pypi]
-home: https://github.com/geoffo-dev/package-repository
+home: https://github.com/entrepotproj/entrepot
 sources:
-  - https://github.com/geoffo-dev/package-repository
+  - https://github.com/entrepotproj/entrepot

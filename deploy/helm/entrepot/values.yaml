@@ -1,7 +1,7 @@
 # Default values for Entrepot.
 
 image:
-  repository: ghcr.io/geoffo-dev/entrepot
+  repository: ghcr.io/entrepotproj/entrepot
   tag: ""          # defaults to the chart appVersion
   pullPolicy: IfNotPresent
 imagePullSecrets: []
@@ -94,7 +94,7 @@ scanning:
     replicaCount: 1
     workers: 2
     image:
-      repository: ghcr.io/geoffo-dev/entrepot-scanner
+      repository: ghcr.io/entrepotproj/entrepot-scanner
       tag: ""
     resources:
       requests: {cpu: 250m, memory: 512Mi}

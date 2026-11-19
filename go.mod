@@ -1,4 +1,4 @@
-module github.com/geoffo-dev/package-repository
+module github.com/entrepotproj/entrepot
 
 go 1.26.0
 

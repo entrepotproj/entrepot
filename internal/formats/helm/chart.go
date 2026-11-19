@@ -14,7 +14,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/geoffo-dev/package-repository/internal/format"
+	"github.com/entrepotproj/entrepot/internal/format"
 )
 
 // chartMeta is the subset of Chart.yaml published in index.yaml. Field

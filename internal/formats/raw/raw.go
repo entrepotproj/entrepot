@@ -20,11 +20,11 @@ import (
 	"path"
 	"strings"
 
-	"github.com/geoffo-dev/package-repository/internal/authz"
-	"github.com/geoffo-dev/package-repository/internal/format"
-	"github.com/geoffo-dev/package-repository/internal/proxy"
-	"github.com/geoffo-dev/package-repository/internal/repo"
-	"github.com/geoffo-dev/package-repository/internal/store"
+	"github.com/entrepotproj/entrepot/internal/authz"
+	"github.com/entrepotproj/entrepot/internal/format"
+	"github.com/entrepotproj/entrepot/internal/proxy"
+	"github.com/entrepotproj/entrepot/internal/repo"
+	"github.com/entrepotproj/entrepot/internal/store"
 )
 
 // MaxUpload is the largest accepted raw upload (10 GiB).

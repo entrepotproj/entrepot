@@ -37,9 +37,9 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/geoffo-dev/package-repository/internal/authz"
-	"github.com/geoffo-dev/package-repository/internal/format"
-	"github.com/geoffo-dev/package-repository/internal/repo"
+	"github.com/entrepotproj/entrepot/internal/authz"
+	"github.com/entrepotproj/entrepot/internal/format"
+	"github.com/entrepotproj/entrepot/internal/repo"
 )
 
 // MaxUpload is the largest accepted package (4 GiB).

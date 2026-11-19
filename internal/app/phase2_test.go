@@ -10,12 +10,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/geoffo-dev/package-repository/internal/config"
-	"github.com/geoffo-dev/package-repository/internal/repo"
-	"github.com/geoffo-dev/package-repository/internal/secrets"
-	"github.com/geoffo-dev/package-repository/internal/store"
-	"github.com/geoffo-dev/package-repository/internal/testutil"
-	"github.com/geoffo-dev/package-repository/internal/testutil/oidctest"
+	"github.com/entrepotproj/entrepot/internal/config"
+	"github.com/entrepotproj/entrepot/internal/repo"
+	"github.com/entrepotproj/entrepot/internal/secrets"
+	"github.com/entrepotproj/entrepot/internal/store"
+	"github.com/entrepotproj/entrepot/internal/testutil"
+	"github.com/entrepotproj/entrepot/internal/testutil/oidctest"
 )
 
 // Proxy passwords are sealed in Postgres but still sent to the upstream.

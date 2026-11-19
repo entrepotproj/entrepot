@@ -14,8 +14,8 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
 
-	"github.com/geoffo-dev/package-repository/internal/httpx"
-	"github.com/geoffo-dev/package-repository/internal/store"
+	"github.com/entrepotproj/entrepot/internal/httpx"
+	"github.com/entrepotproj/entrepot/internal/store"
 )
 
 const loginStateCookie = "entrepot_login"

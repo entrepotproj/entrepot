@@ -8,7 +8,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/random"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 
-	"github.com/geoffo-dev/package-repository/internal/testutil"
+	"github.com/entrepotproj/entrepot/internal/testutil"
 )
 
 func TestDockerCleanupUntagged(t *testing.T) {

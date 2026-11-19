@@ -8,7 +8,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/geoffo-dev/package-repository/internal/storage"
+	"github.com/entrepotproj/entrepot/internal/storage"
 )
 
 func bytesReader(b []byte) io.Reader { return bytes.NewReader(b) }

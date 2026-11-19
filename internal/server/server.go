@@ -17,14 +17,14 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	specpkg "github.com/geoffo-dev/package-repository/api"
-	"github.com/geoffo-dev/package-repository/internal/api"
-	"github.com/geoffo-dev/package-repository/internal/auth"
-	"github.com/geoffo-dev/package-repository/internal/format"
-	"github.com/geoffo-dev/package-repository/internal/httpx"
-	"github.com/geoffo-dev/package-repository/internal/repo"
-	"github.com/geoffo-dev/package-repository/internal/store"
-	"github.com/geoffo-dev/package-repository/internal/usage"
+	specpkg "github.com/entrepotproj/entrepot/api"
+	"github.com/entrepotproj/entrepot/internal/api"
+	"github.com/entrepotproj/entrepot/internal/auth"
+	"github.com/entrepotproj/entrepot/internal/format"
+	"github.com/entrepotproj/entrepot/internal/httpx"
+	"github.com/entrepotproj/entrepot/internal/repo"
+	"github.com/entrepotproj/entrepot/internal/store"
+	"github.com/entrepotproj/entrepot/internal/usage"
 )
 
 var (

@@ -14,9 +14,9 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/validate"
 
-	"github.com/geoffo-dev/package-repository/internal/formats/docker"
-	"github.com/geoffo-dev/package-repository/internal/scan"
-	"github.com/geoffo-dev/package-repository/internal/testutil"
+	"github.com/entrepotproj/entrepot/internal/formats/docker"
+	"github.com/entrepotproj/entrepot/internal/scan"
+	"github.com/entrepotproj/entrepot/internal/testutil"
 )
 
 func imageRef(t *testing.T, inst *testutil.Instance, s string) name.Reference {

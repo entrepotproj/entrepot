@@ -9,14 +9,14 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/geoffo-dev/package-repository/internal/api/apigen"
-	"github.com/geoffo-dev/package-repository/internal/authz"
-	"github.com/geoffo-dev/package-repository/internal/format"
-	"github.com/geoffo-dev/package-repository/internal/httpx"
-	"github.com/geoffo-dev/package-repository/internal/repo"
-	"github.com/geoffo-dev/package-repository/internal/secrets"
-	"github.com/geoffo-dev/package-repository/internal/storage"
-	"github.com/geoffo-dev/package-repository/internal/store"
+	"github.com/entrepotproj/entrepot/internal/api/apigen"
+	"github.com/entrepotproj/entrepot/internal/authz"
+	"github.com/entrepotproj/entrepot/internal/format"
+	"github.com/entrepotproj/entrepot/internal/httpx"
+	"github.com/entrepotproj/entrepot/internal/repo"
+	"github.com/entrepotproj/entrepot/internal/secrets"
+	"github.com/entrepotproj/entrepot/internal/storage"
+	"github.com/entrepotproj/entrepot/internal/store"
 )
 
 var nameRE = regexp.MustCompile(`^[a-z0-9][a-z0-9._-]{0,62}$`)

@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/geoffo-dev/package-repository/internal/api/apigen"
-	"github.com/geoffo-dev/package-repository/internal/httpx"
-	"github.com/geoffo-dev/package-repository/internal/routing"
-	"github.com/geoffo-dev/package-repository/internal/store"
+	"github.com/entrepotproj/entrepot/internal/api/apigen"
+	"github.com/entrepotproj/entrepot/internal/httpx"
+	"github.com/entrepotproj/entrepot/internal/routing"
+	"github.com/entrepotproj/entrepot/internal/store"
 )
 
 // configNameRe is the name pattern of scanners, cleanup policies and

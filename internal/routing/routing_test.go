@@ -9,8 +9,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/geoffo-dev/package-repository/internal/routing"
-	"github.com/geoffo-dev/package-repository/internal/testutil"
+	"github.com/entrepotproj/entrepot/internal/routing"
+	"github.com/entrepotproj/entrepot/internal/testutil"
 )
 
 func TestSubject(t *testing.T) {

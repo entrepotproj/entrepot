@@ -4,8 +4,8 @@ import (
 	"context"
 	"slices"
 
-	"github.com/geoffo-dev/package-repository/internal/api/apigen"
-	"github.com/geoffo-dev/package-repository/internal/repo"
+	"github.com/entrepotproj/entrepot/internal/api/apigen"
+	"github.com/entrepotproj/entrepot/internal/repo"
 )
 
 var severities = []string{"critical", "high", "medium", "low"}

@@ -27,8 +27,8 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 
-	"github.com/geoffo-dev/package-repository/internal/secrets"
-	"github.com/geoffo-dev/package-repository/internal/store"
+	"github.com/entrepotproj/entrepot/internal/secrets"
+	"github.com/entrepotproj/entrepot/internal/store"
 )
 
 // ErrInvalidKey is returned when an imported key cannot be used for signing.

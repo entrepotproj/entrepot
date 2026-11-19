@@ -3,7 +3,7 @@ package npm
 import (
 	"context"
 
-	"github.com/geoffo-dev/package-repository/internal/repo"
+	"github.com/entrepotproj/entrepot/internal/repo"
 )
 
 // maxGroupDepth bounds group nesting when looking for hosted members.

@@ -15,15 +15,15 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/geoffo-dev/package-repository/internal/auth"
-	"github.com/geoffo-dev/package-repository/internal/authz"
-	"github.com/geoffo-dev/package-repository/internal/config"
-	"github.com/geoffo-dev/package-repository/internal/httpx"
-	"github.com/geoffo-dev/package-repository/internal/proxy"
-	"github.com/geoffo-dev/package-repository/internal/repo"
-	"github.com/geoffo-dev/package-repository/internal/secrets"
-	"github.com/geoffo-dev/package-repository/internal/signing"
-	"github.com/geoffo-dev/package-repository/internal/store"
+	"github.com/entrepotproj/entrepot/internal/auth"
+	"github.com/entrepotproj/entrepot/internal/authz"
+	"github.com/entrepotproj/entrepot/internal/config"
+	"github.com/entrepotproj/entrepot/internal/httpx"
+	"github.com/entrepotproj/entrepot/internal/proxy"
+	"github.com/entrepotproj/entrepot/internal/repo"
+	"github.com/entrepotproj/entrepot/internal/secrets"
+	"github.com/entrepotproj/entrepot/internal/signing"
+	"github.com/entrepotproj/entrepot/internal/store"
 )
 
 // Env is the set of shared services available to format handlers.

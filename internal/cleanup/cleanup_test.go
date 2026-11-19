@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/geoffo-dev/package-repository/internal/testutil"
+	"github.com/entrepotproj/entrepot/internal/testutil"
 )
 
 func targz(t *testing.T, files map[string]string) []byte {

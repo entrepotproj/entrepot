@@ -14,11 +14,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/geoffo-dev/package-repository/internal/auth"
-	"github.com/geoffo-dev/package-repository/internal/secrets"
-	"github.com/geoffo-dev/package-repository/internal/storage"
-	"github.com/geoffo-dev/package-repository/internal/store"
-	"github.com/geoffo-dev/package-repository/internal/usage"
+	"github.com/entrepotproj/entrepot/internal/auth"
+	"github.com/entrepotproj/entrepot/internal/secrets"
+	"github.com/entrepotproj/entrepot/internal/storage"
+	"github.com/entrepotproj/entrepot/internal/store"
+	"github.com/entrepotproj/entrepot/internal/usage"
 )
 
 // UsageRepo identifies rp for the usage recorder.

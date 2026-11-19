@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/geoffo-dev/package-repository/internal/match"
-	"github.com/geoffo-dev/package-repository/internal/repo"
-	"github.com/geoffo-dev/package-repository/internal/scan/drivers"
-	"github.com/geoffo-dev/package-repository/internal/store"
+	"github.com/entrepotproj/entrepot/internal/match"
+	"github.com/entrepotproj/entrepot/internal/repo"
+	"github.com/entrepotproj/entrepot/internal/scan/drivers"
+	"github.com/entrepotproj/entrepot/internal/store"
 )
 
 // Finding is a stored finding annotated with the scanner and waiver.

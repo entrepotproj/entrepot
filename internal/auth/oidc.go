@@ -12,7 +12,7 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
 
-	"github.com/geoffo-dev/package-repository/internal/config"
+	"github.com/entrepotproj/entrepot/internal/config"
 )
 
 // lazyProvider performs OIDC discovery on first use and retries on failure,

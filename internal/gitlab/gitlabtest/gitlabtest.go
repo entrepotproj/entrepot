@@ -12,7 +12,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/geoffo-dev/package-repository/internal/gitlab"
+	"github.com/entrepotproj/entrepot/internal/gitlab"
 )
 
 // Status is a recorded commit status.

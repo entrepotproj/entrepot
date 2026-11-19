@@ -15,11 +15,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/geoffo-dev/package-repository/internal/config"
-	"github.com/geoffo-dev/package-repository/internal/gitlab/gitlabtest"
-	"github.com/geoffo-dev/package-repository/internal/scan"
-	"github.com/geoffo-dev/package-repository/internal/testutil"
-	"github.com/geoffo-dev/package-repository/internal/testutil/oidctest"
+	"github.com/entrepotproj/entrepot/internal/config"
+	"github.com/entrepotproj/entrepot/internal/gitlab/gitlabtest"
+	"github.com/entrepotproj/entrepot/internal/scan"
+	"github.com/entrepotproj/entrepot/internal/testutil"
+	"github.com/entrepotproj/entrepot/internal/testutil/oidctest"
 )
 
 // ---- helpers ---------------------------------------------------------------

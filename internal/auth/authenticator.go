@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/geoffo-dev/package-repository/internal/config"
-	"github.com/geoffo-dev/package-repository/internal/store"
+	"github.com/entrepotproj/entrepot/internal/config"
+	"github.com/entrepotproj/entrepot/internal/store"
 )
 
 // ErrInvalidCredentials is returned when credentials were presented but are

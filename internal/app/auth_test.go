@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/geoffo-dev/package-repository/internal/config"
-	"github.com/geoffo-dev/package-repository/internal/testutil"
-	"github.com/geoffo-dev/package-repository/internal/testutil/oidctest"
+	"github.com/entrepotproj/entrepot/internal/config"
+	"github.com/entrepotproj/entrepot/internal/testutil"
+	"github.com/entrepotproj/entrepot/internal/testutil/oidctest"
 )
 
 func withIdP(is *oidctest.Issuer) testutil.Option {

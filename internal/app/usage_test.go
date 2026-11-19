@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/geoffo-dev/package-repository/internal/testutil"
+	"github.com/entrepotproj/entrepot/internal/testutil"
 )
 
 func TestUsageMetricsActivityAndAudit(t *testing.T) {
@@ -44,7 +44,7 @@ func TestUsageMetricsActivityAndAudit(t *testing.T) {
 		TopRepositories []struct {
 			Repository string `json:"repository"`
 		} `json:"topRepositories"`
-		Inventory []map[string]any `json:"inventory"`
+		Inventory []map[string]any  `json:"inventory"`
 		Storage   *[]map[string]any `json:"storage"`
 	}
 	var admin overview

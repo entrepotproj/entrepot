@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/geoffo-dev/package-repository/internal/proxy"
-	"github.com/geoffo-dev/package-repository/internal/repo"
-	"github.com/geoffo-dev/package-repository/internal/store"
+	"github.com/entrepotproj/entrepot/internal/proxy"
+	"github.com/entrepotproj/entrepot/internal/repo"
+	"github.com/entrepotproj/entrepot/internal/store"
 )
 
 type searchObject struct {

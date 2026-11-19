@@ -17,10 +17,10 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/jackc/pgx/v5"
 
-	"github.com/geoffo-dev/package-repository/internal/db"
-	"github.com/geoffo-dev/package-repository/internal/secrets"
-	"github.com/geoffo-dev/package-repository/internal/signing"
-	"github.com/geoffo-dev/package-repository/internal/store"
+	"github.com/entrepotproj/entrepot/internal/db"
+	"github.com/entrepotproj/entrepot/internal/secrets"
+	"github.com/entrepotproj/entrepot/internal/signing"
+	"github.com/entrepotproj/entrepot/internal/store"
 )
 
 // setup creates a fresh database with one repository and returns its ID.

@@ -1,6 +1,6 @@
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
-LDFLAGS := -s -w -X github.com/geoffo-dev/package-repository/internal/api.Version=$(VERSION)
-IMAGE   ?= ghcr.io/geoffo-dev/entrepot:$(VERSION)
+LDFLAGS := -s -w -X github.com/entrepotproj/entrepot/internal/api.Version=$(VERSION)
+IMAGE   ?= ghcr.io/entrepotproj/entrepot:$(VERSION)
 # Postgres used by integration tests (the test user must be able to CREATE DATABASE).
 TEST_DATABASE_URL ?= postgres://postgres@localhost:5432/postgres?sslmode=disable
 

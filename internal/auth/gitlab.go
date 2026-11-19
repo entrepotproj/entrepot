@@ -10,8 +10,8 @@ import (
 
 	"github.com/coreos/go-oidc/v3/oidc"
 
-	"github.com/geoffo-dev/package-repository/internal/match"
-	"github.com/geoffo-dev/package-repository/internal/store"
+	"github.com/entrepotproj/entrepot/internal/match"
+	"github.com/entrepotproj/entrepot/internal/store"
 )
 
 // gitlabIssuer verifies CI/CD id_tokens from one GitLab instance.

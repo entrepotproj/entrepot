@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/geoffo-dev/package-repository/internal/secrets"
-	"github.com/geoffo-dev/package-repository/internal/store"
+	"github.com/entrepotproj/entrepot/internal/secrets"
+	"github.com/entrepotproj/entrepot/internal/store"
 )
 
 // Scanner types.

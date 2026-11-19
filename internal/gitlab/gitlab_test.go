@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/geoffo-dev/package-repository/internal/gitlab"
-	"github.com/geoffo-dev/package-repository/internal/gitlab/gitlabtest"
+	"github.com/entrepotproj/entrepot/internal/gitlab"
+	"github.com/entrepotproj/entrepot/internal/gitlab/gitlabtest"
 )
 
 func TestClient(t *testing.T) {

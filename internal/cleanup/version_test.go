@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/geoffo-dev/package-repository/internal/store"
+	"github.com/entrepotproj/entrepot/internal/store"
 )
 
 func TestPrerelease(t *testing.T) {

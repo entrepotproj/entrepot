@@ -23,7 +23,7 @@ COPY . .
 COPY --from=ui /src/web/dist ./web/dist
 ARG VERSION=dev
 RUN CGO_ENABLED=0 go build -trimpath \
-      -ldflags "-s -w -X github.com/geoffo-dev/package-repository/internal/api.Version=${VERSION}" \
+      -ldflags "-s -w -X github.com/entrepotproj/entrepot/internal/api.Version=${VERSION}" \
       -o /out/entrepot ./cmd/entrepot \
  && mkdir -p /out/data
 

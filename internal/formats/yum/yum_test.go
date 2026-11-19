@@ -16,8 +16,8 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 
-	"github.com/geoffo-dev/package-repository/internal/formats/yum"
-	"github.com/geoffo-dev/package-repository/internal/testutil"
+	"github.com/entrepotproj/entrepot/internal/formats/yum"
+	"github.com/entrepotproj/entrepot/internal/testutil"
 )
 
 type repomd struct {

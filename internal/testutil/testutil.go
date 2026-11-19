@@ -26,8 +26,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"github.com/geoffo-dev/package-repository/internal/app"
-	"github.com/geoffo-dev/package-repository/internal/config"
+	"github.com/entrepotproj/entrepot/internal/app"
+	"github.com/entrepotproj/entrepot/internal/config"
 )
 
 const BootstrapToken = "test-bootstrap-token"

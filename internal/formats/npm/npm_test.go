@@ -18,7 +18,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/geoffo-dev/package-repository/internal/testutil"
+	"github.com/entrepotproj/entrepot/internal/testutil"
 )
 
 // tarball builds an npm package tarball.

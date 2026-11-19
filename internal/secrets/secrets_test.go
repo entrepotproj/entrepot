@@ -33,7 +33,14 @@ func TestSealOpen(t *testing.T) {
 		t.Fatal("empty stays empty")
 	}
 	// Tampering is detected.
-	bad := s[:len(s)-2] + "AA"
+	// Change one character well inside the base64 payload (every bit there is
+	// significant) to a guaranteed-different value.
+	i := len(s) - 5
+	c := byte('A')
+	if s[i] == 'A' {
+		c = 'B'
+	}
+	bad := s[:i] + string(c) + s[i+1:]
 	if _, err := b.Open(bad); err == nil {
 		t.Fatal("tampered ciphertext opened")
 	}
