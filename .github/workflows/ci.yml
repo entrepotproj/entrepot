@@ -96,7 +96,7 @@ jobs:
       - name: Smoke test
         run: |
           kubectl port-forward svc/entrepot 8080:80 &
-          sleep 5
+          for i in $(seq 1 30); do curl -fsS localhost:8080/readyz && break; sleep 2; done
           T=ci-token
           curl -fsS localhost:8080/readyz
           curl -fsS -H "Authorization: Bearer $T" -H 'Content-Type: application/json' \
@@ -107,4 +107,4 @@ jobs:
           test "$(curl -fsS -H "Authorization: Bearer $T" localhost:8080/repository/files/hello.txt)" = hello
       - name: Debug on failure
         if: failure()
-        run: kubectl get all -A; kubectl logs deploy/entrepot --tail=200 || true
+        run: kubectl get all -A; kubectl logs -l app.kubernetes.io/component=server --tail=200 --all-containers || true
