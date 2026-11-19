@@ -107,7 +107,7 @@ scanning:
   # http://<release>-entrepot-trivy:4954 (see NOTES).
   trivyServer:
     enabled: false
-    image: aquasec/trivy:0.57.1
+    image: aquasec/trivy:0.76.0
     token: ""
     resources:
       requests: {cpu: 250m, memory: 512Mi}

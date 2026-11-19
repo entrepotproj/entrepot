@@ -30,7 +30,7 @@ RUN CGO_ENABLED=0 go build -trimpath \
 # --- Scanner CLIs (checksum-verified release binaries) ----------------------
 FROM debian:bookworm-slim AS tools
 ARG TARGETARCH=amd64
-ARG TRIVY_VERSION=0.57.1
+ARG TRIVY_VERSION=0.76.0
 ARG GRYPE_VERSION=0.84.0
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl \
  && rm -rf /var/lib/apt/lists/*
