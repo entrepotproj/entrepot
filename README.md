@@ -142,3 +142,7 @@ web/                   React UI (embedded into the binary)
 deploy/helm/entrepot/  Helm chart
 deploy/compose/        local dev stack (Keycloak, MinIO, Postgres)
 ```
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE).
