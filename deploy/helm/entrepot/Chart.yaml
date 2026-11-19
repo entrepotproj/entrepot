@@ -1,0 +1,10 @@
+apiVersion: v2
+name: entrepot
+description: Entrepot — package repository manager (raw, PyPI, npm, Docker) with proxying, OIDC and GitLab CI authentication
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords: [artifact, repository, registry, proxy, docker, npm, pypi]
+home: https://github.com/entrepotproj/entrepot
+sources:
+  - https://github.com/entrepotproj/entrepot

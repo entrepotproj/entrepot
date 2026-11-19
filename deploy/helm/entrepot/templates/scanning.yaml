@@ -1,0 +1,162 @@
+{{- $fullname := include "entrepot.fullname" . }}
+{{- if .Values.scanning.worker.enabled }}
+{{- $w := .Values.scanning.worker }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullname }}-scan-worker
+  labels:
+    {{- include "entrepot.labels" . | nindent 4 }}
+    app.kubernetes.io/component: scan-worker
+spec:
+  replicas: {{ $w.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "entrepot.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: scan-worker
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "entrepot.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: scan-worker
+    spec:
+      serviceAccountName: {{ include "entrepot.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: scan-worker
+          image: "{{ $w.image.repository }}:{{ $w.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["scan-worker", "-config", "/etc/entrepot/config.yaml"]
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          env:
+            {{- include "entrepot.env" . | nindent 12 }}
+            - name: ENTREPOT_SCAN_WORKERS
+              value: {{ $w.workers | quote }}
+            - name: TRIVY_CACHE_DIR
+              value: /cache/trivy
+            - name: GRYPE_DB_CACHE_DIR
+              value: /cache/grype
+          resources:
+            {{- toYaml $w.resources | nindent 12 }}
+          volumeMounts:
+            {{- include "entrepot.volumeMounts" . | nindent 12 }}
+            - name: scanner-cache
+              mountPath: /cache
+      volumes:
+        {{- include "entrepot.volumes" . | nindent 8 }}
+        - name: scanner-cache
+          {{- if $w.cache.size }}
+          ephemeral:
+            volumeClaimTemplate:
+              spec:
+                accessModes: [ReadWriteOnce]
+                {{- with $w.cache.storageClass }}
+                storageClassName: {{ . }}
+                {{- end }}
+                resources:
+                  requests:
+                    storage: {{ $w.cache.size }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+{{- end }}
+{{- if .Values.scanning.trivyServer.enabled }}
+{{- $t := .Values.scanning.trivyServer }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullname }}-trivy
+  labels:
+    {{- include "entrepot.labels" . | nindent 4 }}
+    app.kubernetes.io/component: trivy
+spec:
+  ports:
+    - port: 4954
+      targetPort: trivy
+      name: trivy
+  selector:
+    {{- include "entrepot.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: trivy
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $fullname }}-trivy
+  labels:
+    {{- include "entrepot.labels" . | nindent 4 }}
+    app.kubernetes.io/component: trivy
+spec:
+  serviceName: {{ $fullname }}-trivy
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "entrepot.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: trivy
+  template:
+    metadata:
+      labels:
+        {{- include "entrepot.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: trivy
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        fsGroup: 65532
+      containers:
+        - name: trivy
+          image: {{ $t.image }}
+          args:
+            - server
+            - --listen=0.0.0.0:4954
+            - --cache-dir=/cache
+            {{- if $t.token }}
+            - --token=$(TRIVY_TOKEN)
+            {{- end }}
+          {{- if $t.token }}
+          env:
+            - name: TRIVY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "entrepot.secretName" . }}
+                  key: trivy-token
+          {{- end }}
+          ports:
+            - name: trivy
+              containerPort: 4954
+          readinessProbe:
+            httpGet: {path: /healthz, port: trivy}
+            periodSeconds: 10
+          resources:
+            {{- toYaml $t.resources | nindent 12 }}
+          volumeMounts:
+            - name: cache
+              mountPath: /cache
+  volumeClaimTemplates:
+    - metadata:
+        name: cache
+      spec:
+        accessModes: [ReadWriteOnce]
+        {{- with $t.persistence.storageClass }}
+        storageClassName: {{ . }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ $t.persistence.size }}
+{{- end }}
