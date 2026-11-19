@@ -27,6 +27,16 @@ app.kubernetes.io/name: {{ include "entrepot.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
+{{/*
+Selector for the API server pods only. The release's other workloads
+(postgresql, scan-worker, trivy) share entrepot.selectorLabels, so anything
+that targets the server must also match on its component.
+*/}}
+{{- define "entrepot.serverSelectorLabels" -}}
+{{ include "entrepot.selectorLabels" . }}
+app.kubernetes.io/component: server
+{{- end }}
+
 {{- define "entrepot.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
 {{- default (include "entrepot.fullname" .) .Values.serviceAccount.name }}
