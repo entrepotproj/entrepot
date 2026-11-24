@@ -1,11 +1,13 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 
 	"github.com/entrepotproj/entrepot/internal/api/apigen"
@@ -356,6 +358,70 @@ func (s *Server) ScanComponent(w http.ResponseWriter, r *http.Request, id string
 
 func countsToAPI(c map[string]int) apigen.SeverityCounts {
 	return apigen.SeverityCounts{Critical: c["critical"], High: c["high"], Medium: c["medium"], Low: c["low"], Unknown: c["unknown"]}
+}
+
+// maxListedFindings is how many findings a component lists in search results.
+const maxListedFindings = 5
+
+// attachFindings fills findingCounts and the most severe findings of each
+// component (out[i] describes cs[i]). Findings covered by an active waiver are
+// left out, and a vulnerability reported by several scanners counts once, as
+// in the component's verdict.
+func (s *Server) attachFindings(ctx context.Context, cs []*store.Component, out []apigen.Component) error {
+	if len(cs) == 0 {
+		return nil
+	}
+	ids := make([]string, len(cs))
+	for i, c := range cs {
+		ids[i] = c.ID
+	}
+	found, err := s.Store.LatestFindings(ctx, ids)
+	if err != nil {
+		return err
+	}
+	waivers, err := s.Store.ListWaivers(ctx, true)
+	if err != nil {
+		return err
+	}
+	for i, c := range cs {
+		counts := map[string]int{}
+		seen := map[string]bool{}
+		var list []apigen.Finding
+		for _, f := range found[c.ID] {
+			if waived(waivers, c, f.VulnID) {
+				continue
+			}
+			k := f.VulnID + "\x00" + f.Package + "\x00" + f.InstalledVersion
+			if seen[k] {
+				continue
+			}
+			seen[k] = true
+			counts[f.Severity]++
+			list = append(list, apigen.Finding{VulnId: f.VulnID, Severity: apigen.Severity(f.Severity), Package: f.Package,
+				InstalledVersion: f.InstalledVersion, FixedVersion: f.FixedVersion, Title: f.Title, Url: f.URL})
+		}
+		sort.SliceStable(list, func(a, b int) bool {
+			return drivers.SeverityRank(string(list[a].Severity)) > drivers.SeverityRank(string(list[b].Severity))
+		})
+		if len(list) > maxListedFindings {
+			list = list[:maxListedFindings]
+		}
+		if list == nil {
+			list = []apigen.Finding{}
+		}
+		out[i].FindingCounts = ptr(countsToAPI(counts))
+		out[i].Findings = &list
+	}
+	return nil
+}
+
+func waived(waivers []*store.Waiver, c *store.Component, vuln string) bool {
+	for _, w := range waivers {
+		if scan.WaiverMatches(w, c.Repository, c.Name, c.Version, vuln) {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Server) GetComponentScans(w http.ResponseWriter, r *http.Request, id string) {

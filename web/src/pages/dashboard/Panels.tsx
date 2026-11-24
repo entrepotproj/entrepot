@@ -153,6 +153,7 @@ export function SecurityPanel({ scan, admin }: { scan: Record<string, number>; a
               color={quarantined > 0 ? 'red' : 'gray'}
               icon={IconLock}
               help="Downloads are blocked until the findings are fixed or waived"
+              to="/search?quarantined=true"
             />
             <BigCount
               label="Vulnerable"
@@ -160,6 +161,7 @@ export function SecurityPanel({ scan, admin }: { scan: Record<string, number>; a
               color={counts.vulnerable > 0 ? 'orange' : 'gray'}
               icon={IconShieldExclamation}
               help="Components whose latest scan reported vulnerabilities"
+              to="/search?scanState=vulnerable"
             />
           </SimpleGrid>
           <Box>
@@ -220,15 +222,19 @@ function BigCount({
   color,
   icon: I,
   help,
+  to,
 }: {
   label: string;
   value: number;
   color: string;
   icon: Icon;
   help: string;
+  /** Where to list the counted components; only linked while the count is above zero. */
+  to?: string;
 }) {
-  return (
-    <Tooltip label={help} withArrow multiline w={220} openDelay={400}>
+  const linked = !!to && value > 0;
+  const tile = (
+    <Tooltip label={linked ? `${help}. Click to list them.` : help} withArrow multiline w={220} openDelay={400}>
       <Paper p="xs" bg={value > 0 ? `var(--mantine-color-${color}-light)` : undefined}>
         <Group gap={6} wrap="nowrap">
           <I size={15} stroke={1.8} color={`var(--mantine-color-${color}-6)`} />
@@ -241,6 +247,13 @@ function BigCount({
         </Text>
       </Paper>
     </Tooltip>
+  );
+  return linked ? (
+    <Link to={to} style={{ color: 'inherit', textDecoration: 'none' }}>
+      {tile}
+    </Link>
+  ) : (
+    tile
   );
 }
 

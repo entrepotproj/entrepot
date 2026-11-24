@@ -331,8 +331,12 @@ type ComponentQuery struct {
 	// Name is a case-insensitive substring match.
 	Name    string
 	Version string
-	Limit   int
-	Offset  int
+	// ScanState restricts to one scan state ("" for any).
+	ScanState string
+	// Quarantined restricts to quarantined (true) or other (false) components; nil for any.
+	Quarantined *bool
+	Limit       int
+	Offset      int
 }
 
 func (s *Store) SearchComponents(ctx context.Context, q ComponentQuery) ([]*Component, error) {
@@ -343,12 +347,14 @@ func (s *Store) SearchComponents(ctx context.Context, q ComponentQuery) ([]*Comp
 		AND ($2 = '' OR r.format = $2)
 		AND ($3 = '' OR c.name ILIKE '%' || $3 || '%')
 		AND ($4 = '' OR c.version = $4)
+		AND ($7 = '' OR c.scan_state = $7)
+		AND ($8::boolean IS NULL OR c.quarantined = $8)
 		ORDER BY lower(c.name), c.created_at DESC LIMIT $5 OFFSET $6`
 	var ids any
 	if q.RepositoryIDs != nil {
 		ids = q.RepositoryIDs
 	}
-	rows, err := s.pool.Query(ctx, sql, ids, q.Format, escapeLike(q.Name), q.Version, q.Limit, q.Offset)
+	rows, err := s.pool.Query(ctx, sql, ids, q.Format, escapeLike(q.Name), q.Version, q.Limit, q.Offset, q.ScanState, q.Quarantined)
 	if err != nil {
 		return nil, mapErr(err, "search components")
 	}

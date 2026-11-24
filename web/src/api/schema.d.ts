@@ -1229,6 +1229,9 @@ export interface components {
             quarantined?: boolean;
             /** Format: date-time */
             scannedAt?: string;
+            findingCounts?: components["schemas"]["SeverityCounts"];
+            /** @description Search with `withFindings` only. The most severe unwaived findings, at most five (`findingCounts` counts all of them). */
+            findings?: components["schemas"]["Finding"][];
         };
         ComponentDetail: {
             component: components["schemas"]["Component"];
@@ -2327,6 +2330,12 @@ export interface operations {
                 format?: string;
                 repository?: string;
                 version?: string;
+                /** @description Only components in this scan state */
+                scanState?: components["schemas"]["ScanState"];
+                /** @description Only quarantined (true) or not quarantined (false) components */
+                quarantined?: boolean;
+                /** @description Include `findingCounts` and the most severe `findings` of each component */
+                withFindings?: boolean;
                 limit?: components["parameters"]["Limit"];
                 offset?: components["parameters"]["Offset"];
             };

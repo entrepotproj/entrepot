@@ -1,11 +1,11 @@
-import { Anchor, Button, Group, Paper, Select, Table, Text, TextInput } from '@mantine/core';
+import { Anchor, Button, Group, Paper, Select, Stack, Table, Text, TextInput } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
 import { IconChevronLeft, IconChevronRight, IconSearch } from '@tabler/icons-react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { api, unwrap } from '../api/client';
+import { api, unwrap, type Component } from '../api/client';
 import { useRepositories, useSystemInfo } from '../api/queries';
-import { FormatBadge, formatLabel } from '../components/badges';
+import { FormatBadge, formatLabel, SeverityBadge, SEVERITIES } from '../components/badges';
 import { PageHeader } from '../components/PageHeader';
 import { EmptyState, QueryError, TableSkeleton } from '../components/states';
 import { formatRelative } from '../lib/format';
@@ -17,6 +17,10 @@ export function SearchPage() {
   const q = params.get('q') ?? '';
   const format = params.get('format') ?? '';
   const repository = params.get('repository') ?? '';
+  const quarantined = params.get('quarantined') === 'true';
+  const scanState = params.get('scanState') === 'vulnerable' ? 'vulnerable' : '';
+  // The security filter is one of: all, vulnerable, quarantined.
+  const security = quarantined ? 'quarantined' : scanState;
   const offset = Number(params.get('offset') ?? 0) || 0;
   const [debounced] = useDebouncedValue(q.trim(), 250);
   const { data: info } = useSystemInfo();
@@ -31,8 +35,18 @@ export function SearchPage() {
     setParams(next, { replace: true });
   };
 
+  const setSecurity = (v: string) => {
+    const next = new URLSearchParams(params);
+    next.delete('scanState');
+    next.delete('quarantined');
+    next.delete('offset');
+    if (v === 'vulnerable') next.set('scanState', 'vulnerable');
+    if (v === 'quarantined') next.set('quarantined', 'true');
+    setParams(next, { replace: true });
+  };
+
   const { data, isPending, isFetching, error, refetch } = useQuery({
-    queryKey: ['search', debounced, format, repository, offset],
+    queryKey: ['search', debounced, format, repository, security, offset],
     queryFn: () =>
       unwrap(
         api.GET('/search', {
@@ -41,6 +55,9 @@ export function SearchPage() {
               q: debounced || undefined,
               format: format || undefined,
               repository: repository || undefined,
+              scanState: scanState ? 'vulnerable' : undefined,
+              quarantined: quarantined ? true : undefined,
+              withFindings: security ? true : undefined,
               limit: PAGE,
               offset,
             },
@@ -83,6 +100,17 @@ export function SearchPage() {
             searchable
             w={220}
           />
+          <Select
+            placeholder="Any security state"
+            data={[
+              { value: 'vulnerable', label: 'Vulnerable' },
+              { value: 'quarantined', label: 'Quarantined' },
+            ]}
+            value={security || null}
+            onChange={(v) => setSecurity(v ?? '')}
+            clearable
+            w={180}
+          />
         </Group>
         {error ? (
           <div style={{ padding: 12 }}>
@@ -104,6 +132,7 @@ export function SearchPage() {
                 <Table.Th>Version</Table.Th>
                 <Table.Th>Format</Table.Th>
                 <Table.Th>Repository</Table.Th>
+                {security && <Table.Th>Findings</Table.Th>}
                 <Table.Th>Updated</Table.Th>
               </Table.Tr>
             </Table.Thead>
@@ -133,6 +162,11 @@ export function SearchPage() {
                       {c.repository}
                     </Anchor>
                   </Table.Td>
+                  {security && (
+                    <Table.Td>
+                      <FindingsCell component={c} />
+                    </Table.Td>
+                  )}
                   <Table.Td>
                     <Text size="sm" c="dimmed">
                       {formatRelative(c.updatedAt)}
@@ -165,5 +199,54 @@ export function SearchPage() {
         </Button>
       </Group>
     </>
+  );
+}
+
+/** Only http(s) advisory links are rendered as links; the URL comes from a scanner. */
+function safeHref(url: string): string | undefined {
+  return /^https?:\/\//i.test(url) ? url : undefined;
+}
+
+/** Unwaived finding counts by severity and the most severe findings, linked to their advisories. */
+function FindingsCell({ component: c }: { component: Component }) {
+  const counts = c.findingCounts;
+  const findings = c.findings ?? [];
+  const total = counts ? SEVERITIES.reduce((n, s) => n + counts[s], 0) : 0;
+  if (!counts || total === 0) {
+    return (
+      <Text size="sm" c="dimmed">
+        {c.quarantined ? 'Quarantined' : '—'}
+      </Text>
+    );
+  }
+  return (
+    <Stack gap={4} onClick={(e) => e.stopPropagation()}>
+      <Group gap={4}>
+        {SEVERITIES.filter((s) => counts[s] > 0).map((s) => (
+          <SeverityBadge key={s} severity={s} size="sm">
+            {counts[s]} {s}
+          </SeverityBadge>
+        ))}
+      </Group>
+      <Group gap="xs">
+        {findings.map((f) => {
+          const href = safeHref(f.url);
+          return href ? (
+            <Anchor key={`${f.vulnId}${f.package}`} href={href} target="_blank" rel="noopener noreferrer" size="xs" ff="monospace" title={f.title}>
+              {f.vulnId}
+            </Anchor>
+          ) : (
+            <Text key={`${f.vulnId}${f.package}`} size="xs" ff="monospace" title={f.title}>
+              {f.vulnId}
+            </Text>
+          );
+        })}
+        {total > findings.length && (
+          <Anchor component={Link} to={`/components/${c.id}`} size="xs">
+            +{total - findings.length} more
+          </Anchor>
+        )}
+      </Group>
+    </Stack>
   );
 }

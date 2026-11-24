@@ -719,6 +719,10 @@ func (s *Server) DeleteComponent(w http.ResponseWriter, r *http.Request, id stri
 
 func (s *Server) SearchComponents(w http.ResponseWriter, r *http.Request, params apigen.SearchComponentsParams) {
 	ctx := r.Context()
+	if st := params.ScanState; st != nil && !st.Valid() {
+		s.writeErr(w, errBad("invalid scanState"))
+		return
+	}
 	rs, err := s.Store.ListRepositories(ctx)
 	if err != nil {
 		s.writeErr(w, err)
@@ -737,6 +741,7 @@ func (s *Server) SearchComponents(w http.ResponseWriter, r *http.Request, params
 	if len(ids) > 0 {
 		cs, err := s.Store.SearchComponents(ctx, store.ComponentQuery{
 			RepositoryIDs: ids, Format: deref(params.Format), Name: deref(params.Q), Version: deref(params.Version),
+			ScanState: string(deref(params.ScanState)), Quarantined: params.Quarantined,
 			Limit: deref(params.Limit), Offset: deref(params.Offset),
 		})
 		if err != nil {
@@ -745,6 +750,12 @@ func (s *Server) SearchComponents(w http.ResponseWriter, r *http.Request, params
 		}
 		for _, c := range cs {
 			out = append(out, s.componentToAPI(c))
+		}
+		if deref(params.WithFindings) {
+			if err := s.attachFindings(ctx, cs, out); err != nil {
+				s.writeErr(w, err)
+				return
+			}
 		}
 	}
 	httpx.WriteJSON(w, http.StatusOK, out)
