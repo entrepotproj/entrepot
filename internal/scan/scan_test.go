@@ -170,11 +170,26 @@ func getScans(t *testing.T, inst *testutil.Instance, id string) scans {
 	return s
 }
 
-// waitState waits until the component reaches state with no outstanding jobs.
+// storedState is the component's stored verdict (GET /components/{id}),
+// which the download gate reads.
+func storedState(t *testing.T, inst *testutil.Instance, id string) string {
+	t.Helper()
+	var d struct {
+		Component component `json:"component"`
+	}
+	inst.JSON("GET", "/components/"+id, nil, http.StatusOK, &d)
+	return d.Component.ScanState
+}
+
+// waitState waits until the component reaches state with no outstanding jobs,
+// both in the verdict computed from the latest results (/scans) and in the
+// stored copy the download gate reads. The worker stores a result before it
+// stores the verdict, so for a moment the first can be ahead of the second.
 func waitState(t *testing.T, inst *testutil.Instance, id, state string) scans {
 	t.Helper()
 	deadline := time.Now().Add(20 * time.Second)
 	var s scans
+	stored := ""
 	for time.Now().Before(deadline) {
 		s = getScans(t, inst, id)
 		busy := false
@@ -184,11 +199,13 @@ func waitState(t *testing.T, inst *testutil.Instance, id, state string) scans {
 			}
 		}
 		if s.ScanState == state && !busy {
-			return s
+			if stored = storedState(t, inst, id); stored == state {
+				return s
+			}
 		}
 		time.Sleep(50 * time.Millisecond)
 	}
-	t.Fatalf("component %s did not reach %s: %+v", id, state, s)
+	t.Fatalf("component %s did not reach %s (stored: %q): %+v", id, state, stored, s)
 	return s
 }
 
