@@ -4,8 +4,10 @@ Releases are cut automatically by
 [semantic-release](https://semantic-release.gitbook.io/) from the commit
 messages on `main`. Nobody tags by hand.
 
-Every push to `main` runs the `Release` workflow. It looks at the commits
-since the last `v*` tag and, if any of them warrants a release, it:
+Every push to `main` runs the `Release` workflow. It first runs CI
+(`.github/workflows/ci.yml`) against the pushed commit; if that passes, it
+looks at the commits since the last `v*` tag and, if any of them warrants a
+release, it:
 
 1. works out the next version and pushes the tag `vX.Y.Z`;
 2. creates the GitHub release, with notes generated from the commits;
@@ -41,3 +43,10 @@ merge commit, the commits on the branch are what count.
   run.
 * The configuration is `.releaserc.json`; the tool versions are pinned in
   `.github/workflows/release.yml`.
+* If `main` moves on while CI is running, semantic-release skips the older
+  run ("the local branch is behind the remote one"); the run for the newer
+  push releases everything since the last tag.
+* The images and the chart must be public on GHCR for anonymous `docker pull`
+  and `helm install` (and for the provider's acceptance tests): in the
+  organisation's **Packages**, open `entrepot`, `entrepot-scanner` and
+  `charts/entrepot`, then **Package settings → Change visibility → Public**.
