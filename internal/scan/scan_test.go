@@ -278,6 +278,85 @@ func TestUploadQuarantineAndWaiver(t *testing.T) {
 	testutil.Expect(t, inst.Do("GET", "/api/v1/assets/"+detail.Assets[0].ID+"/content", testutil.BootstrapToken, nil), http.StatusForbidden)
 }
 
+// Search filters by scan state and quarantine, and summarises unwaived findings.
+func TestSearchBySecurityState(t *testing.T) {
+	inst := newInst(t)
+	createTrivy(t, inst, "trivy", nil)
+	inst.CreateRepo("npm-libs", "npm", "hosted", scanSettings([]string{"trivy"}, "quarantine", nil))
+	startWorkers(t, inst)
+
+	publishNPM(t, inst, "npm-libs", "lodash", "4.17.20", testutil.BootstrapToken)
+	publishNPM(t, inst, "npm-libs", "left-pad", "1.3.0", testutil.BootstrapToken)
+	waitState(t, inst, findComponent(t, inst, "npm-libs", "lodash", "4.17.20").ID, "vulnerable")
+	waitState(t, inst, findComponent(t, inst, "npm-libs", "left-pad", "1.3.0").ID, "clean")
+
+	type result struct {
+		Name          string         `json:"name"`
+		FindingCounts map[string]int `json:"findingCounts"`
+		Findings      []struct {
+			VulnID   string `json:"vulnId"`
+			Severity string `json:"severity"`
+			URL      string `json:"url"`
+		} `json:"findings"`
+	}
+	search := func(query string) []result {
+		t.Helper()
+		var out []result
+		inst.JSON("GET", "/search?"+query, nil, http.StatusOK, &out)
+		return out
+	}
+
+	// The stored state trails the live verdict by a moment; wait for it.
+	for _, q := range []string{"scanState=vulnerable", "scanState=clean"} {
+		deadline := time.Now().Add(10 * time.Second)
+		for len(search(q)) == 0 && time.Now().Before(deadline) {
+			time.Sleep(50 * time.Millisecond)
+		}
+	}
+
+	if r := search("scanState=vulnerable"); len(r) != 1 || r[0].Name != "lodash" || r[0].Findings != nil || r[0].FindingCounts != nil {
+		t.Fatalf("vulnerable without findings: %+v", r)
+	}
+	if r := search("scanState=clean"); len(r) != 1 || r[0].Name != "left-pad" {
+		t.Fatalf("clean: %+v", r)
+	}
+	if r := search("quarantined=true"); len(r) != 1 || r[0].Name != "lodash" {
+		t.Fatalf("quarantined: %+v", r)
+	}
+	if r := search("quarantined=false"); len(r) != 1 || r[0].Name != "left-pad" {
+		t.Fatalf("not quarantined: %+v", r)
+	}
+	testutil.Expect(t, inst.Do("GET", "/api/v1/search?scanState=bogus", testutil.BootstrapToken, nil), http.StatusBadRequest)
+
+	r := search("scanState=vulnerable&withFindings=true")
+	if len(r) != 1 || r[0].FindingCounts["high"] != 2 || r[0].FindingCounts["medium"] != 2 || len(r[0].Findings) != 4 {
+		t.Fatalf("with findings: %+v", r)
+	}
+	for i, f := range r[0].Findings {
+		if i < 2 && f.Severity != "high" || i >= 2 && f.Severity != "medium" {
+			t.Fatalf("findings not ordered by severity: %+v", r[0].Findings)
+		}
+	}
+
+	// A waived finding drops out of both the counts and the list.
+	inst.JSON("POST", "/waivers", map[string]any{"vulnId": "CVE-2021-23337", "componentPattern": "lodash@4.17.*",
+		"reason": "template() not used"}, http.StatusCreated, nil)
+	r = search("scanState=vulnerable&withFindings=true")
+	if len(r) != 1 || r[0].FindingCounts["high"] != 1 || len(r[0].Findings) != 3 {
+		t.Fatalf("after waiver: %+v", r)
+	}
+	for _, f := range r[0].Findings {
+		if f.VulnID == "CVE-2021-23337" {
+			t.Fatalf("waived finding listed: %+v", r[0].Findings)
+		}
+	}
+
+	// Components the caller cannot read are never listed.
+	if r := search("scanState=vulnerable&repository=nope"); len(r) != 0 {
+		t.Fatalf("unknown repository: %+v", r)
+	}
+}
+
 // Warn mode records findings but never blocks; grype output is parsed.
 func TestWarnModeNeverBlocks(t *testing.T) {
 	inst := newInst(t)

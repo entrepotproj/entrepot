@@ -453,6 +453,36 @@ func (s *Store) LatestScanResults(ctx context.Context, componentID string) ([]*S
 	return out, frows.Err()
 }
 
+// LatestFindings returns, for each component, the findings of its latest ok
+// result of every scanner. Components without findings are absent. It takes
+// two indexed reads whatever the number of components.
+func (s *Store) LatestFindings(ctx context.Context, componentIDs []string) (map[string][]ScanFinding, error) {
+	out := map[string][]ScanFinding{}
+	if len(componentIDs) == 0 {
+		return out, nil
+	}
+	rows, err := s.pool.Query(ctx, `WITH latest AS (
+			SELECT DISTINCT ON (component_id, scanner_id) id, component_id
+			FROM scan_results WHERE component_id = ANY($1) AND status = 'ok'
+			ORDER BY component_id, scanner_id, scanned_at DESC)
+		SELECT l.component_id, f.vuln_id, f.severity, f.package, f.installed_version, f.fixed_version, f.title, f.url
+		FROM latest l JOIN scan_findings f ON f.result_id = l.id
+		ORDER BY l.component_id, f.id`, componentIDs)
+	if err != nil {
+		return nil, mapErr(err, "latest findings")
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var cid string
+		var f ScanFinding
+		if err := rows.Scan(&cid, &f.VulnID, &f.Severity, &f.Package, &f.InstalledVersion, &f.FixedVersion, &f.Title, &f.URL); err != nil {
+			return nil, err
+		}
+		out[cid] = append(out[cid], f)
+	}
+	return out, rows.Err()
+}
+
 // SetComponentScanState stores the evaluated verdict of a component.
 func (s *Store) SetComponentScanState(ctx context.Context, id, state string, quarantined bool, scannedAt *time.Time) error {
 	_, err := s.pool.Exec(ctx, `UPDATE components SET scan_state=$2, quarantined=$3, scanned_at=$4 WHERE id=$1`,
