@@ -114,8 +114,8 @@ func (o *OIDC) VerifyAccessToken(ctx context.Context, raw string) (*oidc.IDToken
 
 // Identity is the user information extracted from OIDC claims.
 type Identity struct {
-	Issuer, Subject, Username, Email, DisplayName string
-	Groups                                        []string
+	Issuer, Subject, Username, Email, DisplayName, GivenName string
+	Groups                                                   []string
 }
 
 func (o *OIDC) identity(tok *oidc.IDToken) (*Identity, error) {
@@ -136,6 +136,7 @@ func (o *OIDC) identity(tok *oidc.IDToken) (*Identity, error) {
 	}
 	id.Email = claimString(claims, "email")
 	id.DisplayName = claimString(claims, "name")
+	id.GivenName = claimString(claims, o.cfg.GivenNameClaim)
 	id.Groups = claimStrings(claims, o.cfg.GroupsClaim)
 	return id, nil
 }

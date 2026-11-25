@@ -72,6 +72,7 @@ auth:
     clientSecret: ...        # or ENTREPOT_AUTH_OIDC_CLIENTSECRET
     groupsClaim: groups
     usernameClaim: preferred_username
+    givenNameClaim: given_name   # dashboard greeting; falls back to the username when the claim is absent
 ```
 
 5. Grant access, e.g. let the `developers` group publish to every `*-internal`

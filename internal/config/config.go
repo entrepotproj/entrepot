@@ -85,6 +85,10 @@ type OIDC struct {
 	GroupsClaim string `yaml:"groupsClaim"`
 	// UsernameClaim is the claim used as username (default preferred_username).
 	UsernameClaim string `yaml:"usernameClaim"`
+	// GivenNameClaim is the claim holding the user's first name, shown in the
+	// dashboard greeting (default given_name). When the claim is absent the
+	// dashboard shows the username instead.
+	GivenNameClaim string `yaml:"givenNameClaim"`
 	// BearerAudiences are accepted "aud" values for access tokens presented
 	// directly as bearer tokens. Defaults to ClientID.
 	BearerAudiences []string `yaml:"bearerAudiences"`
@@ -223,10 +227,11 @@ func Default() *Config {
 			SessionTTL:      12 * time.Hour,
 			AnonymousAccess: true,
 			OIDC: OIDC{
-				Scopes:        []string{"openid", "profile", "email"},
-				GroupsClaim:   "groups",
-				UsernameClaim: "preferred_username",
-				DisplayName:   "Single sign-on",
+				Scopes:         []string{"openid", "profile", "email"},
+				GroupsClaim:    "groups",
+				UsernameClaim:  "preferred_username",
+				GivenNameClaim: "given_name",
+				DisplayName:    "Single sign-on",
 			},
 		},
 		Storage: Storage{

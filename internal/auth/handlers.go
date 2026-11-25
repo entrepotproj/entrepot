@@ -152,7 +152,7 @@ func (h *Handlers) Callback(w http.ResponseWriter, r *http.Request) {
 	}
 	u, err := h.A.store.UpsertUser(ctx, &store.User{
 		Issuer: id.Issuer, Subject: id.Subject, Username: id.Username,
-		Email: id.Email, DisplayName: id.DisplayName, Groups: id.Groups,
+		Email: id.Email, DisplayName: id.DisplayName, GivenName: id.GivenName, Groups: id.Groups,
 	}, true)
 	if err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, "internal", err.Error())

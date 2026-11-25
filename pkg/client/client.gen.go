@@ -1007,15 +1007,18 @@ type HostedSettings struct {
 
 // Me defines model for Me.
 type Me struct {
-	Admin    bool                    `json:"admin"`
-	Claims   *map[string]interface{} `json:"claims,omitempty"`
-	Email    *string                 `json:"email,omitempty"`
-	Groups   []string                `json:"groups"`
-	Kind     MeKind                  `json:"kind"`
-	Name     string                  `json:"name"`
-	Policies []string                `json:"policies"`
-	Scopes   []string                `json:"scopes"`
-	UserId   *string                 `json:"userId,omitempty"`
+	Admin  bool                    `json:"admin"`
+	Claims *map[string]interface{} `json:"claims,omitempty"`
+	Email  *string                 `json:"email,omitempty"`
+
+	// GivenName User's first name
+	GivenName *string  `json:"givenName,omitempty"`
+	Groups    []string `json:"groups"`
+	Kind      MeKind   `json:"kind"`
+	Name      string   `json:"name"`
+	Policies  []string `json:"policies"`
+	Scopes    []string `json:"scopes"`
+	UserId    *string  `json:"userId,omitempty"`
 }
 
 // MeKind defines model for Me.Kind.
