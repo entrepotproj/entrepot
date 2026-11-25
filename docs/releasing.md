@@ -34,6 +34,23 @@ commit publishes nothing. When a pull request is squash-merged, its title
 becomes the commit message, so the title must follow the convention; with a
 merge commit, the commits on the branch are what count.
 
+## Dependency updates
+
+[Renovate](https://docs.renovatebot.com/) opens dependency PRs every Monday
+morning (UTC), configured in `.github/renovate.json`: one PR per area (Go
+modules, web UI packages, images and scanners, CI) for minor and patch
+updates, and one PR per major update. A Dependency Dashboard issue lists
+what is pending. Their commit messages follow the convention above:
+
+* updates to what ships (Go modules, the UI's npm packages, the Dockerfile
+  and chart images, Trivy and Grype) are `fix(deps):`, so merging one
+  releases a patch;
+* workflow actions and the semantic-release tooling are `ci(deps):`, and the
+  local compose stack `chore(deps):`, so they release nothing.
+
+Renovate runs as the [Renovate GitHub App](https://github.com/apps/renovate),
+which must be installed on the repository.
+
 ## Notes
 
 * semantic-release has no special handling of `0.x`: a breaking change always
