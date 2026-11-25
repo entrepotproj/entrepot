@@ -109,6 +109,7 @@ are included. See [docs/storage.md](docs/storage.md) for the trade-offs.
 * [Client setup](docs/clients.md)
 * [Vulnerability scanning](docs/scanning.md)
 * [Cleanup, routing & dependency confusion](docs/cleanup-and-routing.md)
+* [Releasing](docs/releasing.md) — automatic releases from commit messages
 * [Roadmap](docs/roadmap.md) — Terraform provider next
 
 ## Development
