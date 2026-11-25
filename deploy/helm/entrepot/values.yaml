@@ -60,6 +60,7 @@ auth:
     displayName: Keycloak
     groupsClaim: groups
     usernameClaim: preferred_username
+    givenNameClaim: given_name   # first name shown in the dashboard greeting
     scopes: [openid, profile, email]
     bearerAudiences: []
   # Trusted GitLab instances for CI/CD id_tokens.

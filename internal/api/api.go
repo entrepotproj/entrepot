@@ -197,6 +197,9 @@ func (s *Server) GetMe(w http.ResponseWriter, r *http.Request) {
 	if p.Email != "" {
 		me.Email = &p.Email
 	}
+	if p.GivenName != "" {
+		me.GivenName = &p.GivenName
+	}
 	if len(p.Claims) > 0 {
 		me.Claims = &p.Claims
 	}

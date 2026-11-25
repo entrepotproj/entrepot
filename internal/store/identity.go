@@ -13,16 +13,17 @@ type User struct {
 	Username    string     `json:"username"`
 	Email       string     `json:"email"`
 	DisplayName string     `json:"displayName"`
+	GivenName   string     `json:"givenName"`
 	Groups      []string   `json:"groups"`
 	CreatedAt   time.Time  `json:"createdAt"`
 	LastLoginAt *time.Time `json:"lastLoginAt,omitempty"`
 }
 
-const userCols = `id, issuer, subject, username, email, display_name, groups, created_at, last_login_at`
+const userCols = `id, issuer, subject, username, email, display_name, given_name, groups, created_at, last_login_at`
 
 func scanUser(row interface{ Scan(...any) error }) (*User, error) {
 	var u User
-	err := row.Scan(&u.ID, &u.Issuer, &u.Subject, &u.Username, &u.Email, &u.DisplayName, &u.Groups, &u.CreatedAt, &u.LastLoginAt)
+	err := row.Scan(&u.ID, &u.Issuer, &u.Subject, &u.Username, &u.Email, &u.DisplayName, &u.GivenName, &u.Groups, &u.CreatedAt, &u.LastLoginAt)
 	return &u, err
 }
 
@@ -31,12 +32,12 @@ func (s *Store) UpsertUser(ctx context.Context, u *User, login bool) (*User, err
 	if u.Groups == nil {
 		u.Groups = []string{}
 	}
-	out, err := scanUser(s.pool.QueryRow(ctx, `INSERT INTO users (issuer, subject, username, email, display_name, groups, last_login_at)
-		VALUES ($1,$2,$3,$4,$5,$6, CASE WHEN $7 THEN now() END)
+	out, err := scanUser(s.pool.QueryRow(ctx, `INSERT INTO users (issuer, subject, username, email, display_name, given_name, groups, last_login_at)
+		VALUES ($1,$2,$3,$4,$5,$6,$7, CASE WHEN $8 THEN now() END)
 		ON CONFLICT (issuer, subject) DO UPDATE SET username=EXCLUDED.username, email=EXCLUDED.email,
-			display_name=EXCLUDED.display_name, groups=EXCLUDED.groups,
-			last_login_at = CASE WHEN $7 THEN now() ELSE users.last_login_at END
-		RETURNING `+userCols, u.Issuer, u.Subject, u.Username, u.Email, u.DisplayName, u.Groups, login))
+			display_name=EXCLUDED.display_name, given_name=EXCLUDED.given_name, groups=EXCLUDED.groups,
+			last_login_at = CASE WHEN $8 THEN now() ELSE users.last_login_at END
+		RETURNING `+userCols, u.Issuer, u.Subject, u.Username, u.Email, u.DisplayName, u.GivenName, u.Groups, login))
 	return out, mapErr(err, "upsert user")
 }
 
@@ -93,13 +94,13 @@ func (s *Store) CreateAPIToken(ctx context.Context, t *APIToken, hash []byte) (*
 // LookupAPIToken finds a non-expired token by hash and returns it with its user.
 func (s *Store) LookupAPIToken(ctx context.Context, hash []byte) (*APIToken, *User, error) {
 	row := s.pool.QueryRow(ctx, `SELECT t.id, t.user_id, t.name, t.hint, t.scopes, t.expires_at, t.last_used_at, t.created_at,
-		u.id, u.issuer, u.subject, u.username, u.email, u.display_name, u.groups, u.created_at, u.last_login_at
+		u.id, u.issuer, u.subject, u.username, u.email, u.display_name, u.given_name, u.groups, u.created_at, u.last_login_at
 		FROM api_tokens t JOIN users u ON u.id = t.user_id
 		WHERE t.hash=$1 AND (t.expires_at IS NULL OR t.expires_at > now())`, hash)
 	var t APIToken
 	var u User
 	err := row.Scan(&t.ID, &t.UserID, &t.Name, &t.Hint, &t.Scopes, &t.ExpiresAt, &t.LastUsedAt, &t.CreatedAt,
-		&u.ID, &u.Issuer, &u.Subject, &u.Username, &u.Email, &u.DisplayName, &u.Groups, &u.CreatedAt, &u.LastLoginAt)
+		&u.ID, &u.Issuer, &u.Subject, &u.Username, &u.Email, &u.DisplayName, &u.GivenName, &u.Groups, &u.CreatedAt, &u.LastLoginAt)
 	if err != nil {
 		return nil, nil, mapErr(err, "token")
 	}
@@ -467,8 +468,8 @@ func (s *Store) CreateUser(ctx context.Context, u *User) (*User, error) {
 	if u.Groups == nil {
 		u.Groups = []string{}
 	}
-	out, err := scanUser(s.pool.QueryRow(ctx, `INSERT INTO users (issuer, subject, username, email, display_name, groups)
-		VALUES ($1,$2,$3,$4,$5,$6) RETURNING `+userCols, u.Issuer, u.Subject, u.Username, u.Email, u.DisplayName, u.Groups))
+	out, err := scanUser(s.pool.QueryRow(ctx, `INSERT INTO users (issuer, subject, username, email, display_name, given_name, groups)
+		VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING `+userCols, u.Issuer, u.Subject, u.Username, u.Email, u.DisplayName, u.GivenName, u.Groups))
 	return out, mapErr(err, "create user "+u.Username)
 }
 

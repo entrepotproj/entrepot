@@ -31,10 +31,12 @@ type Principal struct {
 	// UserID is set for users (OIDC or service accounts).
 	UserID string `json:"userId,omitempty"`
 	// Name is a human readable identity used for audit and created_by.
-	Name     string   `json:"name"`
-	Email    string   `json:"email,omitempty"`
-	Groups   []string `json:"groups,omitempty"`
-	Policies []string `json:"policies,omitempty"`
+	Name string `json:"name"`
+	// GivenName is the user's first name, when the identity provider has one.
+	GivenName string   `json:"givenName,omitempty"`
+	Email     string   `json:"email,omitempty"`
+	Groups    []string `json:"groups,omitempty"`
+	Policies  []string `json:"policies,omitempty"`
 	// Scopes restrict the actions this credential may perform. Empty means
 	// the credential carries the full rights of its identity.
 	Scopes []string `json:"scopes,omitempty"`

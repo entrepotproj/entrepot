@@ -973,6 +973,8 @@ export interface components {
             /** @enum {string} */
             kind: "anonymous" | "user" | "gitlab" | "bootstrap";
             name: string;
+            /** @description User's first name */
+            givenName?: string;
             userId?: string;
             email?: string;
             groups: string[];

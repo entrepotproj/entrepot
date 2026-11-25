@@ -170,13 +170,14 @@ func (a *Authenticator) apiTokenPrincipal(ctx context.Context, tok string) (*Pri
 	}
 	go a.store.TouchAPIToken(context.WithoutCancel(ctx), t.ID)
 	return &Principal{
-		Kind:    KindUser,
-		UserID:  u.ID,
-		Name:    u.Username,
-		Email:   u.Email,
-		Groups:  u.Groups,
-		Scopes:  t.Scopes,
-		TokenID: t.ID,
+		Kind:      KindUser,
+		UserID:    u.ID,
+		Name:      u.Username,
+		GivenName: u.GivenName,
+		Email:     u.Email,
+		Groups:    u.Groups,
+		Scopes:    t.Scopes,
+		TokenID:   t.ID,
 	}, nil
 }
 
@@ -191,7 +192,7 @@ func (a *Authenticator) oidcBearerPrincipal(ctx context.Context, tok string) (*P
 	}
 	u, err := a.store.UpsertUser(ctx, &store.User{
 		Issuer: id.Issuer, Subject: id.Subject, Username: id.Username,
-		Email: id.Email, DisplayName: id.DisplayName, Groups: id.Groups,
+		Email: id.Email, DisplayName: id.DisplayName, GivenName: id.GivenName, Groups: id.Groups,
 	}, false)
 	if err != nil {
 		return nil, err
@@ -200,7 +201,7 @@ func (a *Authenticator) oidcBearerPrincipal(ctx context.Context, tok string) (*P
 }
 
 func userPrincipal(u *store.User) *Principal {
-	return &Principal{Kind: KindUser, UserID: u.ID, Name: u.Username, Email: u.Email, Groups: u.Groups}
+	return &Principal{Kind: KindUser, UserID: u.ID, Name: u.Username, GivenName: u.GivenName, Email: u.Email, Groups: u.Groups}
 }
 
 func (a *Authenticator) sessionPrincipal(ctx context.Context, cookie string) (*Principal, error) {

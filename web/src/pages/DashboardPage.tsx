@@ -38,7 +38,7 @@ export function DashboardPage() {
             <Skeleton h={32} w={280} />
           ) : (
             <Title order={2} fw={650}>
-              {anonymous ? 'Welcome to Entrepot' : `${greeting()}, ${displayName(me?.name ?? '')}`}
+              {anonymous ? 'Welcome to Entrepot' : `${greeting()}, ${me?.givenName || displayName(me?.name ?? '')}`}
             </Title>
           )}
           <Group gap={8} mt={4}>

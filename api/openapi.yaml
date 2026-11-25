@@ -1335,6 +1335,7 @@ components:
       properties:
         kind: { type: string, enum: [anonymous, user, gitlab, bootstrap] }
         name: { type: string }
+        givenName: { type: string, description: User's first name }
         userId: { type: string }
         email: { type: string }
         groups: { type: array, items: { type: string } }
