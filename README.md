@@ -143,6 +143,12 @@ deploy/helm/entrepot/  Helm chart
 deploy/compose/        local dev stack (Keycloak, MinIO, Postgres)
 ```
 
+## Releases
+
+Releases are cut with release-please from Conventional Commit PR titles (`feat: …`, `fix: …`).
+See [CHANGELOG.md](CHANGELOG.md) for what changed and [RELEASING.md](RELEASING.md) for how
+versions, images and the Helm chart are published.
+
 ## License
 
 Apache License 2.0. See [LICENSE](LICENSE).
