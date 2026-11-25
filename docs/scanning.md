@@ -130,6 +130,37 @@ curl -H "Authorization: Bearer $ADMIN" "$E/api/v1/scan-jobs?status=failed"      
 Scanners with `rescanIntervalHours` periodically rescan components that
 repositories still use, so new CVEs are picked up for old artifacts.
 
+## Finding vulnerable and quarantined components
+
+The dashboard's **Vulnerable** and **Quarantined** tiles link to the search
+page filtered by that state, where a **Findings** column lists each
+component's findings with links to the advisories. The search page also has a
+security-state filter.
+
+The same filters are on the search API:
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" "$E/api/v1/search?scanState=vulnerable&withFindings=true"
+curl -H "Authorization: Bearer $TOKEN" "$E/api/v1/search?quarantined=true&repository=npm-libs"
+```
+
+* `scanState` returns only components in that [state](#repository-policy).
+  An unknown state is rejected with `400`.
+* `quarantined` returns only quarantined (`true`) or only other (`false`)
+  components.
+* `withFindings=true` adds two fields to each component:
+  * `findingCounts`: the number of findings by severity;
+  * `findings`: the five most severe findings. `findingCounts` counts all of
+    them.
+
+  Both leave out findings covered by an active waiver, and count a
+  vulnerability reported by several scanners once, as the component's state
+  does.
+
+They combine with the other search parameters (`q`, `format`, `repository`,
+`version`, `limit`, `offset`), and search only returns components in
+repositories the caller can read.
+
 ## Webhook protocol
 
 Entrepot sends:
