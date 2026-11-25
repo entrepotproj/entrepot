@@ -23,13 +23,18 @@ export function UsageChart({
   height?: number;
   emptyHint?: string;
 }) {
+  const hasTraffic = (pts: UsagePoint[]) =>
+    pts.some((p) => (metric === 'bytes' ? p.bytesOut > 0 : p.requests > 0 || p.downloads > 0));
   // The newest bucket is still filling up; plotting it would show a misleading
-  // drop at the right edge. The totals above still include it.
+  // drop at the right edge. The totals above still include it. Keep it when it
+  // holds all the traffic (a 15-minute bucket on the 24h range often does):
+  // dropping it would report "no traffic" while the totals show some.
   const last = series[series.length - 1];
   if (last && new Date(last.t).getTime() + bucketSeconds * 1000 > Date.now() && series.length > 1) {
-    series = series.slice(0, -1);
+    const settled = series.slice(0, -1);
+    if (hasTraffic(settled)) series = settled;
   }
-  const empty = series.every((p) => (metric === 'bytes' ? p.bytesOut === 0 : p.requests === 0 && p.downloads === 0));
+  const empty = !hasTraffic(series);
   if (empty) {
     return (
       <Center h={height}>
