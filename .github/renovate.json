@@ -1,0 +1,69 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Weekly dependency updates. The commit type decides the release (docs/releasing.md): what ships in the images, the chart or the UI is fix(deps), a patch release; CI-only updates are ci(deps), and the dev compose file chore(deps), which release nothing.",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    "schedule:weekly",
+    "customManagers:dockerfileVersions"
+  ],
+  "postUpdateOptions": ["gomodTidy"],
+  "lockFileMaintenance": { "enabled": true },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "semantic-release and its plugins, pinned in the release workflow",
+      "managerFilePatterns": ["/^\\.github/workflows/release\\.ya?ml$/"],
+      "matchStrings": ["-p (?<depName>(?:@[a-z0-9-]+/)?[a-z0-9-]+)@(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      "datasourceTemplate": "npm"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Updates ship in the images, the chart or the UI: fix(deps), a patch release.",
+      "matchPackageNames": ["*"],
+      "semanticCommitType": "fix"
+    },
+    {
+      "description": "Actions and release tooling only affect CI: ci(deps), no release.",
+      "matchFileNames": [".github/workflows/**"],
+      "semanticCommitType": "ci"
+    },
+    {
+      "description": "The local docker compose stack isn't shipped: chore(deps), no release.",
+      "matchFileNames": ["deploy/compose/**"],
+      "semanticCommitType": "chore"
+    },
+    {
+      "description": "Minor and patch updates come as one PR per area each week; majors get their own PRs.",
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "groupName": "Go modules"
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "web UI packages"
+    },
+    {
+      "matchFileNames": ["Dockerfile", "deploy/helm/**"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "groupName": "images and scanners"
+    },
+    {
+      "matchFileNames": ["deploy/compose/**"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "groupName": "dev compose images"
+    },
+    {
+      "matchFileNames": [".github/workflows/**"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "groupName": "CI"
+    },
+    {
+      "description": "The go directive and the golang build image move together, or the image build breaks.",
+      "matchPackageNames": ["go", "golang"],
+      "groupName": "Go toolchain"
+    }
+  ]
+}
