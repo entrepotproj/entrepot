@@ -72,6 +72,7 @@ any number of replicas.
   "onUpload": true,
   "onProxyFetch": true,
   "blockUntilScanned": false,
+  "holdSeconds": 0,
   "blockOnError": false,
   "distro": "debian-12"
 }
@@ -96,12 +97,46 @@ any number of replicas.
   * Docker tag manifests and digest manifests are blocked; layers never are.
 * **Block until scanned** (quarantine mode only) also blocks components that
   have not been scanned yet. The download attempt queues the scan.
+* **Hold until verdict** (`holdSeconds`, with `blockUntilScanned`): instead
+  of refusing a download of content that is still being scanned, keep the
+  request open for up to `holdSeconds` (1–600) and answer as soon as the
+  verdict is in: the file, or `403` if it is quarantined. The component's
+  queued scans move to the front of the queue. If the hold runs out the
+  client gets `503` with `Retry-After: 10` and `X-Entrepot-Scan-Pending:
+  true`. `0` (the default) keeps the immediate `403`.
+  * Sidecar files (PyPI `.metadata`, Helm `.prov`) are never held: pip reads
+    them while resolving, often for many versions. A quarantine still
+    blocks them.
+  * Held downloads are woken through Postgres notifications, so a verdict
+    from a separate scan-worker deployment or another replica releases them
+    at once; otherwise they poll (every second at most).
+  * At most `scan.maxHolds` downloads are held per process; more get `503`
+    at once. Draining pods answer held downloads with `503`.
+  * Prometheus: `entrepot_scan_hold_duration_seconds{outcome}` (served,
+    blocked, timeout, cancelled, refused) and `entrepot_scan_holds_active`.
+  * Choose the hold per format: clients and load balancers time out on a
+    response that sends nothing.
+
+    | Client or proxy | Gives up after | On `503` | Suggested `holdSeconds` |
+    |---|---|---|---|
+    | pip | 15s without data (`--timeout`) | retries 5 times | 10 |
+    | apt | about 30s | per `Acquire::Retries` | 20 |
+    | dnf / yum | 30s (low-speed timeout) | retries | 20 |
+    | npm | 300s (`fetch-timeout`) | retries twice | 60 |
+    | Docker, containerd | rarely | doesn't retry manifests | 300 |
+    | AWS ALB | 60s idle timeout by default | — | stay below it |
+    | nginx ingress (this chart) | 900s (`proxy-read-timeout`) | — | stay below it |
+
+    `server.readTimeout` must be `0` (the default) or longer than the hold.
+    Run enough scan workers (`scan.workers`) that scans of new content start
+    promptly.
 * **Block on scan errors** (`blockOnError`, quarantine mode only) fails
   closed: a component whose latest scan by a configured scanner failed is
   blocked with `… could not be scanned; downloads are blocked until a scan
   succeeds`. Failed scans are queued again every `scan.errorRetryInterval`
   (default 15 minutes), and a download attempt retries them once the failure
-  is more than a minute old. Use it with `blockUntilScanned`.
+  is more than a minute old (with `holdSeconds`, the download waits for that
+  retry). Use it with `blockUntilScanned`.
 * **Strict verdicts.** Repositories with `blockOnError` decide a component's
   state only once every configured scanner has scanned its current content.
   * Until then the component is `pending`. Other repositories keep the

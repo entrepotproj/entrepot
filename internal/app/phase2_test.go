@@ -128,8 +128,8 @@ func TestQuarantineGateAndStoredHook(t *testing.T) {
 			events.Add(1)
 		}
 	})
-	inst.App.Repos.QuarantineCheck = func(ctx context.Context, rp *repo.Repository, a *store.Asset) (bool, string) {
-		return strings.HasSuffix(a.Path, ".tgz"), "CVE-0000-0001 (critical)"
+	inst.App.Repos.QuarantineCheck = func(ctx context.Context, rp *repo.Repository, a *store.Asset) repo.GateDecision {
+		return repo.GateDecision{Blocked: strings.HasSuffix(a.Path, ".tgz"), Reason: "CVE-0000-0001 (critical)"}
 	}
 	pkg := map[string]any{
 		"name": "demo", "versions": map[string]any{"1.0.0": map[string]any{"name": "demo", "version": "1.0.0",

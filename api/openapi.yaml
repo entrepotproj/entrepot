@@ -1481,6 +1481,14 @@ components:
           enum: [critical, high, medium, low]
           description: "Lowest severity that quarantines (default high)"
         blockUntilScanned: { type: boolean, description: "quarantine mode: block downloads until the first scan completes" }
+        holdSeconds:
+          type: integer
+          minimum: 0
+          maximum: 600
+          description: >-
+            quarantine mode with blockUntilScanned: keep a download of content that is still being scanned open for
+            up to this many seconds, waiting for the verdict (0, the default, refuses it at once with 403). When the
+            hold runs out the client gets 503 with Retry-After and X-Entrepot-Scan-Pending.
         blockOnError:
           type: boolean
           description: >-

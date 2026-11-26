@@ -1119,6 +1119,8 @@ export interface components {
             severityThreshold?: "critical" | "high" | "medium" | "low";
             /** @description quarantine mode: block downloads until the first scan completes */
             blockUntilScanned?: boolean;
+            /** @description quarantine mode with blockUntilScanned: keep a download of content that is still being scanned open for up to this many seconds, waiting for the verdict (0, the default, refuses it at once with 403). When the hold runs out the client gets 503 with Retry-After and X-Entrepot-Scan-Pending. */
+            holdSeconds?: number;
             /** @description quarantine mode: block downloads of components whose latest scan by a configured scanner failed, until a retry succeeds (failed scans are retried every scan.errorRetryInterval). Verdicts become strict: a component stays pending until every configured scanner has scanned its current content. */
             blockOnError?: boolean;
             /** @description Apt/Yum: distribution for vulnerability matching, e.g. debian-12, ubuntu-24.04, rocky-9 */

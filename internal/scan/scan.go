@@ -72,6 +72,7 @@ type Service struct {
 	mu         sync.Mutex
 	reasons    map[string]reasonEntry
 	scannerIdx *scannerIndex
+	holds      *holdHub
 	feedback   sync.WaitGroup
 	// waiverLast is when expired waivers were last looked for.
 	waiverLast time.Time
@@ -93,7 +94,15 @@ func New(d Deps) *Service {
 		workerID:     fmt.Sprintf("%s-%d-%s", host, os.Getpid(), hex.EncodeToString(b[:])),
 		wake:         make(chan struct{}, 1),
 		reasons:      map[string]reasonEntry{},
+		holds:        newHoldHub(maxHolds(d.Config)),
 	}
+}
+
+func maxHolds(c *config.Config) int {
+	if c == nil || c.Scan.MaxHolds == 0 {
+		return 1000
+	}
+	return c.Scan.MaxHolds
 }
 
 // Attach registers repository hooks: jobs are enqueued when components are
@@ -128,7 +137,7 @@ func (s *Service) onStored(ctx context.Context, ev repo.StoredEvent) {
 		return
 	}
 	if n > 0 {
-		s.notify()
+		s.notifyJobs(ctx)
 	}
 	if ev.Sidecar {
 		return
@@ -152,16 +161,55 @@ func (s *Service) Enqueue(ctx context.Context, componentID string, scanners []st
 		return nil, err
 	}
 	if n > 0 {
-		s.notify()
+		s.notifyJobs(ctx)
 	}
 	return s.Store.OutstandingJobs(ctx, componentID, scanners)
 }
 
+// notify wakes an idle worker of this process.
 func (s *Service) notify() {
 	select {
 	case s.wake <- struct{}{}:
 	default:
 	}
+}
+
+// notifyJobs wakes idle workers here and, through a Postgres notification,
+// in other processes (a separate scan-worker deployment), so they don't
+// wait for their next poll.
+func (s *Service) notifyJobs(ctx context.Context) {
+	s.notify()
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
+	defer cancel()
+	if err := s.Store.Notify(ctx, store.ChannelScanJobs, ""); err != nil {
+		s.Logger.Debug("notify scan jobs", "err", err)
+	}
+}
+
+// listen relays Postgres notifications: verdict changes wake held
+// downloads, queued jobs wake this process's workers.
+func (s *Service) listen(ctx context.Context) {
+	var lost bool
+	s.Store.Listen(ctx, []string{store.ChannelScanVerdict, store.ChannelScanJobs}, func(channel, payload string) {
+		switch channel {
+		case store.ChannelScanVerdict:
+			s.holds.signal(payload)
+		case store.ChannelScanJobs:
+			s.notify()
+		}
+	}, func(err error) {
+		if err != nil {
+			if !lost {
+				s.Logger.Warn("scan notifications lost; held downloads poll until reconnected", "err", err)
+			}
+			lost = true
+			return
+		}
+		if lost {
+			s.Logger.Info("scan notifications reconnected")
+		}
+		lost = false
+	})
 }
 
 // Run starts the workers (scan.workers of them), the rescan scheduler and
@@ -178,7 +226,8 @@ func (s *Service) Run(ctx context.Context) {
 	if s.Config.Scan.Workers > 0 {
 		s.Logger.Info("scan workers started", "workers", s.Config.Scan.Workers, "id", s.workerID)
 	}
-	wg.Add(2)
+	wg.Add(3)
+	go func() { defer wg.Done(); s.listen(ctx) }()
 	go func() { defer wg.Done(); s.loop(ctx, s.RescanEvery, time.Minute, s.rescanTick) }()
 	go func() { defer wg.Done(); s.loop(ctx, s.ReapEvery, s.ReapEvery, s.reapTick) }()
 	wg.Wait()
@@ -226,6 +275,8 @@ func (s *Service) worker(ctx context.Context, id string) {
 			}
 			continue
 		}
+		// More jobs may be ready: let another idle worker look too.
+		s.notify()
 		s.process(ctx, id, job)
 	}
 }
@@ -291,7 +342,7 @@ func (s *Service) RetryNow(ctx context.Context) (int, error) {
 	}
 	if total > 0 {
 		s.Logger.Info("scan retries queued", "jobs", total)
-		s.notify()
+		s.notifyJobs(ctx)
 	}
 	return total, nil
 }
@@ -332,7 +383,7 @@ func (s *Service) RescanNow(ctx context.Context) (int, error) {
 	}
 	if total > 0 {
 		s.Logger.Info("rescans queued", "jobs", total)
-		s.notify()
+		s.notifyJobs(ctx)
 	}
 	return total, nil
 }

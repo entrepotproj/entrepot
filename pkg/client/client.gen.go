@@ -1289,6 +1289,9 @@ type ScanSettings struct {
 	// Distro Apt/Yum: distribution for vulnerability matching, e.g. debian-12, ubuntu-24.04, rocky-9
 	Distro *string `json:"distro,omitempty"`
 
+	// HoldSeconds quarantine mode with blockUntilScanned: keep a download of content that is still being scanned open for up to this many seconds, waiting for the verdict (0, the default, refuses it at once with 403). When the hold runs out the client gets 503 with Retry-After and X-Entrepot-Scan-Pending.
+	HoldSeconds *int `json:"holdSeconds,omitempty"`
+
 	// Mode warn: record findings only; quarantine: block downloads of components with findings at or above severityThreshold
 	Mode *ScanSettingsMode `json:"mode,omitempty"`
 

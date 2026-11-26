@@ -506,11 +506,28 @@ func (s *Store) LatestFindings(ctx context.Context, componentIDs []string) (map[
 	return out, rows.Err()
 }
 
-// SetComponentScanState stores the evaluated verdict of a component.
+// SetComponentScanState stores the evaluated verdict of a component and
+// notifies ChannelScanVerdict (downloads held for the verdict, in any
+// process, wake up).
 func (s *Store) SetComponentScanState(ctx context.Context, id, state string, quarantined bool, scannedAt *time.Time) error {
-	_, err := s.pool.Exec(ctx, `UPDATE components SET scan_state=$2, quarantined=$3, scanned_at=$4 WHERE id=$1`,
+	_, err := s.pool.Exec(ctx, `WITH u AS (
+			UPDATE components SET scan_state=$2, quarantined=$3, scanned_at=$4 WHERE id=$1 RETURNING id)
+		SELECT pg_notify('`+ChannelScanVerdict+`', id::text) FROM u`,
 		id, state, quarantined, scannedAt)
 	return mapErr(err, "set scan state")
+}
+
+// PrioritizeJobs moves the queued, ready jobs of components to the front of
+// the queue (a download is waiting for them). Jobs waiting out a retry
+// backoff are left alone. It returns the number of jobs moved.
+func (s *Store) PrioritizeJobs(ctx context.Context, componentIDs []string) (int, error) {
+	tag, err := s.pool.Exec(ctx, `UPDATE scan_jobs SET run_after = now() - interval '1 day', updated_at = now()
+		WHERE component_id = ANY($1) AND status = 'queued' AND run_after <= now() AND run_after > now() - interval '1 day'`,
+		componentIDs)
+	if err != nil {
+		return 0, mapErr(err, "prioritize scan jobs")
+	}
+	return int(tag.RowsAffected()), nil
 }
 
 // QuarantineStatus is the denormalised scan verdict used at download time.
