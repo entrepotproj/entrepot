@@ -463,3 +463,34 @@ func escapeLike(s string) string {
 	r := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
 	return r.Replace(s)
 }
+
+// BackfillRawComponents gives up to limit assets of a raw repository that
+// have no component one named after their path (version ""), and returns
+// how many it linked. Repeat until it returns 0; it is idempotent.
+func (s *Store) BackfillRawComponents(ctx context.Context, repoID string, limit int) (int, error) {
+	tag, err := s.pool.Exec(ctx, `WITH todo AS (
+			SELECT id, path FROM assets WHERE repository_id=$1 AND component_id IS NULL ORDER BY path LIMIT $2),
+		comps AS (
+			INSERT INTO components (repository_id, name, version) SELECT $1, path, '' FROM todo
+			ON CONFLICT (repository_id, name, version) DO UPDATE SET updated_at = components.updated_at
+			RETURNING id, name)
+		UPDATE assets a SET component_id = comps.id FROM todo JOIN comps ON comps.name = todo.path
+		WHERE a.id = todo.id AND a.component_id IS NULL`, repoID, limit)
+	if err != nil {
+		return 0, mapErr(err, "backfill raw components")
+	}
+	return int(tag.RowsAffected()), nil
+}
+
+// AttachRawComponent links a raw file without a component to one named
+// after its path, and returns the component id.
+func (s *Store) AttachRawComponent(ctx context.Context, repoID, assetID, path string) (string, error) {
+	var id string
+	err := s.pool.QueryRow(ctx, `WITH comp AS (
+			INSERT INTO components (repository_id, name, version) VALUES ($1, $3, '')
+			ON CONFLICT (repository_id, name, version) DO UPDATE SET updated_at = components.updated_at
+			RETURNING id)
+		UPDATE assets a SET component_id = coalesce(a.component_id, comp.id) FROM comp
+		WHERE a.id = $2 AND a.repository_id = $1 RETURNING a.component_id`, repoID, assetID, path).Scan(&id)
+	return id, mapErr(err, "attach raw component")
+}

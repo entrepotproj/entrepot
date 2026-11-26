@@ -215,7 +215,7 @@ func quarantineReason(comp *store.Component, blocking []Finding) string {
 // threatReason describes a blocking threat found by a file scanner.
 func threatReason(comp *store.Component, f Finding, more int) string {
 	where := describe(comp)
-	if f.Package != "" {
+	if f.Package != "" && f.Package != where {
 		where = f.Package + " (" + where + ")"
 	}
 	var msg string
@@ -357,6 +357,18 @@ func (s *Service) gate(ctx context.Context, rp *repo.Repository, a *store.Asset)
 		return repo.GateDecision{}, nil
 	}
 	var statuses []*store.QuarantineStatus
+	if a.ComponentID == nil && rp.Format == "raw" {
+		// A raw file stored before scanning was enabled (the startup and
+		// settings backfill may not have reached it yet).
+		id, err := s.Store.AttachRawComponent(context.WithoutCancel(ctx), rp.ID, a.ID, a.Path)
+		if err != nil {
+			s.Logger.Warn("attach raw component", "asset", a.ID, "err", err)
+			return repo.GateDecision{}, nil
+		}
+		linked := *a
+		linked.ComponentID = &id
+		a = &linked
+	}
 	switch {
 	case a.ComponentID != nil:
 		q, err := s.Store.ComponentQuarantine(ctx, *a.ComponentID)
@@ -520,7 +532,10 @@ func (s *Service) hold(ctx context.Context, rp *repo.Repository, a *store.Asset,
 func (s *Service) StopHolds() { s.holds.shutdown() }
 
 func refOf(rp *repo.Repository, q *store.QuarantineStatus) string {
-	if rp.Format == "docker" {
+	switch {
+	case q.Version == "":
+		return q.Name // raw files
+	case rp.Format == "docker":
 		return q.Name + ":" + q.Version
 	}
 	return q.Name + "@" + q.Version
@@ -574,7 +589,11 @@ func (s *Service) reasonFor(ctx context.Context, q *store.QuarantineStatus) stri
 	if ok && time.Now().Before(e.expires) {
 		return e.reason
 	}
-	reason := "vulnerabilities at or above the severity threshold in " + q.Name + "@" + q.Version + " — waive or fix to download"
+	ref := q.Name
+	if q.Version != "" {
+		ref += "@" + q.Version
+	}
+	reason := "vulnerabilities at or above the severity threshold in " + ref + " — waive or fix to download"
 	if comp, err := s.Store.GetComponent(ctx, q.ComponentID); err == nil {
 		if v, err := s.ComponentVerdict(ctx, comp); err == nil && v.Reason != "" {
 			reason = v.Reason

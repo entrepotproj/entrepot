@@ -111,6 +111,9 @@ func (h *Handler) find(ctx context.Context, rp *repo.Repository, p string) (*rep
 			if err == nil && !res.NotModified && (res.ContentType == "" || res.ContentType == "application/octet-stream") {
 				res.ContentType = contentType(p)
 			}
+			if err == nil {
+				res.Component = Component(rp, p)
+			}
 			return res, err
 		})
 		return rp, a, err
@@ -146,6 +149,7 @@ func (h *Handler) put(w http.ResponseWriter, r *http.Request, rp *repo.Repositor
 		ContentType: ct,
 		CreatedBy:   format.Actor(r),
 		NoOverwrite: !rp.AllowRedeploy(),
+		Component:   Component(rp, p),
 	})
 	if err != nil {
 		h.env.WriteError(w, r, err)
@@ -248,11 +252,22 @@ func (h *Handler) Upload(ctx context.Context, rp *repo.Repository, u *format.Upl
 		ContentType: ct,
 		CreatedBy:   u.Uploader.Name,
 		NoOverwrite: !rp.AllowRedeploy(),
+		Component:   Component(rp, clean),
 	})
 	if err != nil {
 		return nil, err
 	}
 	return []*store.Asset{a}, nil
+}
+
+// Component is the component of a raw file: in repositories with scanning
+// enabled each file is one, named after its path (no version), so it can be
+// scanned and gated like a package. Elsewhere raw files have none.
+func Component(rp *repo.Repository, p string) *repo.ComponentRef {
+	if !rp.Cfg.Scan.Enabled() {
+		return nil
+	}
+	return &repo.ComponentRef{Name: p}
 }
 
 func contentType(p string) string {

@@ -64,6 +64,14 @@ any number of replicas.
 | Docker | the image is exported from the blob store as an OCI layout, one per platform (up to 8), and the findings are merged. A proxy scans the platforms it has cached, or linux/amd64 |
 | Helm, raw | reported as `unsupported` by Trivy, Grype and webhooks |
 
+In raw repositories with scanning enabled, every file is a component named
+after its path (with no version), so it is scanned and gated like a package:
+on upload, when a proxy first caches it, and when it is replaced. Files
+stored before scanning was switched on get their components in the
+background when it is switched on (and at startup), or at the latest when
+they are downloaded; like other components stored before scanning, they are
+scanned on demand, by a rescan, or at download with `blockUntilScanned`.
+
 Scanners that read content (`metadefender`) are sent the component's files
 instead: every format's package files, Helm charts included, except files
 derived from the package (PyPI `.metadata`, Helm `.prov`). Docker images are

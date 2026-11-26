@@ -62,7 +62,9 @@ Every file of the component, streamed from the blob store as the raw body of
 `POST /file` (with `Content-Length` and the `filename` header), except files
 derived from the package: PyPI `.metadata` and Helm `.prov` sidecars. Nothing
 is written to the scan work directory. Helm charts, which Trivy and Grype
-can't scan, are covered. Docker images are sent layer by layer (below).
+can't scan, are covered, and so are raw files (each file is a component in
+raw repositories with scanning enabled). Docker images are sent layer by
+layer (below).
 
 Each analysis is polled (`GET /file/{data_id}`, every 250 ms backing off to
 2 s) until it finishes. A full queue (`503`) is retried with backoff until the

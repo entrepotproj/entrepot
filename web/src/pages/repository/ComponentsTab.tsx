@@ -82,7 +82,7 @@ export function ComponentsTab({ repository }: { repository: Repository }) {
           description={
             debounced
               ? 'Try a different search.'
-              : 'Components are packages with a name and version (for example an npm package version). Raw files are listed under Browse.'
+              : 'Components are packages with a name and version (for example an npm package version). Raw files are listed under Browse; in raw repositories with scanning enabled each file is also a component, so it can be scanned.'
           }
         />
       ) : (

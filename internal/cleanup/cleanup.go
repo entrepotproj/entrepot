@@ -233,6 +233,12 @@ func (s *Service) candidates(ctx context.Context, rp *repo.Repository, policies 
 			if !p.Criteria.componentCriteria() {
 				continue
 			}
+			// Raw files only have components so they can be scanned: policies
+			// for every format keep ignoring them, as before; only policies
+			// written for raw repositories remove them.
+			if rp.Format == "raw" && p.Format != "raw" {
+				continue
+			}
 			for _, c := range p.match(rp.Format, all, s.now()) {
 				if !selected[c.ID] {
 					selected[c.ID] = true

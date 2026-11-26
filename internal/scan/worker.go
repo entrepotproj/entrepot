@@ -460,7 +460,10 @@ func (s *Service) expireWaivers(ctx context.Context) {
 
 // describe returns "name@version" (or image:tag for Docker).
 func describe(c *store.Component) string {
-	if c.Format == "docker" {
+	switch {
+	case c.Version == "":
+		return c.Name // raw files
+	case c.Format == "docker":
 		return c.Name + ":" + c.Version
 	}
 	return c.Name + "@" + c.Version

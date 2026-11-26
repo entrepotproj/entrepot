@@ -402,3 +402,36 @@ func contains(list []string, v string) bool {
 	}
 	return false
 }
+
+// rawBackfillBatch is the number of raw files linked to components per
+// statement.
+const rawBackfillBatch = 500
+
+// BackfillRaw gives the files of a raw repository with scanning enabled
+// that have no component one (named after the path), so they can be
+// scanned and gated. It is idempotent and safe to run on several replicas.
+func (s *Service) BackfillRaw(ctx context.Context, rp *repo.Repository) (int, error) {
+	if rp.Format != "raw" || rp.IsGroup() || !rp.Cfg.Scan.Enabled() {
+		return 0, nil
+	}
+	unlock, err := s.Store.AdvisoryLock(ctx, "raw-backfill:"+rp.ID)
+	if err != nil {
+		return 0, err
+	}
+	defer unlock()
+	total := 0
+	for ctx.Err() == nil {
+		n, err := s.Store.BackfillRawComponents(ctx, rp.ID, rawBackfillBatch)
+		if err != nil {
+			return total, err
+		}
+		total += n
+		if n < rawBackfillBatch {
+			break
+		}
+	}
+	if total > 0 {
+		s.Logger.Info("raw files linked to components for scanning", "repository", rp.Name, "files", total)
+	}
+	return total, ctx.Err()
+}
