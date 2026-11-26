@@ -67,7 +67,8 @@ any number of replicas.
 Scanners that read content (`metadefender`) are sent the component's files
 instead: every format's package files, Helm charts included, except files
 derived from the package (PyPI `.metadata`, Helm `.prov`). Docker images are
-reported as `unsupported` by them for now.
+sent layer by layer, for the same platforms as image scans; see
+[MetaDefender Core](metadefender.md#docker-images).
 
 ## Repository policy
 
@@ -156,6 +157,10 @@ reported as `unsupported` by them for now.
     scan. A scan that was already running when the file arrived is repeated.
   * Sidecar files (PyPI `.metadata`, Helm `.prov`) are derived from the
     package and don't count as new content.
+  * A Docker proxy scans the platforms of an index it has cached (or
+    linux/amd64). Pulling a platform manifest that the last scan left out
+    counts as new content: the image is scanned again with that platform, and
+    the pull waits for it like any pending download.
 * Switching a repository from warn to quarantine takes effect immediately,
   without rescanning.
 

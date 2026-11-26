@@ -372,7 +372,7 @@ func (s *Service) gate(ctx context.Context, rp *repo.Repository, a *store.Asset)
 			s.Logger.Warn("quarantine check", "asset", a.ID, "err", err)
 			return repo.GateDecision{}, nil
 		}
-		statuses = qs
+		statuses = append(qs, s.unscannedPlatform(ctx, rp, image, a.Digest)...)
 	default:
 		return repo.GateDecision{}, nil
 	}
@@ -427,6 +427,39 @@ func (s *Service) gate(ctx context.Context, rp *repo.Repository, a *store.Asset)
 		}
 	}
 	return repo.GateDecision{}, nil
+}
+
+// unscannedPlatform handles a pull of a platform manifest that the image's
+// last scan left out (a proxy had not cached it). In strict repositories
+// this is new content: the image is scanned again, with the platform, and
+// the pull waits like any pending download.
+func (s *Service) unscannedPlatform(ctx context.Context, rp *repo.Repository, image, digest string) []*store.QuarantineStatus {
+	if _, strict, err := s.strictConfig(ctx, rp.Cfg.Scan); err != nil || !strict {
+		return nil
+	}
+	refs, err := s.Store.SkippedManifestComponents(ctx, rp.ID, image, digest)
+	if err != nil {
+		s.Logger.Warn("unscanned platform check", "image", image, "err", err)
+		return nil
+	}
+	var out []*store.QuarantineStatus
+	for _, r := range refs {
+		bctx := context.WithoutCancel(ctx)
+		if bumped, err := s.Store.BumpContentRev(bctx, r.ComponentID, r.ContentRev); err == nil && bumped {
+			s.Logger.Info("platform pulled that was not scanned; rescanning", "image", image, "manifest", digest,
+				"component", r.ComponentID)
+			if _, err := s.Store.MarkComponentPending(bctx, r.ComponentID); err != nil {
+				s.Logger.Warn("mark component pending", "component", r.ComponentID, "err", err)
+			}
+			if _, err := s.Enqueue(bctx, r.ComponentID, rp.Cfg.Scan.Scanners, "proxy"); err != nil {
+				s.Logger.Warn("queue platform rescan", "component", r.ComponentID, "err", err)
+			}
+		}
+		if q, err := s.Store.ComponentQuarantine(ctx, r.ComponentID); err == nil {
+			out = append(out, q)
+		}
+	}
+	return out
 }
 
 // hold waits (up to timeout) for the verdict of the pending components and

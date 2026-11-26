@@ -1395,7 +1395,7 @@ export interface components {
             /** @description Time allowed for the callback (default 900) */
             timeoutSeconds?: number;
         };
-        /** @description OPSWAT MetaDefender Core. Every file of a component (except sidecars such as PyPI .metadata) is uploaded for analysis, or matched by hash with an earlier analysis by the same rule. */
+        /** @description OPSWAT MetaDefender Core. Every file of a component (except sidecars such as PyPI .metadata), or every layer of a Docker image, is uploaded for analysis, or matched by hash with an earlier analysis by the same rule. */
         MetaDefenderSettings: {
             /** @description MetaDefender Core REST API, e.g. https://metadefender.example.com:8008 */
             url: string;

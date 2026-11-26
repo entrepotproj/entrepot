@@ -27,7 +27,10 @@ type summary struct {
 	Digest    string   `json:"digest,omitempty"`
 	Digests   []string `json:"digests,omitempty"`
 	Platforms []string `json:"platforms,omitempty"`
-	Attempt   int      `json:"attempt,omitempty"`
+	// SkippedDigests are platform manifests a proxy had not cached, left
+	// out of the scan (pulling one rescans the image in strict repositories).
+	SkippedDigests []string `json:"skippedDigests,omitempty"`
+	Attempt        int      `json:"attempt,omitempty"`
 	// Files records how each file was analysed by a file scanner.
 	Files []drivers.FileResult `json:"files,omitempty"`
 }
@@ -225,6 +228,17 @@ func (s *Service) runDriver(ctx context.Context, ls *loadedScanner, rp *repo.Rep
 			return nil, sm, err
 		}
 		sm.ScannerVersion, sm.DBVersion, sm.Counts, sm.Files = o.ScannerVersion, o.DBVersion, countFindings(o.Findings), o.Files
+		if tg.digest != "" {
+			sm.Digest, sm.Digests, sm.SkippedDigests = tg.digest, []string{tg.digest}, tg.skipped
+			for _, m := range tg.platforms {
+				if m.Digest != tg.digest {
+					sm.Digests = append(sm.Digests, m.Digest)
+				}
+				if m.Platform != "" {
+					sm.Platforms = append(sm.Platforms, m.Platform)
+				}
+			}
+		}
 		return o, sm, nil
 	}
 	dir, err := s.workDir(job.ID)
@@ -253,6 +267,7 @@ func (s *Service) runDriver(ctx context.Context, ls *loadedScanner, rp *repo.Rep
 		}
 		sm.Digest = tg.digest
 		sm.Digests = []string{tg.digest}
+		sm.SkippedDigests = tg.skipped
 		total := &drivers.Outcome{Status: drivers.StatusOK}
 		for i, m := range tg.platforms {
 			ldir := filepath.Join(dir, fmt.Sprintf("image-%d", i))

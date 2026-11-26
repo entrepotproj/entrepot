@@ -1063,7 +1063,7 @@ type Me struct {
 // MeKind defines model for Me.Kind.
 type MeKind string
 
-// MetaDefenderSettings OPSWAT MetaDefender Core. Every file of a component (except sidecars such as PyPI .metadata) is uploaded for analysis, or matched by hash with an earlier analysis by the same rule.
+// MetaDefenderSettings OPSWAT MetaDefender Core. Every file of a component (except sidecars such as PyPI .metadata), or every layer of a Docker image, is uploaded for analysis, or matched by hash with an earlier analysis by the same rule.
 type MetaDefenderSettings struct {
 	// ApiKey Sent in the apikey header; kept when omitted on update and the URL is unchanged
 	ApiKey *string `json:"apiKey,omitempty"`
@@ -1406,7 +1406,7 @@ type Scanner struct {
 	Enabled   bool           `json:"enabled"`
 	Grype     *GrypeSettings `json:"grype,omitempty"`
 
-	// Metadefender OPSWAT MetaDefender Core. Every file of a component (except sidecars such as PyPI .metadata) is uploaded for analysis, or matched by hash with an earlier analysis by the same rule.
+	// Metadefender OPSWAT MetaDefender Core. Every file of a component (except sidecars such as PyPI .metadata), or every layer of a Docker image, is uploaded for analysis, or matched by hash with an earlier analysis by the same rule.
 	Metadefender        *MetaDefenderSettings   `json:"metadefender,omitempty"`
 	Name                string                  `json:"name"`
 	RescanIntervalHours int                     `json:"rescanIntervalHours"`
@@ -1421,7 +1421,7 @@ type ScannerInput struct {
 	Enabled *bool          `json:"enabled,omitempty"`
 	Grype   *GrypeSettings `json:"grype,omitempty"`
 
-	// Metadefender OPSWAT MetaDefender Core. Every file of a component (except sidecars such as PyPI .metadata) is uploaded for analysis, or matched by hash with an earlier analysis by the same rule.
+	// Metadefender OPSWAT MetaDefender Core. Every file of a component (except sidecars such as PyPI .metadata), or every layer of a Docker image, is uploaded for analysis, or matched by hash with an earlier analysis by the same rule.
 	Metadefender *MetaDefenderSettings `json:"metadefender,omitempty"`
 	Name         string                `json:"name"`
 

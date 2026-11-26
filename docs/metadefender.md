@@ -62,7 +62,7 @@ Every file of the component, streamed from the blob store as the raw body of
 `POST /file` (with `Content-Length` and the `filename` header), except files
 derived from the package: PyPI `.metadata` and Helm `.prov` sidecars. Nothing
 is written to the scan work directory. Helm charts, which Trivy and Grype
-can't scan, are covered. Docker images are reported as `unsupported` for now.
+can't scan, are covered. Docker images are sent layer by layer (below).
 
 Each analysis is polled (`GET /file/{data_id}`, every 250 ms backing off to
 2 s) until it finishes. A full queue (`503`) is retried with backoff until the
@@ -77,6 +77,31 @@ younger than `maxResultAgeHours`. Without a `rule`, results are only reused
 once Entrepot has learnt the default rule's name from one of its own uploads.
 Concurrent scans of the same content in one Entrepot process share a single
 analysis.
+
+## Docker images
+
+A Docker tag is sent as its layer blobs: the unique layers of the platform
+images, chosen as for Trivy image scans (every platform in hosted
+repositories, up to 8; in proxies the platforms already cached, or
+linux/amd64). Config blobs are not sent.
+
+* A layer's sha256 is its digest, so a base layer MetaDefender has analysed
+  before (for another image or tag) is matched by hash: it is not uploaded
+  again, and a proxy doesn't even fetch it from the upstream.
+* Findings name the layer and the platforms that use it:
+  `layer sha256:3f1a2b4c5d6e (linux/amd64, linux/arm64)`, and for a blocked
+  layer the file inside it.
+* An infected layer quarantines the tag: its manifest is refused by tag and
+  by digest (index and platform manifests). Layer blobs themselves are
+  served, so a client that already knows a layer's digest can still fetch
+  it.
+* In a proxy, pulling a platform manifest that the last scan left out makes
+  the image pending again: it is scanned with that platform and the pull is
+  held for the verdict. Docker clients don't retry a `503` on a manifest, so
+  give Docker repositories a generous `holdSeconds` (e.g. 300) and enough
+  `timeoutSeconds` for large layers.
+* Layers compressed with zstd may be reported as unsupported or blocked by
+  your rule, depending on your MetaDefender version.
 
 ## Verdicts
 

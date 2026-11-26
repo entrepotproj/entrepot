@@ -59,7 +59,7 @@ const TYPE_HELP: Record<ScannerType, string> = {
   grype: 'Runs the Grype CLI on this server. Scans every format, including Docker images and OS packages.',
   webhook: 'Sends scan requests to your own HTTP service, which reports findings back asynchronously.',
   metadefender:
-    'Sends the files of each package to OPSWAT MetaDefender Core for multi-engine malware analysis. Files it already analysed with the same rule are matched by hash and not uploaded again. Docker images are not scanned yet.',
+    'Sends the files of each package to OPSWAT MetaDefender Core for multi-engine malware analysis. Docker images are sent layer by layer. Files it already analysed with the same rule are matched by hash and not uploaded again.',
 };
 
 function MetaDefenderHelp() {

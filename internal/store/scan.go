@@ -575,6 +575,49 @@ func (s *Store) ManifestQuarantine(ctx context.Context, repoID, image, tagPrefix
 	return out, rows.Err()
 }
 
+// SkippedManifest is a component whose latest scan by some scanner left out
+// a platform manifest (not cached by the proxy at the time).
+type SkippedManifest struct {
+	ComponentID string
+	// ContentRev is the revision that scan covered.
+	ContentRev int64
+}
+
+// SkippedManifestComponents returns the components of image whose latest
+// result of any scanner lists digest in summary.skippedDigests.
+func (s *Store) SkippedManifestComponents(ctx context.Context, repoID, image, digest string) ([]SkippedManifest, error) {
+	rows, err := s.pool.Query(ctx, `SELECT l.component_id, l.content_rev FROM (
+			SELECT DISTINCT ON (r.component_id, r.scanner_id) r.component_id, r.content_rev, r.summary
+			FROM scan_results r JOIN components c ON c.id = r.component_id
+			WHERE c.repository_id=$1 AND c.name=$2
+			ORDER BY r.component_id, r.scanner_id, r.scanned_at DESC) l
+		WHERE l.summary->'skippedDigests' ? $3 LIMIT 50`, repoID, image, digest)
+	if err != nil {
+		return nil, mapErr(err, "skipped manifests")
+	}
+	defer rows.Close()
+	var out []SkippedManifest
+	for rows.Next() {
+		var m SkippedManifest
+		if err := rows.Scan(&m.ComponentID, &m.ContentRev); err != nil {
+			return nil, err
+		}
+		out = append(out, m)
+	}
+	return out, rows.Err()
+}
+
+// BumpContentRev increments a component's content revision if it is still
+// rev, and reports whether it did (concurrent callers bump it once).
+func (s *Store) BumpContentRev(ctx context.Context, componentID string, rev int64) (bool, error) {
+	tag, err := s.pool.Exec(ctx, `UPDATE components SET content_rev = content_rev + 1, updated_at = now()
+		WHERE id=$1 AND content_rev=$2`, componentID, rev)
+	if err != nil {
+		return false, mapErr(err, "bump content revision")
+	}
+	return tag.RowsAffected() == 1, nil
+}
+
 // RescanCandidates returns components whose latest result from scanner is
 // older than age and that have no outstanding job for it.
 func (s *Store) RescanCandidates(ctx context.Context, scannerID string, age time.Duration, limit int) ([]string, error) {

@@ -35,6 +35,9 @@ type target struct {
 	image     string
 	digest    string
 	platforms []docker.ImageManifest
+	// skipped are platform manifests of the index left out because a proxy
+	// has not cached them; pulling one rescans the image (strict verdicts).
+	skipped []string
 
 	// file targets (scanners that read content)
 	files []drivers.File
@@ -44,6 +47,24 @@ type target struct {
 type imageExporter interface {
 	ImageManifests(ctx context.Context, rp *repo.Repository, image, digest string) ([]docker.ImageManifest, error)
 	ExportImages(ctx context.Context, rp *repo.Repository, image string, digests []string, dir string) error
+}
+
+// layerSource lists and opens image layers (Docker format handler).
+type layerSource interface {
+	ImageLayers(ctx context.Context, rp *repo.Repository, image string, manifests []docker.ImageManifest) ([]docker.Layer, error)
+	OpenBlob(ctx context.Context, rp *repo.Repository, image, digest string) (io.ReadCloser, error)
+}
+
+func (s *Service) layerSource() (layerSource, error) {
+	h, ok := s.Formats.Get("docker")
+	if !ok {
+		return nil, errors.New("docker format is not enabled")
+	}
+	l, ok := h.(layerSource)
+	if !ok {
+		return nil, errors.New("docker format cannot list image layers")
+	}
+	return l, nil
 }
 
 func (s *Service) imageExporter() (imageExporter, error) {
@@ -157,6 +178,7 @@ func (s *Service) resolveTarget(ctx context.Context, rp *repo.Repository, comp *
 		tg := &target{kind: drivers.KindImage, image: comp.Name, digest: a.Digest,
 			description: comp.Name + ":" + comp.Version + "@" + a.Digest}
 		tg.platforms = selectPlatforms(rp, ms)
+		tg.skipped = uncachedPlatforms(rp, ms, tg.platforms)
 		if len(tg.platforms) == 0 {
 			return &target{kind: kindUnsupported, description: tg.description,
 				reason: "the image index has no platform images"}, nil
@@ -176,6 +198,26 @@ func (s *Service) resolveTarget(ctx context.Context, rp *repo.Repository, comp *
 		return &target{kind: kindUnsupported, description: describe(comp),
 			reason: comp.Format + " components cannot be scanned"}, nil
 	}
+}
+
+// uncachedPlatforms lists the platform manifests of a proxy's index that
+// are not scanned because they are not cached yet (not those beyond the
+// platform limit).
+func uncachedPlatforms(rp *repo.Repository, all, selected []docker.ImageManifest) []string {
+	if !rp.IsProxy() {
+		return nil
+	}
+	chosen := map[string]bool{}
+	for _, m := range selected {
+		chosen[m.Digest] = true
+	}
+	var out []string
+	for _, m := range all {
+		if !chosen[m.Digest] && !m.Local {
+			out = append(out, m.Digest)
+		}
+	}
+	return out
 }
 
 // selectPlatforms picks the platform images of an index to scan: all of
@@ -221,8 +263,7 @@ const maxFiles = 1000
 // only when the scanner needs it.
 func (s *Service) fileTarget(ctx context.Context, rp *repo.Repository, comp *store.Component) (*target, error) {
 	if comp.Format == "docker" {
-		return &target{kind: kindUnsupported, description: describe(comp),
-			reason: "Docker images cannot be scanned by file scanners yet"}, nil
+		return s.layerTarget(ctx, rp, comp)
 	}
 	assets, err := s.Store.ListComponentAssets(ctx, comp.ID)
 	if err != nil {
@@ -254,4 +295,65 @@ func (s *Service) fileTarget(ctx context.Context, rp *repo.Repository, comp *sto
 		return &target{kind: kindUnsupported, description: tg.description, reason: "the component has no files"}, nil
 	}
 	return tg, nil
+}
+
+// layerTarget lists the layers of a Docker image (the platforms chosen as
+// for image scans) as files. Each layer is sent once even when platforms
+// share it; its sha256 is the blob digest, so a scanner that knows the
+// layer by hash never needs it fetched from the upstream.
+func (s *Service) layerTarget(ctx context.Context, rp *repo.Repository, comp *store.Component) (*target, error) {
+	img, err := s.resolveTarget(ctx, rp, comp)
+	if err != nil || img.kind != drivers.KindImage {
+		return img, err
+	}
+	src, err := s.layerSource()
+	if err != nil {
+		return nil, err
+	}
+	layers, err := src.ImageLayers(ctx, rp, comp.Name, img.platforms)
+	if err != nil {
+		return nil, err
+	}
+	if len(layers) > maxFiles {
+		return nil, fmt.Errorf("%s has more than %d layers", describe(comp), maxFiles)
+	}
+	tg := &target{kind: drivers.KindFiles, description: img.description, image: img.image, digest: img.digest,
+		platforms: img.platforms, skipped: img.skipped}
+	for _, l := range layers {
+		l := l
+		hexd, _ := strings.CutPrefix(l.Digest, "sha256:")
+		if hexd == l.Digest {
+			hexd = "" // not a sha256 digest: never matched by hash
+		}
+		short := strings.TrimPrefix(l.Digest, "sha256:")
+		if len(short) > 12 {
+			short = short[:12]
+		}
+		label := "layer sha256:" + short
+		if len(l.Platforms) > 0 {
+			label += " (" + strings.Join(l.Platforms, ", ") + ")"
+		}
+		tg.files = append(tg.files, drivers.File{Name: "layer-" + short + layerExt(l.MediaType), Label: label, Size: l.Size,
+			SHA256: hexd, MediaType: l.MediaType, Open: func(ctx context.Context) (io.ReadCloser, error) {
+				return src.OpenBlob(ctx, rp, comp.Name, l.Digest)
+			}})
+	}
+	if len(tg.files) == 0 {
+		return &target{kind: kindUnsupported, description: tg.description, reason: "the image has no layers"}, nil
+	}
+	return tg, nil
+}
+
+// layerExt names a layer file after its compression (scanners use the
+// name as a hint).
+func layerExt(mediaType string) string {
+	switch {
+	case strings.HasSuffix(mediaType, "+zstd") || strings.HasSuffix(mediaType, ".zstd"):
+		return ".tar.zst"
+	case strings.HasSuffix(mediaType, "gzip"):
+		return ".tar.gz"
+	case strings.HasSuffix(mediaType, ".tar") || strings.HasSuffix(mediaType, "layer.v1.tar"):
+		return ".tar"
+	}
+	return ".tar.gz"
 }
