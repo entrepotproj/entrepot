@@ -1,0 +1,21 @@
+{
+  "data_id": "00000000000000000000000000000000",
+  "file_info": {"display_name": "file.bin", "file_size": 0, "sha256": ""},
+  "process_info": {
+    "blocked_reasons": [],
+    "outdated_data": [],
+    "profile": "File process",
+    "progress_percentage": 40,
+    "result": "Processing",
+    "verdicts": []
+  },
+  "scan_results": {
+    "data_id": "00000000000000000000000000000000",
+    "progress_percentage": 40,
+    "scan_all_result_a": "In Progress",
+    "scan_all_result_i": 255,
+    "scan_details": {},
+    "start_time": "2026-01-01T00:00:00.000Z",
+    "total_avs": 3
+  }
+}

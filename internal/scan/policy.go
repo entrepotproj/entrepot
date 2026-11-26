@@ -62,7 +62,12 @@ func WaiverMatches(w *store.Waiver, repoName, name, version, vuln string) bool {
 	if w.ExpiresAt != nil && !w.ExpiresAt.After(time.Now()) {
 		return false
 	}
-	if w.VulnID != "*" && !strings.EqualFold(w.VulnID, vuln) {
+	if w.VulnID == "*" {
+		// Threats (malware, policy blocks) are only waived by their exact id.
+		if drivers.IsThreat(vuln) {
+			return false
+		}
+	} else if !strings.EqualFold(w.VulnID, vuln) {
 		return false
 	}
 	if p := w.RepositoryPattern; p != "" && p != "*" && p != "**" && !match.Glob(p, repoName) {
@@ -193,6 +198,9 @@ func (s *Service) verdict(ctx context.Context, comp *store.Component, rp *repo.R
 func quarantineReason(comp *store.Component, blocking []Finding) string {
 	sortFindings(blocking)
 	f := blocking[0]
+	if drivers.IsThreat(f.VulnID) {
+		return threatReason(comp, f, len(blocking)-1)
+	}
 	where := describe(comp)
 	if f.Package != "" && f.Package != comp.Name {
 		where = strings.TrimSpace(f.Package+" "+f.InstalledVersion) + " in " + where
@@ -202,6 +210,24 @@ func quarantineReason(comp *store.Component, blocking []Finding) string {
 		msg += fmt.Sprintf(" and %d more", len(blocking)-1)
 	}
 	return msg + " — waive or fix to download"
+}
+
+// threatReason describes a blocking threat found by a file scanner.
+func threatReason(comp *store.Component, f Finding, more int) string {
+	where := describe(comp)
+	if f.Package != "" {
+		where = f.Package + " (" + where + ")"
+	}
+	var msg string
+	if drivers.FindingKind(f.VulnID) == "policy" {
+		msg = fmt.Sprintf("%s refused %s: %s", f.Scanner, where, strings.TrimPrefix(f.VulnID, drivers.ThreatBlocked))
+	} else {
+		msg = fmt.Sprintf("%s detected by %s in %s", f.VulnID, f.Scanner, where)
+	}
+	if more > 0 {
+		msg += fmt.Sprintf(" and %d more", more)
+	}
+	return msg + " — downloads are blocked; only a waiver for this exact finding releases it"
 }
 
 func sortFindings(fs []Finding) {
@@ -215,6 +241,10 @@ func sortFindings(fs []Finding) {
 func less(a, b Finding) bool {
 	if ra, rb := drivers.SeverityRank(a.Severity), drivers.SeverityRank(b.Severity); ra != rb {
 		return ra > rb
+	}
+	// Threats before vulnerabilities of the same severity.
+	if ta, tb := drivers.IsThreat(a.VulnID), drivers.IsThreat(b.VulnID); ta != tb {
+		return ta
 	}
 	return a.VulnID < b.VulnID
 }

@@ -1,0 +1,19 @@
+{
+  "details": [
+    {
+      "blocked_reasons": ["Infected"],
+      "data_id": "914b95fb1a9948e5a1d9b29817ecb69f",
+      "display_name": "payload.exe",
+      "engines": [
+        {"engine": "Avira", "threat_name": "Virus eicar test file"},
+        {"engine": "ClamAV", "threat_name": "Win.Test.EICAR_HDB-1"},
+        {"engine": "K7", "threat_name": "Virus eicar test file"}
+      ],
+      "file_type": "application/x-dosexec",
+      "parent_id": "00000000000000000000000000000000",
+      "path": "file.bin\\bin\\payload.exe",
+      "verdicts": ["Infected"]
+    }
+  ],
+  "limit_reached": false
+}

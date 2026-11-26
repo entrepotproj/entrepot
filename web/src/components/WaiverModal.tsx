@@ -26,7 +26,7 @@ const PRESETS: { label: string; days: number }[] = [
   { label: '1 year', days: 365 },
 ];
 
-/** Create or edit a vulnerability waiver. `initial` prefills a new waiver. */
+/** Create or edit a waiver (vulnerabilities and file scanner threats). `initial` prefills a new waiver. */
 export function WaiverModal({
   waiver,
   initial,
@@ -91,8 +91,13 @@ export function WaiverModal({
             globs: <Code>*</Code> matches anything.
           </Text>
           <TextInput
-            label="Vulnerability ID"
-            description="e.g. CVE-2021-23337, GHSA-…, or * for any vulnerability"
+            label="Finding ID"
+            description={
+              <>
+                e.g. CVE-2021-23337, GHSA-…, <Code fz={11}>MALWARE:…</Code>, or * for any vulnerability (never covers
+                malware and policy blocks, which need their exact ID)
+              </>
+            }
             value={vulnId}
             onChange={(e) => setVulnId(e.currentTarget.value)}
             required

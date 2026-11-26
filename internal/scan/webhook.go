@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -410,6 +411,29 @@ func (s *Service) TestScanner(ctx context.Context, sc *store.Scanner) TestResult
 			return TestResult{Message: err.Error()}
 		}
 		return TestResult{OK: true, Message: fmt.Sprintf("webhook answered %d", code)}
+	case TypeMetaDefender:
+		md, err := s.metaDefender(ls)
+		if err != nil {
+			return TestResult{Message: err.Error()}
+		}
+		h, err := md.Check(ctx)
+		if err != nil {
+			v := ""
+			if h != nil {
+				v = h.Version
+			}
+			return TestResult{Message: err.Error(), Version: v}
+		}
+		msg := "MetaDefender Core " + h.Version + " is ready"
+		if md.Rule != "" {
+			msg += "; rule " + strconv.Quote(md.Rule) + " is available"
+			if max := h.Rules[md.Rule]; max > 0 {
+				msg += fmt.Sprintf(" (files up to %d MB)", max>>20)
+			}
+		} else {
+			msg += fmt.Sprintf("; no rule set, the server default applies (%d rules available)", len(h.Rules))
+		}
+		return TestResult{OK: true, Message: msg, Version: h.Version}
 	default:
 		dir, err := s.workDir("test0000")
 		if err != nil {

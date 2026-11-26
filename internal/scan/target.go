@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/entrepotproj/entrepot/internal/formats/docker"
@@ -20,7 +21,7 @@ const maxPlatforms = 8
 
 // target is what a job scans.
 type target struct {
-	kind        string // drivers.KindPackage, drivers.KindImage or kindUnsupported
+	kind        string // drivers.KindPackage, KindImage, KindFiles or kindUnsupported
 	reason      string // why unsupported
 	description string
 
@@ -34,6 +35,9 @@ type target struct {
 	image     string
 	digest    string
 	platforms []docker.ImageManifest
+
+	// file targets (scanners that read content)
+	files []drivers.File
 }
 
 // imageExporter is implemented by the Docker format handler.
@@ -206,4 +210,48 @@ func selectPlatforms(rp *repo.Repository, ms []docker.ImageManifest) []docker.Im
 		out = out[:maxPlatforms]
 	}
 	return out
+}
+
+// maxFiles bounds the files of a component sent to a file scanner.
+const maxFiles = 1000
+
+// fileTarget lists the files of a component for scanners that read content
+// (every format: the component's assets except sidecars derived from the
+// package, such as PyPI .metadata and Helm .prov files). Content is opened
+// only when the scanner needs it.
+func (s *Service) fileTarget(ctx context.Context, rp *repo.Repository, comp *store.Component) (*target, error) {
+	if comp.Format == "docker" {
+		return &target{kind: kindUnsupported, description: describe(comp),
+			reason: "Docker images cannot be scanned by file scanners yet"}, nil
+	}
+	assets, err := s.Store.ListComponentAssets(ctx, comp.ID)
+	if err != nil {
+		return nil, err
+	}
+	tg := &target{kind: drivers.KindFiles, description: describe(comp)}
+	for _, a := range assets {
+		if repo.IsSidecar(comp.Format, a.Path) {
+			continue
+		}
+		if len(tg.files) == maxFiles {
+			return nil, fmt.Errorf("%s has more than %d files", describe(comp), maxFiles)
+		}
+		a := a
+		name := a.Path
+		if i := strings.LastIndex(name, "/"); i >= 0 {
+			name = name[i+1:]
+		}
+		sum := ""
+		if d, ok := strings.CutPrefix(a.Digest, "sha256:"); ok {
+			sum = d
+		}
+		tg.files = append(tg.files, drivers.File{Name: name, Label: a.Path, Size: a.Size, SHA256: sum,
+			MediaType: a.ContentType, Open: func(ctx context.Context) (io.ReadCloser, error) {
+				return s.Repos.Open(ctx, rp, a)
+			}})
+	}
+	if len(tg.files) == 0 {
+		return &target{kind: kindUnsupported, description: tg.description, reason: "the component has no files"}, nil
+	}
+	return tg, nil
 }

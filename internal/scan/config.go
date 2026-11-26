@@ -14,15 +14,19 @@ const (
 	TypeTrivy   = "trivy"
 	TypeGrype   = "grype"
 	TypeWebhook = "webhook"
+	// TypeMetaDefender scans file content with OPSWAT MetaDefender Core.
+	TypeMetaDefender = "metadefender"
 )
 
 // ScannerConfig is the typed form of scanners.config. Secret fields
-// (trivy.serverToken, webhook.secret) are sealed when stored.
+// (trivy.serverToken, webhook.secret, metadefender.apiKey) are sealed when
+// stored.
 type ScannerConfig struct {
-	RescanIntervalHours int              `json:"rescanIntervalHours,omitempty"`
-	Trivy               *TrivySettings   `json:"trivy,omitempty"`
-	Grype               *GrypeSettings   `json:"grype,omitempty"`
-	Webhook             *WebhookSettings `json:"webhook,omitempty"`
+	RescanIntervalHours int                   `json:"rescanIntervalHours,omitempty"`
+	Trivy               *TrivySettings        `json:"trivy,omitempty"`
+	Grype               *GrypeSettings        `json:"grype,omitempty"`
+	Webhook             *WebhookSettings      `json:"webhook,omitempty"`
+	MetaDefender        *MetaDefenderSettings `json:"metadefender,omitempty"`
 }
 
 type TrivySettings struct {
@@ -43,6 +47,70 @@ type WebhookSettings struct {
 	URL            string `json:"url"`
 	Secret         string `json:"secret,omitempty"`
 	TimeoutSeconds int    `json:"timeoutSeconds,omitempty"`
+}
+
+// MetaDefenderSettings configures a MetaDefender Core scanner.
+type MetaDefenderSettings struct {
+	// URL of the MetaDefender Core REST API, e.g. https://metadefender:8008.
+	URL string `json:"url"`
+	// APIKey is sent in the apikey header (sealed at rest).
+	APIKey string `json:"apiKey,omitempty"`
+	// Rule (workflow) files are processed with; empty for the server default.
+	Rule string `json:"rule,omitempty"`
+	// TimeoutSeconds bounds the scan of one component (all its files).
+	TimeoutSeconds int `json:"timeoutSeconds,omitempty"`
+	// Concurrency is the number of files of a component analysed at once.
+	Concurrency int `json:"concurrency,omitempty"`
+	// HashLookup reuses earlier analyses of the same content (default true).
+	HashLookup *bool `json:"hashLookup,omitempty"`
+	// MaxResultAgeHours is the age after which an earlier analysis found by
+	// hash is not reused.
+	MaxResultAgeHours int `json:"maxResultAgeHours,omitempty"`
+	// WebURL links findings to the result in the MetaDefender web console;
+	// {dataId} is replaced, e.g. https://metadefender:8008/#/public/process/dataId/{dataId}.
+	WebURL string `json:"webUrl,omitempty"`
+	// CACertificate is a PEM bundle trusted for the URL (internal CAs).
+	CACertificate string `json:"caCertificate,omitempty"`
+}
+
+// MetaDefender defaults and limits.
+const (
+	DefaultMetaDefenderTimeout     = 600 * time.Second
+	DefaultMetaDefenderConcurrency = 4
+	MaxMetaDefenderConcurrency     = 32
+	DefaultMetaDefenderResultAge   = 24
+)
+
+// Timeout is the time allowed for one component.
+func (m *MetaDefenderSettings) Timeout() time.Duration {
+	if m == nil || m.TimeoutSeconds <= 0 {
+		return DefaultMetaDefenderTimeout
+	}
+	return time.Duration(m.TimeoutSeconds) * time.Second
+}
+
+// Parallel is the number of files analysed at once.
+func (m *MetaDefenderSettings) Parallel() int {
+	switch {
+	case m == nil || m.Concurrency <= 0:
+		return DefaultMetaDefenderConcurrency
+	case m.Concurrency > MaxMetaDefenderConcurrency:
+		return MaxMetaDefenderConcurrency
+	}
+	return m.Concurrency
+}
+
+// LookupHashes reports whether earlier analyses are reused.
+func (m *MetaDefenderSettings) LookupHashes() bool {
+	return m == nil || m.HashLookup == nil || *m.HashLookup
+}
+
+// ResultAge is the maximum age of a reused analysis.
+func (m *MetaDefenderSettings) ResultAge() time.Duration {
+	if m == nil || m.MaxResultAgeHours <= 0 {
+		return DefaultMetaDefenderResultAge * time.Hour
+	}
+	return time.Duration(m.MaxResultAgeHours) * time.Hour
 }
 
 // DefaultWebhookTimeout is the time a webhook scanner has to call back.
@@ -80,6 +148,11 @@ func (c *ScannerConfig) Seal(box *secrets.Box) error {
 			return err
 		}
 	}
+	if c.MetaDefender != nil && c.MetaDefender.APIKey != "" && !secrets.IsSealed(c.MetaDefender.APIKey) {
+		if c.MetaDefender.APIKey, err = box.Seal(c.MetaDefender.APIKey); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -94,6 +167,11 @@ func (c *ScannerConfig) Open(box *secrets.Box) error {
 	if c.Webhook != nil && c.Webhook.Secret != "" && box != nil {
 		if c.Webhook.Secret, err = box.Open(c.Webhook.Secret); err != nil {
 			return fmt.Errorf("webhook.secret: %w", err)
+		}
+	}
+	if c.MetaDefender != nil && c.MetaDefender.APIKey != "" && box != nil {
+		if c.MetaDefender.APIKey, err = box.Open(c.MetaDefender.APIKey); err != nil {
+			return fmt.Errorf("metadefender.apiKey: %w", err)
 		}
 	}
 	return nil
@@ -125,6 +203,9 @@ func (c *ScannerConfig) secretFields() []*string {
 	if c.Webhook != nil && c.Webhook.Secret != "" {
 		out = append(out, &c.Webhook.Secret)
 	}
+	if c.MetaDefender != nil && c.MetaDefender.APIKey != "" {
+		out = append(out, &c.MetaDefender.APIKey)
+	}
 	return out
 }
 
@@ -140,6 +221,11 @@ func (c *ScannerConfig) Redacted() *ScannerConfig {
 		w := *c.Webhook
 		w.Secret = ""
 		out.Webhook = &w
+	}
+	if c.MetaDefender != nil {
+		m := *c.MetaDefender
+		m.APIKey = ""
+		out.MetaDefender = &m
 	}
 	return &out
 }

@@ -20,6 +20,9 @@ import (
 const (
 	KindPackage = "package"
 	KindImage   = "image"
+	// KindFiles targets are the files of a component (Files), for scanners
+	// that read content (MetaDefender).
+	KindFiles = "files"
 )
 
 // Outcome statuses.
@@ -43,6 +46,61 @@ type Target struct {
 	LayoutDir string
 	// Description is shown in results (purl or image reference).
 	Description string
+	// Files of a KindFiles target.
+	Files []File
+}
+
+// File is one file of a KindFiles target. Open is called only when the
+// content is needed (a scanner may already know the file by its hash).
+type File struct {
+	// Name is the file name sent to the scanner.
+	Name string
+	// Label names the file in findings (defaults to Name), e.g. a Docker
+	// layer and its platforms.
+	Label string
+	Size  int64
+	// SHA256 of the content, hex.
+	SHA256    string
+	MediaType string
+	Open      func(ctx context.Context) (io.ReadCloser, error)
+}
+
+// FileResult records how a file of a KindFiles target was scanned.
+type FileResult struct {
+	Name   string `json:"name"`
+	SHA256 string `json:"sha256,omitempty"`
+	// DataID identifies the analysis in the scanner.
+	DataID string `json:"dataId,omitempty"`
+	Result string `json:"result,omitempty"`
+	// Cached is true when an earlier analysis of the same content was used.
+	Cached bool `json:"cached,omitempty"`
+}
+
+// Threat finding id prefixes (malware scanners report threats, not CVEs).
+// Waivers for "*" don't cover them.
+const (
+	ThreatMalware    = "MALWARE:"
+	ThreatSuspicious = "SUSPICIOUS:"
+	ThreatPUA        = "PUA:"
+	ThreatBlocked    = "BLOCKED:"
+)
+
+// IsThreat reports whether a finding id is a threat rather than a
+// vulnerability.
+func IsThreat(vulnID string) bool {
+	return FindingKind(vulnID) != "vulnerability"
+}
+
+// FindingKind is vulnerability, malware (MALWARE:, SUSPICIOUS:, PUA:) or
+// policy (BLOCKED:, the scanner's policy refused the file).
+func FindingKind(vulnID string) string {
+	switch {
+	case strings.HasPrefix(vulnID, ThreatMalware), strings.HasPrefix(vulnID, ThreatSuspicious), strings.HasPrefix(vulnID, ThreatPUA):
+		return "malware"
+	case strings.HasPrefix(vulnID, ThreatBlocked):
+		return "policy"
+	}
+	return "vulnerability"
 }
 
 // Finding is one vulnerability.
@@ -62,6 +120,8 @@ type Outcome struct {
 	Findings       []Finding
 	ScannerVersion string
 	DBVersion      string
+	// Files of a KindFiles target.
+	Files []FileResult
 }
 
 // Driver scans targets with one scanner.

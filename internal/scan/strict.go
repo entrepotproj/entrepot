@@ -11,7 +11,7 @@ import (
 // isFileScanner reports whether scanners of type t read the files of a
 // component (rather than look its name and version up).
 func isFileScanner(t string) bool {
-	return false
+	return t == TypeMetaDefender
 }
 
 // scannerIndex is a short-lived snapshot of the configured scanners.

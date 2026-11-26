@@ -74,6 +74,11 @@ func TestResealPlaintextSecrets(t *testing.T) {
 	if _, err := inst.App.Pool.Exec(ctx, `UPDATE scanners SET config = jsonb_set(config, '{webhook,secret}', '"plain-hook"') WHERE name='hook'`); err != nil {
 		t.Fatal(err)
 	}
+	inst.JSON("POST", "/scanners", map[string]any{"name": "md", "type": "metadefender",
+		"metadefender": map[string]any{"url": "https://md.example:8008", "apiKey": "k"}}, http.StatusCreated, nil)
+	if _, err := inst.App.Pool.Exec(ctx, `UPDATE scanners SET config = jsonb_set(config, '{metadefender,apiKey}', '"plain-key"') WHERE name='md'`); err != nil {
+		t.Fatal(err)
+	}
 	box, _ := secrets.New(inst.Config.SecretsKey())
 	// Simulate a restart by running the startup migration through a second app.
 	inst2 := testutil.Reopen(t, inst)
@@ -88,6 +93,10 @@ func TestResealPlaintextSecrets(t *testing.T) {
 	_ = inst2.App.Pool.QueryRow(ctx, `SELECT config->'webhook'->>'secret' FROM scanners WHERE name='hook'`).Scan(&raw)
 	if pt, err := box.Open(string(raw)); !secrets.IsSealed(string(raw)) || err != nil || pt != "plain-hook" {
 		t.Fatalf("scanner secret not resealed: %s (%q %v)", raw, pt, err)
+	}
+	_ = inst2.App.Pool.QueryRow(ctx, `SELECT config->'metadefender'->>'apiKey' FROM scanners WHERE name='md'`).Scan(&raw)
+	if pt, err := box.Open(string(raw)); !secrets.IsSealed(string(raw)) || err != nil || pt != "plain-key" {
+		t.Fatalf("MetaDefender API key not resealed: %s (%q %v)", raw, pt, err)
 	}
 }
 

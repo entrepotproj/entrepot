@@ -28,6 +28,8 @@ type summary struct {
 	Digests   []string `json:"digests,omitempty"`
 	Platforms []string `json:"platforms,omitempty"`
 	Attempt   int      `json:"attempt,omitempty"`
+	// Files records how each file was analysed by a file scanner.
+	Files []drivers.FileResult `json:"files,omitempty"`
 }
 
 func (sm summary) json() json.RawMessage {
@@ -74,6 +76,8 @@ func (s *Service) jobTimeout(ls *loadedScanner) time.Duration {
 		sec = ls.Cfg.Trivy.TimeoutSeconds
 	case ls.Cfg.Grype != nil:
 		sec = ls.Cfg.Grype.TimeoutSeconds
+	case ls.Type == TypeMetaDefender:
+		return ls.Cfg.MetaDefender.Timeout()
 	}
 	if sec > 0 {
 		return time.Duration(sec) * time.Second
@@ -116,7 +120,12 @@ func (s *Service) process(ctx context.Context, worker string, job *store.ScanJob
 		s.fail(ctx, job, owner, "", err)
 		return
 	}
-	tg, err := s.resolveTarget(ctx, rp, comp)
+	var tg *target
+	if isFileScanner(ls.Type) {
+		tg, err = s.fileTarget(ctx, rp, comp)
+	} else {
+		tg, err = s.resolveTarget(ctx, rp, comp)
+	}
 	if err != nil {
 		s.fail(ctx, job, owner, "", err)
 		return
@@ -201,10 +210,23 @@ func (s *Service) release(job *store.ScanJob, owner store.JobOwner) {
 	}
 }
 
-// runDriver materialises the target and runs a CLI driver.
+// runDriver materialises the target and runs a CLI driver, or streams the
+// files to a file scanner.
 func (s *Service) runDriver(ctx context.Context, ls *loadedScanner, rp *repo.Repository, comp *store.Component, tg *target,
 	job *store.ScanJob) (*drivers.Outcome, summary, error) {
 	sm := summary{Target: tg.description}
+	if tg.kind == drivers.KindFiles {
+		md, err := s.metaDefender(ls)
+		if err != nil {
+			return nil, sm, err
+		}
+		o, err := md.Scan(ctx, drivers.Target{Kind: drivers.KindFiles, Files: tg.files, Description: tg.description})
+		if err != nil {
+			return nil, sm, err
+		}
+		sm.ScannerVersion, sm.DBVersion, sm.Counts, sm.Files = o.ScannerVersion, o.DBVersion, countFindings(o.Findings), o.Files
+		return o, sm, nil
+	}
 	dir, err := s.workDir(job.ID)
 	if err != nil {
 		return nil, sm, err

@@ -65,6 +65,10 @@ type Service struct {
 	ReapEvery time.Duration
 	// HTTP is used for webhook scanners and GitLab feedback.
 	HTTP *http.Client
+	// FilePollMin, FilePollMax and FileBusyBackoff tune how file scanners
+	// (MetaDefender) poll for results and back off while the scanner is
+	// busy (defaults 250ms, 2s and 1s; tests shorten them).
+	FilePollMin, FilePollMax, FileBusyBackoff time.Duration
 
 	workerID string
 	wake     chan struct{}
@@ -73,7 +77,9 @@ type Service struct {
 	reasons    map[string]reasonEntry
 	scannerIdx *scannerIndex
 	holds      *holdHub
-	feedback   sync.WaitGroup
+	// fileClients are the HTTP clients of file scanners, by CA bundle.
+	fileClients map[string]*http.Client
+	feedback    sync.WaitGroup
 	// waiverLast is when expired waivers were last looked for.
 	waiverLast time.Time
 }

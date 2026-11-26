@@ -1,0 +1,102 @@
+{
+  "data_id": "8101abae27be4d63859c55d9e0ed0135",
+  "file_info": {
+    "display_name": "OPSWAT_Proactive_DLP_CCN.pdf",
+    "file_size": 75906,
+    "file_type": "application/pdf",
+    "file_type_description": "Adobe Portable Document Format",
+    "file_type_id": "PDF",
+    "is_skip_hash": false,
+    "md5": "c4863c8ce44fb7ae84eb48c9b78f8b5e",
+    "receive_data_timestamp": "2020-03-12T08:37:00.002Z",
+    "sha1": "a33c72a996a9603d479e3dff3d23bf619c975fbe",
+    "sha256": "b9fdc10b47950b9e503ef4dc0ef42d28e7c37ccd749d4a5dcd7d9b3218996b7f",
+    "sha512": "f5859df81d9a3c77216819b2f262972f71b224810700de31db9308ea547855785a38831ac141f8ddc8a9580e10a127bfd82a060e048840f34d95ae6b22d5b961",
+    "signer_infos": [
+      {
+        "digest_algorithm": "sha256",
+        "digest_encryption_algorithm": "rsaEncryption",
+        "issuer": "DigiCert SHA2 Assured ID Code Signing CA",
+        "serial_number": "018B3D51928A477491ADD4FBC33B4FCB",
+        "vendor_name": "OPSWAT, Inc.",
+        "version": 2
+      }
+    ],
+    "type_category": [
+      "P"
+    ],
+    "upload_time": 3456,
+    "upload_timestamp": "2020-03-12T08:37:05.412Z"
+  },
+  "process_info": {
+    "allowlisted_reason": "By File Type",
+    "archive_handling_details": {
+      "description": "Partially Extracted Archive"
+    },
+    "blocked_reason": "Sensitive Data Found",
+    "blocked_reasons": [
+      "Sensitive Data Found"
+    ],
+    "blocklisted_reason": "Password Protection Required",
+    "client_identity": {
+      "clients": [
+        {
+          "deployment_id": "abcdef1234567890",
+          "host": "client.example.com",
+          "product_type": "MetaDefender Kiosk",
+          "timestamp": 1744949754890,
+          "user_name": "Gemini",
+          "version": "1.0.0"
+        }
+      ]
+    },
+    "file_type_skipped_scan": false,
+    "hash_time": 145,
+    "is_rejected_request": false,
+    "outdated_data": [
+      "engineconfigurations",
+      "enginedefinitions",
+      "configuration",
+      "sanitization"
+    ],
+    "post_processing": {
+      "actions_failed": "Sanitization Failed | PAscript failed",
+      "actions_ran": "Sanitized | PAscript",
+      "converted_destination": "OPSWAT_Proactive_DLP_CCN_sanitized.pdf",
+      "converted_to": "",
+      "copy_move_destination": ""
+    },
+    "processing_time": 4804,
+    "profile": "File process",
+    "progress_percentage": 100,
+    "queue_time": 321,
+    "result": "Blocked",
+    "user_agent": "webscan",
+    "username": "LOCAL/admin",
+    "verdicts": [
+      "Sensitive Data Found"
+    ]
+  },
+  "scan_results": {
+    "current_av_result_a": "No Threat Detected",
+    "current_av_result_i": 0,
+    "data_id": "8101abae27be4d63859c55d9e0ed0135",
+    "progress_percentage": 100,
+    "scan_all_result_a": "Sensitive Data Found",
+    "scan_all_result_i": 20,
+    "scan_details": {
+      "ClamAV": {
+        "def_time": "2020-03-11T11:08:00.000Z",
+        "eng_id": "clamav_1_windows",
+        "location": "local",
+        "scan_result_i": 0,
+        "scan_time": 336,
+        "threat_found": "",
+        "wait_time": 3
+      }
+    },
+    "start_time": "2020-03-12T08:37:05.427Z",
+    "total_avs": 1,
+    "total_time": 4804
+  }
+}

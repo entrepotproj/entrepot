@@ -1,0 +1,51 @@
+{
+  "data_id": "00000000000000000000000000000000",
+  "file_info": {
+    "display_name": "file.bin",
+    "file_size": 0,
+    "file_type": "application/octet-stream",
+    "file_type_description": "Binary data",
+    "md5": "",
+    "sha1": "",
+    "sha256": "",
+    "type_category": ["O"],
+    "upload_timestamp": "2026-01-01T00:00:00.000Z"
+  },
+  "process_info": {
+    "blocked_reason": "",
+    "blocked_reasons": [],
+    "file_type_skipped_scan": false,
+    "outdated_data": [],
+    "post_processing": {
+      "actions_failed": "",
+      "actions_ran": "",
+      "converted_destination": "",
+      "converted_to": "",
+      "copy_move_destination": ""
+    },
+    "processing_time": 412,
+    "profile": "File process",
+    "progress_percentage": 100,
+    "queue_time": 3,
+    "result": "Allowed",
+    "user_agent": "",
+    "username": "LOCAL/admin",
+    "verdicts": ["No Threat Detected"]
+  },
+  "scan_results": {
+    "current_av_result_a": "No Threat Detected",
+    "current_av_result_i": 0,
+    "data_id": "00000000000000000000000000000000",
+    "progress_percentage": 100,
+    "scan_all_result_a": "No Threat Detected",
+    "scan_all_result_i": 0,
+    "scan_details": {
+      "Avira": {"def_time": "2026-01-01T06:00:00.000Z", "eng_id": "avira_1_linux", "location": "local", "scan_result_i": 0, "scan_time": 12, "threat_found": "", "wait_time": 2},
+      "ClamAV": {"def_time": "2026-01-01T05:00:00.000Z", "eng_id": "clamav_1_linux", "location": "local", "scan_result_i": 0, "scan_time": 30, "threat_found": "", "wait_time": 2},
+      "K7": {"def_time": "2026-01-01T04:00:00.000Z", "eng_id": "k7_1_linux", "location": "local", "scan_result_i": 0, "scan_time": 9, "threat_found": "", "wait_time": 2}
+    },
+    "start_time": "2026-01-01T00:00:00.000Z",
+    "total_avs": 3,
+    "total_time": 412
+  }
+}

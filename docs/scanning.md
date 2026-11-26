@@ -7,7 +7,7 @@ with the results: just record them (**warn**) or block downloads
 commit status and an MR note.
 
 ```
- upload / proxy fetch ──► scan_jobs (Postgres queue) ──► worker ──► trivy | grype | webhook
+ upload / proxy fetch ──► scan_jobs (Postgres queue) ──► worker ──► trivy | grype | webhook | metadefender
                                                              │
                      download ◄── quarantine gate ◄── verdict ◄── findings − waivers
                                                              └──► GitLab commit status + MR note
@@ -16,13 +16,14 @@ commit status and an MR note.
 ## Scanners
 
 Scanners are configured in the UI (*Administration → Scanners*) or with the
-API. A scanner is one of three types:
+API. A scanner is one of four types:
 
 | Type | How it runs | Best for |
 |---|---|---|
 | `trivy` | runs the `trivy` CLI. With `serverUrl` set it uses client/server mode, so a central Trivy server keeps the vulnerability DB | most deployments |
 | `grype` | runs the `grype` CLI | a second opinion, or when you already use Anchore |
 | `webhook` | POSTs a signed job to your service, which calls back with results | in-house or commercial scanners (Snyk, Xray, Dependency-Track, …) |
+| `metadefender` | uploads each file of a component to OPSWAT MetaDefender Core for multi-engine malware analysis | malware, archive and file-policy checks; see [MetaDefender Core](metadefender.md) |
 
 ```bash
 curl -H "Authorization: Bearer $ADMIN" -X POST $E/api/v1/scanners -d '{
@@ -32,7 +33,8 @@ curl -H "Authorization: Bearer $ADMIN" -X POST $E/api/v1/scanners -d '{
 curl -H "Authorization: Bearer $ADMIN" -X POST $E/api/v1/scanners/trivy/test
 ```
 
-Secret settings, the Trivy `serverToken` and the webhook `secret`, are
+Secret settings, the Trivy `serverToken`, the webhook `secret` and the
+MetaDefender `apiKey`, are
 encrypted at rest and never returned by the API. You can't delete a scanner
 while a repository still uses it (`409`).
 
@@ -60,7 +62,12 @@ any number of replicas.
 | npm, PyPI | a one-component CycloneDX SBOM with the package's purl (`pkg:npm/lodash@4.17.20`) |
 | Apt, Yum | a deb or rpm purl plus an operating-system component from the repository's `scan.distro`, e.g. `debian-12`, `ubuntu-24.04`, `rocky-9` |
 | Docker | the image is exported from the blob store as an OCI layout, one per platform (up to 8), and the findings are merged. A proxy scans the platforms it has cached, or linux/amd64 |
-| Helm, raw | reported as `unsupported` |
+| Helm, raw | reported as `unsupported` by Trivy, Grype and webhooks |
+
+Scanners that read content (`metadefender`) are sent the component's files
+instead: every format's package files, Helm charts included, except files
+derived from the package (PyPI `.metadata`, Helm `.prov`). Docker images are
+reported as `unsupported` by them for now.
 
 ## Repository policy
 
@@ -137,8 +144,10 @@ any number of replicas.
   (default 15 minutes), and a download attempt retries them once the failure
   is more than a minute old (with `holdSeconds`, the download waits for that
   retry). Use it with `blockUntilScanned`.
-* **Strict verdicts.** Repositories with `blockOnError` decide a component's
-  state only once every configured scanner has scanned its current content.
+* **Strict verdicts.** Repositories with `blockOnError`, or with a
+  `metadefender` scanner selected, decide a component's state only once every
+  configured scanner has scanned its current content (so a fast Trivy result
+  never releases a file MetaDefender hasn't analysed yet).
   * Until then the component is `pending`. Other repositories keep the
     original rule: the first completed scan decides, and later results update
     the state.
@@ -154,7 +163,9 @@ any number of replicas.
 
 A waiver accepts a vulnerability.
 
-* `vulnId` is an exact ID, or `*`.
+* `vulnId` is an exact ID, or `*`. `*` never covers threats reported by file
+  scanners (IDs starting `MALWARE:`, `SUSPICIOUS:`, `PUA:` or `BLOCKED:`);
+  those need a waiver for the exact ID.
 * `repositoryPattern` and `componentPattern` are globs. The component
   pattern is matched against `name`, `name@version` or `name:version`.
 * `expiresAt` is optional. When a waiver expires, the components it covered
