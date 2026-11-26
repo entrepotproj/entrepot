@@ -18,7 +18,12 @@ func (s *Server) phase2Settings(ctx context.Context, in apigen.RepositoryInput, 
 			OnUpload:          sc.OnUpload,
 			OnProxyFetch:      sc.OnProxyFetch,
 			BlockUntilScanned: deref(sc.BlockUntilScanned),
+			BlockOnError:      deref(sc.BlockOnError),
+			HoldSeconds:       deref(sc.HoldSeconds),
 			Distro:            deref(sc.Distro),
+		}
+		if c.HoldSeconds < 0 || c.HoldSeconds > 600 {
+			return errBad("scan.holdSeconds must be between 0 and 600")
 		}
 		if sc.Scanners != nil {
 			for _, name := range *sc.Scanners {
@@ -112,6 +117,7 @@ func phase2ToAPI(rp *repo.Repository, out *apigen.Repository) {
 		out.Scan = &apigen.ScanSettings{
 			Scanners: ptr(nonNil(c.Scanners)), Mode: &mode, SeverityThreshold: &thr,
 			OnUpload: &up, OnProxyFetch: &px, BlockUntilScanned: ptr(c.BlockUntilScanned),
+			BlockOnError: ptr(c.BlockOnError), HoldSeconds: ptr(c.HoldSeconds),
 		}
 		if c.Distro != "" {
 			out.Scan.Distro = ptr(c.Distro)

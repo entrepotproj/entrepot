@@ -449,8 +449,23 @@ func (s *Server) UpdateRepository(w http.ResponseWriter, r *http.Request, name s
 		s.writeErr(w, err)
 		return
 	}
+	s.backfillRaw(r, rp)
 	s.audit(r, "repository.update", name, nil)
 	httpx.WriteJSON(w, http.StatusOK, s.repoToAPI(r, rp, true))
+}
+
+// backfillRaw links existing files of a raw repository to components when
+// scanning is on (in the background: large repositories take a while).
+func (s *Server) backfillRaw(r *http.Request, rp *repo.Repository) {
+	if rp.Format != "raw" || !rp.Cfg.Scan.Enabled() || s.Scan == nil {
+		return
+	}
+	ctx := context.WithoutCancel(r.Context())
+	go func() {
+		if _, err := s.Scan.BackfillRaw(ctx, rp); err != nil {
+			s.Logger.Warn("raw backfill", "repository", rp.Name, "err", err)
+		}
+	}()
 }
 
 func (s *Server) DeleteRepository(w http.ResponseWriter, r *http.Request, name string) {

@@ -140,6 +140,12 @@ type Scan struct {
 	JobTimeout time.Duration `yaml:"jobTimeout"`
 	// PollInterval is how often idle workers look for jobs.
 	PollInterval time.Duration `yaml:"pollInterval"`
+	// ErrorRetryInterval is how long after a failed scan the component is
+	// scanned again, in repositories with blockOnError (0 disables).
+	ErrorRetryInterval time.Duration `yaml:"errorRetryInterval"`
+	// MaxHolds bounds the downloads held waiting for a scan verdict, per
+	// process (default 1000); further ones are asked to retry (503).
+	MaxHolds int `yaml:"maxHolds"`
 }
 
 // Cleanup configures scheduled cleanup policy runs.
@@ -244,10 +250,12 @@ func Default() *Config {
 		},
 		Log: Log{Level: "info", Format: "json"},
 		Scan: Scan{
-			Workers:      2,
-			WorkDir:      os.TempDir(),
-			JobTimeout:   15 * time.Minute,
-			PollInterval: 2 * time.Second,
+			Workers:            2,
+			WorkDir:            os.TempDir(),
+			JobTimeout:         15 * time.Minute,
+			PollInterval:       2 * time.Second,
+			ErrorRetryInterval: 15 * time.Minute,
+			MaxHolds:           1000,
 		},
 		Cleanup: Cleanup{Interval: 24 * time.Hour},
 		Usage:   Usage{RecordDownloads: true, ActivityRetention: 30 * 24 * time.Hour, FlushInterval: 10 * time.Second},

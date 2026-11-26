@@ -3,6 +3,7 @@ import {
   IconAlertTriangle,
   IconArrowsShuffle,
   IconBrandDebian,
+  IconBug,
   IconBrandDocker,
   IconBrandRedhat,
   IconBrandNpm,
@@ -167,6 +168,7 @@ const scannerTypes: Record<string, { color: string; icon: IconT; label: string }
   trivy: { color: 'cyan', icon: IconShieldCheck, label: 'Trivy' },
   grype: { color: 'violet', icon: IconTerminal2, label: 'Grype' },
   webhook: { color: 'orange', icon: IconWebhook, label: 'Webhook' },
+  metadefender: { color: 'grape', icon: IconBug, label: 'MetaDefender' },
 };
 
 export function ScannerTypeBadge({ type, ...rest }: { type: string } & BadgeProps) {

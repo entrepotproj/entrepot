@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -53,6 +54,17 @@ type ScanConfig struct {
 	SeverityThreshold string `json:"severityThreshold,omitempty"`
 	// BlockUntilScanned blocks downloads until the first scan completes.
 	BlockUntilScanned bool `json:"blockUntilScanned,omitempty"`
+	// HoldSeconds (quarantine mode with BlockUntilScanned) keeps a download
+	// of a component that is still being scanned open for up to this many
+	// seconds, waiting for the verdict, instead of refusing it at once. 0
+	// (default) refuses at once (403). When the hold runs out the client
+	// gets 503 with Retry-After.
+	HoldSeconds int `json:"holdSeconds,omitempty"`
+	// BlockOnError (quarantine mode) blocks downloads of components whose
+	// latest scan by a configured scanner failed, until a retry succeeds. It
+	// also makes verdicts strict: a component stays pending until every
+	// configured scanner has scanned its current content.
+	BlockOnError bool `json:"blockOnError,omitempty"`
 	// Distro qualifies Apt/Yum packages for vulnerability matching (debian-12).
 	Distro string `json:"distro,omitempty"`
 }
@@ -77,6 +89,27 @@ func (c *ScanConfig) Threshold() string {
 }
 
 func (c *ScanConfig) ScanOnUpload() bool { return c != nil && (c.OnUpload == nil || *c.OnUpload) }
+
+// HoldTimeout is how long a download waits for a pending verdict (0: it
+// doesn't wait).
+func (c *ScanConfig) HoldTimeout() time.Duration {
+	if c == nil || !c.BlockUntilScanned || c.HoldSeconds <= 0 {
+		return 0
+	}
+	return time.Duration(c.HoldSeconds) * time.Second
+}
+
+// GateDecision is the download gate's answer for an asset.
+type GateDecision struct {
+	// Blocked refuses the download (403).
+	Blocked bool
+	// Pending means the content is still being scanned and the hold ran out
+	// (or holds are full): the client should retry (503, Retry-After).
+	Pending bool
+	// Reason is shown to the client.
+	Reason string
+}
+
 func (c *ScanConfig) ScanOnProxyFetch() bool {
 	return c != nil && (c.OnProxyFetch == nil || *c.OnProxyFetch)
 }
@@ -226,8 +259,9 @@ type Service struct {
 	Usage *usage.Recorder
 
 	// QuarantineCheck, when set, is consulted before serving content. A
-	// blocked asset is answered with 403 and the returned reason.
-	QuarantineCheck func(ctx context.Context, rp *Repository, a *store.Asset) (blocked bool, reason string)
+	// blocked asset is answered with 403, a pending one with 503 and
+	// Retry-After, both with the decision's reason.
+	QuarantineCheck func(ctx context.Context, rp *Repository, a *store.Asset) GateDecision
 
 	hooksMu sync.RWMutex
 	stored  []StoredHook
@@ -256,6 +290,22 @@ type StoredEvent struct {
 	Cached bool
 	// Changed is false when identical content was re-stored (no-op upload).
 	Changed bool
+	// Sidecar is true for files derived from the package (IsSidecar).
+	Sidecar bool
+}
+
+// IsSidecar reports whether path is a file derived from a package rather
+// than package content: PyPI .metadata (PEP 658) and Helm .prov signatures.
+// Sidecars don't change a component's content revision and are not sent to
+// file scanners.
+func IsSidecar(format, path string) bool {
+	switch format {
+	case "pypi":
+		return strings.HasSuffix(path, ".metadata")
+	case "helm":
+		return strings.HasSuffix(path, ".prov")
+	}
+	return false
 }
 
 // StoredHook is called synchronously after an asset with a component is
@@ -431,6 +481,8 @@ func (s *Service) PutStored(ctx context.Context, rp *Repository, d storage.Diges
 		ComponentID:  componentID,
 		Cached:       o.Cached,
 		NoOverwrite:  o.NoOverwrite,
+		// A new or changed package file is new content to scan.
+		BumpComponentRev: !IsSidecar(rp.Format, o.Path),
 	})
 	if errors.Is(err, store.ErrConflict) {
 		return nil, ErrRedeploy
@@ -440,7 +492,7 @@ func (s *Service) PutStored(ctx context.Context, rp *Repository, d storage.Diges
 	}
 	if err == nil && componentID != nil {
 		s.fireStored(ctx, StoredEvent{Repository: rp, Asset: a, ComponentID: *componentID, Cached: o.Cached,
-			Changed: prevDigest != a.Digest})
+			Changed: prevDigest != a.Digest, Sidecar: IsSidecar(rp.Format, o.Path)})
 	}
 	return a, err
 }
@@ -520,15 +572,22 @@ func (s *Service) Serve(w http.ResponseWriter, r *http.Request, rp *Repository, 
 		h.Set("Content-Disposition", `attachment; filename="`+o.Filename+`"`)
 	}
 	if s.QuarantineCheck != nil {
-		if blocked, reason := s.QuarantineCheck(ctx, rp, a); blocked {
+		if d := s.QuarantineCheck(ctx, rp, a); d.Blocked || d.Pending {
 			h.Del("ETag")
 			h.Del("X-Checksum-Sha256")
 			h.Del("Content-Disposition")
 			h.Set("Content-Type", "text/plain; charset=utf-8")
-			h.Set("X-Entrepot-Quarantined", "true")
-			w.WriteHeader(http.StatusForbidden)
+			status, msg := http.StatusForbidden, "quarantined by Entrepot: "+d.Reason+"\n"
+			if d.Blocked {
+				h.Set("X-Entrepot-Quarantined", "true")
+			} else {
+				status, msg = http.StatusServiceUnavailable, "scan pending: "+d.Reason+"\n"
+				h.Set("Retry-After", "10")
+				h.Set("X-Entrepot-Scan-Pending", "true")
+			}
+			w.WriteHeader(status)
 			if r.Method != http.MethodHead {
-				_, _ = io.WriteString(w, "quarantined by Entrepot: "+reason+"\n")
+				_, _ = io.WriteString(w, msg)
 			}
 			return
 		}

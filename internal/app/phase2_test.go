@@ -69,6 +69,16 @@ func TestResealPlaintextSecrets(t *testing.T) {
 	if _, err := inst.App.Pool.Exec(ctx, `UPDATE repositories SET config = jsonb_set(config, '{proxy,password}', '"plain-old"') WHERE name='legacy'`); err != nil {
 		t.Fatal(err)
 	}
+	inst.JSON("POST", "/scanners", map[string]any{"name": "hook", "type": "webhook",
+		"webhook": map[string]any{"url": "https://scanner.example/hook", "secret": "s3cret"}}, http.StatusCreated, nil)
+	if _, err := inst.App.Pool.Exec(ctx, `UPDATE scanners SET config = jsonb_set(config, '{webhook,secret}', '"plain-hook"') WHERE name='hook'`); err != nil {
+		t.Fatal(err)
+	}
+	inst.JSON("POST", "/scanners", map[string]any{"name": "md", "type": "metadefender",
+		"metadefender": map[string]any{"url": "https://md.example:8008", "apiKey": "k"}}, http.StatusCreated, nil)
+	if _, err := inst.App.Pool.Exec(ctx, `UPDATE scanners SET config = jsonb_set(config, '{metadefender,apiKey}', '"plain-key"') WHERE name='md'`); err != nil {
+		t.Fatal(err)
+	}
 	box, _ := secrets.New(inst.Config.SecretsKey())
 	// Simulate a restart by running the startup migration through a second app.
 	inst2 := testutil.Reopen(t, inst)
@@ -79,6 +89,14 @@ func TestResealPlaintextSecrets(t *testing.T) {
 	}
 	if pt, err := box.Open(string(raw)); err != nil || pt != "plain-old" {
 		t.Fatalf("open: %q %v", pt, err)
+	}
+	_ = inst2.App.Pool.QueryRow(ctx, `SELECT config->'webhook'->>'secret' FROM scanners WHERE name='hook'`).Scan(&raw)
+	if pt, err := box.Open(string(raw)); !secrets.IsSealed(string(raw)) || err != nil || pt != "plain-hook" {
+		t.Fatalf("scanner secret not resealed: %s (%q %v)", raw, pt, err)
+	}
+	_ = inst2.App.Pool.QueryRow(ctx, `SELECT config->'metadefender'->>'apiKey' FROM scanners WHERE name='md'`).Scan(&raw)
+	if pt, err := box.Open(string(raw)); !secrets.IsSealed(string(raw)) || err != nil || pt != "plain-key" {
+		t.Fatalf("MetaDefender API key not resealed: %s (%q %v)", raw, pt, err)
 	}
 }
 
@@ -119,8 +137,8 @@ func TestQuarantineGateAndStoredHook(t *testing.T) {
 			events.Add(1)
 		}
 	})
-	inst.App.Repos.QuarantineCheck = func(ctx context.Context, rp *repo.Repository, a *store.Asset) (bool, string) {
-		return strings.HasSuffix(a.Path, ".tgz"), "CVE-0000-0001 (critical)"
+	inst.App.Repos.QuarantineCheck = func(ctx context.Context, rp *repo.Repository, a *store.Asset) repo.GateDecision {
+		return repo.GateDecision{Blocked: strings.HasSuffix(a.Path, ".tgz"), Reason: "CVE-0000-0001 (critical)"}
 	}
 	pkg := map[string]any{
 		"name": "demo", "versions": map[string]any{"1.0.0": map[string]any{"name": "demo", "version": "1.0.0",

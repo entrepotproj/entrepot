@@ -1119,6 +1119,10 @@ export interface components {
             severityThreshold?: "critical" | "high" | "medium" | "low";
             /** @description quarantine mode: block downloads until the first scan completes */
             blockUntilScanned?: boolean;
+            /** @description quarantine mode with blockUntilScanned: keep a download of content that is still being scanned open for up to this many seconds, waiting for the verdict (0, the default, refuses it at once with 403). When the hold runs out the client gets 503 with Retry-After and X-Entrepot-Scan-Pending. */
+            holdSeconds?: number;
+            /** @description quarantine mode: block downloads of components whose latest scan by a configured scanner failed, until a retry succeeds (failed scans are retried every scan.errorRetryInterval). Verdicts become strict: a component stays pending until every configured scanner has scanned its current content. */
+            blockOnError?: boolean;
             /** @description Apt/Yum: distribution for vulnerability matching, e.g. debian-12, ubuntu-24.04, rocky-9 */
             distro?: string;
         };
@@ -1367,7 +1371,7 @@ export interface components {
             passphrase?: string;
         };
         /** @enum {string} */
-        ScannerType: "trivy" | "grype" | "webhook";
+        ScannerType: "trivy" | "grype" | "webhook" | "metadefender";
         TrivySettings: {
             /** @description Path to the trivy CLI (default "trivy") */
             binary?: string;
@@ -1391,6 +1395,27 @@ export interface components {
             /** @description Time allowed for the callback (default 900) */
             timeoutSeconds?: number;
         };
+        /** @description OPSWAT MetaDefender Core. Every file of a component (except sidecars such as PyPI .metadata), or every layer of a Docker image, is uploaded for analysis, or matched by hash with an earlier analysis by the same rule. */
+        MetaDefenderSettings: {
+            /** @description MetaDefender Core REST API, e.g. https://metadefender.example.com:8008 */
+            url: string;
+            /** @description Sent in the apikey header; kept when omitted on update and the URL is unchanged */
+            apiKey?: string;
+            /** @description Rule (workflow) to process files with; empty for the server default */
+            rule?: string;
+            /** @description Time allowed to analyse all files of a component (default 600) */
+            timeoutSeconds?: number;
+            /** @description Files analysed at once (default 4) */
+            concurrency?: number;
+            /** @description Reuse earlier analyses of the same content by the same rule (default true) */
+            hashLookup?: boolean;
+            /** @description Age after which earlier analyses are not reused (default 24) */
+            maxResultAgeHours?: number;
+            /** @description Link to results in the MetaDefender console; {dataId} is replaced */
+            webUrl?: string;
+            /** @description PEM certificates trusted for url (internal CAs) */
+            caCertificate?: string;
+        };
         ScannerInput: {
             name: string;
             type: components["schemas"]["ScannerType"];
@@ -1401,6 +1426,7 @@ export interface components {
             trivy?: components["schemas"]["TrivySettings"];
             grype?: components["schemas"]["GrypeSettings"];
             webhook?: components["schemas"]["WebhookScannerSettings"];
+            metadefender?: components["schemas"]["MetaDefenderSettings"];
         };
         Scanner: {
             name: string;
@@ -1410,6 +1436,7 @@ export interface components {
             trivy?: components["schemas"]["TrivySettings"];
             grype?: components["schemas"]["GrypeSettings"];
             webhook?: components["schemas"]["WebhookScannerSettings"];
+            metadefender?: components["schemas"]["MetaDefenderSettings"];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -1433,7 +1460,7 @@ export interface components {
             /** @enum {string} */
             status: "queued" | "running" | "done" | "failed";
             /** @enum {string} */
-            reason: "upload" | "proxy" | "manual" | "rescan";
+            reason: "upload" | "proxy" | "manual" | "rescan" | "retry";
             attempts: number;
             error: string;
             /** Format: date-time */
@@ -1446,10 +1473,20 @@ export interface components {
             finishedAt?: string;
         };
         Finding: {
-            /** @example CVE-2021-23337 */
+            /**
+             * @description Vulnerability id, or for threats found by file scanners MALWARE:, SUSPICIOUS: or PUA: and the threat name, or BLOCKED: and the reason the scanner's policy refused the file.
+             * @example CVE-2021-23337
+             */
             vulnId: string;
+            /**
+             * @description Derived from vulnId. Waivers for "*" do not cover malware and policy findings.
+             * @enum {string}
+             */
+            kind: "vulnerability" | "malware" | "policy";
             severity: components["schemas"]["Severity"];
+            /** @description Package */
             package: string;
+            /** @description Installed version */
             installedVersion: string;
             fixedVersion: string;
             title: string;
@@ -1476,6 +1513,18 @@ export interface components {
             target?: string;
             error?: string;
             findings: components["schemas"]["Finding"][];
+            /** @description How each file was analysed (file scanners) */
+            files?: components["schemas"]["ScannedFile"][];
+        };
+        ScannedFile: {
+            name: string;
+            sha256?: string;
+            /** @description The scanner's id of the analysis */
+            dataId?: string;
+            /** @example No Threat Detected */
+            result?: string;
+            /** @description An earlier analysis of the same content was reused */
+            cached?: boolean;
         };
         ComponentScans: {
             scanState: components["schemas"]["ScanState"];

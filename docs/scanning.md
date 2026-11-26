@@ -7,7 +7,7 @@ with the results: just record them (**warn**) or block downloads
 commit status and an MR note.
 
 ```
- upload / proxy fetch ──► scan_jobs (Postgres queue) ──► worker ──► trivy | grype | webhook
+ upload / proxy fetch ──► scan_jobs (Postgres queue) ──► worker ──► trivy | grype | webhook | metadefender
                                                              │
                      download ◄── quarantine gate ◄── verdict ◄── findings − waivers
                                                              └──► GitLab commit status + MR note
@@ -16,13 +16,14 @@ commit status and an MR note.
 ## Scanners
 
 Scanners are configured in the UI (*Administration → Scanners*) or with the
-API. A scanner is one of three types:
+API. A scanner is one of four types:
 
 | Type | How it runs | Best for |
 |---|---|---|
 | `trivy` | runs the `trivy` CLI. With `serverUrl` set it uses client/server mode, so a central Trivy server keeps the vulnerability DB | most deployments |
 | `grype` | runs the `grype` CLI | a second opinion, or when you already use Anchore |
 | `webhook` | POSTs a signed job to your service, which calls back with results | in-house or commercial scanners (Snyk, Xray, Dependency-Track, …) |
+| `metadefender` | uploads each file of a component to OPSWAT MetaDefender Core for multi-engine malware analysis | malware, archive and file-policy checks; see [MetaDefender Core](metadefender.md) |
 
 ```bash
 curl -H "Authorization: Bearer $ADMIN" -X POST $E/api/v1/scanners -d '{
@@ -32,7 +33,8 @@ curl -H "Authorization: Bearer $ADMIN" -X POST $E/api/v1/scanners -d '{
 curl -H "Authorization: Bearer $ADMIN" -X POST $E/api/v1/scanners/trivy/test
 ```
 
-Secret settings, the Trivy `serverToken` and the webhook `secret`, are
+Secret settings, the Trivy `serverToken`, the webhook `secret` and the
+MetaDefender `apiKey`, are
 encrypted at rest and never returned by the API. You can't delete a scanner
 while a repository still uses it (`409`).
 
@@ -60,7 +62,21 @@ any number of replicas.
 | npm, PyPI | a one-component CycloneDX SBOM with the package's purl (`pkg:npm/lodash@4.17.20`) |
 | Apt, Yum | a deb or rpm purl plus an operating-system component from the repository's `scan.distro`, e.g. `debian-12`, `ubuntu-24.04`, `rocky-9` |
 | Docker | the image is exported from the blob store as an OCI layout, one per platform (up to 8), and the findings are merged. A proxy scans the platforms it has cached, or linux/amd64 |
-| Helm, raw | reported as `unsupported` |
+| Helm, raw | reported as `unsupported` by Trivy, Grype and webhooks |
+
+In raw repositories with scanning enabled, every file is a component named
+after its path (with no version), so it is scanned and gated like a package:
+on upload, when a proxy first caches it, and when it is replaced. Files
+stored before scanning was switched on get their components in the
+background when it is switched on (and at startup), or at the latest when
+they are downloaded; like other components stored before scanning, they are
+scanned on demand, by a rescan, or at download with `blockUntilScanned`.
+
+Scanners that read content (`metadefender`) are sent the component's files
+instead: every format's package files, Helm charts included, except files
+derived from the package (PyPI `.metadata`, Helm `.prov`). Docker images are
+sent layer by layer, for the same platforms as image scans; see
+[MetaDefender Core](metadefender.md#docker-images).
 
 ## Repository policy
 
@@ -72,6 +88,8 @@ any number of replicas.
   "onUpload": true,
   "onProxyFetch": true,
   "blockUntilScanned": false,
+  "holdSeconds": 0,
+  "blockOnError": false,
   "distro": "debian-12"
 }
 ```
@@ -95,6 +113,62 @@ any number of replicas.
   * Docker tag manifests and digest manifests are blocked; layers never are.
 * **Block until scanned** (quarantine mode only) also blocks components that
   have not been scanned yet. The download attempt queues the scan.
+* **Hold until verdict** (`holdSeconds`, with `blockUntilScanned`): instead
+  of refusing a download of content that is still being scanned, keep the
+  request open for up to `holdSeconds` (1–600) and answer as soon as the
+  verdict is in: the file, or `403` if it is quarantined. The component's
+  queued scans move to the front of the queue. If the hold runs out the
+  client gets `503` with `Retry-After: 10` and `X-Entrepot-Scan-Pending:
+  true`. `0` (the default) keeps the immediate `403`.
+  * Sidecar files (PyPI `.metadata`, Helm `.prov`) are never held: pip reads
+    them while resolving, often for many versions. A quarantine still
+    blocks them.
+  * Held downloads are woken through Postgres notifications, so a verdict
+    from a separate scan-worker deployment or another replica releases them
+    at once; otherwise they poll (every second at most).
+  * At most `scan.maxHolds` downloads are held per process; more get `503`
+    at once. Draining pods answer held downloads with `503`.
+  * Prometheus: `entrepot_scan_hold_duration_seconds{outcome}` (served,
+    blocked, timeout, cancelled, refused) and `entrepot_scan_holds_active`.
+  * Choose the hold per format: clients and load balancers time out on a
+    response that sends nothing.
+
+    | Client or proxy | Gives up after | On `503` | Suggested `holdSeconds` |
+    |---|---|---|---|
+    | pip | 15s without data (`--timeout`) | retries 5 times | 10 |
+    | apt | about 30s | per `Acquire::Retries` | 20 |
+    | dnf / yum | 30s (low-speed timeout) | retries | 20 |
+    | npm | 300s (`fetch-timeout`) | retries twice | 60 |
+    | Docker, containerd | rarely | doesn't retry manifests | 300 |
+    | AWS ALB | 60s idle timeout by default | — | stay below it |
+    | nginx ingress (this chart) | 900s (`proxy-read-timeout`) | — | stay below it |
+
+    `server.readTimeout` must be `0` (the default) or longer than the hold.
+    Run enough scan workers (`scan.workers`) that scans of new content start
+    promptly.
+* **Block on scan errors** (`blockOnError`, quarantine mode only) fails
+  closed: a component whose latest scan by a configured scanner failed is
+  blocked with `… could not be scanned; downloads are blocked until a scan
+  succeeds`. Failed scans are queued again every `scan.errorRetryInterval`
+  (default 15 minutes), and a download attempt retries them once the failure
+  is more than a minute old (with `holdSeconds`, the download waits for that
+  retry). Use it with `blockUntilScanned`.
+* **Strict verdicts.** Repositories with `blockOnError`, or with a
+  `metadefender` scanner selected, decide a component's state only once every
+  configured scanner has scanned its current content (so a fast Trivy result
+  never releases a file MetaDefender hasn't analysed yet).
+  * Until then the component is `pending`. Other repositories keep the
+    original rule: the first completed scan decides, and later results update
+    the state.
+  * A new or changed file in a component (another wheel of a version, a
+    re-upload, a Docker tag that moved) makes it `pending` again and queues a
+    scan. A scan that was already running when the file arrived is repeated.
+  * Sidecar files (PyPI `.metadata`, Helm `.prov`) are derived from the
+    package and don't count as new content.
+  * A Docker proxy scans the platforms of an index it has cached (or
+    linux/amd64). Pulling a platform manifest that the last scan left out
+    counts as new content: the image is scanned again with that platform, and
+    the pull waits for it like any pending download.
 * Switching a repository from warn to quarantine takes effect immediately,
   without rescanning.
 
@@ -102,7 +176,9 @@ any number of replicas.
 
 A waiver accepts a vulnerability.
 
-* `vulnId` is an exact ID, or `*`.
+* `vulnId` is an exact ID, or `*`. `*` never covers threats reported by file
+  scanners (IDs starting `MALWARE:`, `SUSPICIOUS:`, `PUA:` or `BLOCKED:`);
+  those need a waiver for the exact ID.
 * `repositoryPattern` and `componentPattern` are globs. The component
   pattern is matched against `name`, `name@version` or `name:version`.
 * `expiresAt` is optional. When a waiver expires, the components it covered

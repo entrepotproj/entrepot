@@ -34,6 +34,10 @@ curl -H "Authorization: Bearer $ADMIN" -X POST "$E/api/v1/repositories/npm-inter
 * **Proxies.** Cleanup only evicts cached components; anything still needed is
   fetched again on demand.
 * **Groups** are skipped.
+* **Raw files** are components only in raw repositories with scanning
+  enabled (so they can be scanned). Only policies with `"format": "raw"`
+  remove them; policies for every format leave raw repositories alone, as
+  before.
 * **In-use policies.** A policy that repositories use can't be deleted (`409`
   lists them).
 

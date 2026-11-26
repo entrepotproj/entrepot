@@ -149,6 +149,8 @@ export function settingsRows(r: Repository, canAdmin: boolean, onRunCleanup: () 
               r.kind !== 'proxy' && sc.onUpload !== false && 'on upload',
               r.kind !== 'hosted' && sc.onProxyFetch !== false && 'on proxy fetch',
               sc.blockUntilScanned && sc.mode === 'quarantine' && 'blocks until scanned',
+              sc.blockOnError && sc.mode === 'quarantine' && 'blocks on scan errors',
+              (sc.holdSeconds ?? 0) > 0 && sc.blockUntilScanned && sc.mode === 'quarantine' && `holds up to ${sc.holdSeconds}s`,
               sc.distro && `distro ${sc.distro}`,
             ]
               .filter(Boolean)

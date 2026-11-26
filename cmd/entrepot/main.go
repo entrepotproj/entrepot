@@ -100,6 +100,8 @@ func serve(ctx context.Context, cfg *config.Config, logger *slog.Logger) error {
 		ReadTimeout:       cfg.Server.ReadTimeout,
 		IdleTimeout:       120 * time.Second,
 	}
+	// Downloads held for a scan verdict answer at once when draining.
+	srv.RegisterOnShutdown(a.Scan.StopHolds)
 	errCh := make(chan error, 1)
 	go func() {
 		logger.Info("entrepot listening", "addr", cfg.Server.Addr, "version", api.Version, "baseURL", cfg.Server.BaseURL)

@@ -164,7 +164,9 @@ ingress:
   enabled: false
   className: ""
   annotations:
-    # Large uploads (Docker layers, wheels) need generous limits.
+    # Large uploads (Docker layers, wheels) need generous limits. The read
+    # timeout must also exceed any repository's scan.holdSeconds (downloads
+    # held for a scan verdict send nothing until the verdict is in).
     nginx.ingress.kubernetes.io/proxy-body-size: "0"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "900"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "900"

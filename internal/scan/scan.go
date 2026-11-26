@@ -65,13 +65,21 @@ type Service struct {
 	ReapEvery time.Duration
 	// HTTP is used for webhook scanners and GitLab feedback.
 	HTTP *http.Client
+	// FilePollMin, FilePollMax and FileBusyBackoff tune how file scanners
+	// (MetaDefender) poll for results and back off while the scanner is
+	// busy (defaults 250ms, 2s and 1s; tests shorten them).
+	FilePollMin, FilePollMax, FileBusyBackoff time.Duration
 
 	workerID string
 	wake     chan struct{}
 
-	mu       sync.Mutex
-	reasons  map[string]reasonEntry
-	feedback sync.WaitGroup
+	mu         sync.Mutex
+	reasons    map[string]reasonEntry
+	scannerIdx *scannerIndex
+	holds      *holdHub
+	// fileClients are the HTTP clients of file scanners, by CA bundle.
+	fileClients map[string]*http.Client
+	feedback    sync.WaitGroup
 	// waiverLast is when expired waivers were last looked for.
 	waiverLast time.Time
 }
@@ -92,7 +100,15 @@ func New(d Deps) *Service {
 		workerID:     fmt.Sprintf("%s-%d-%s", host, os.Getpid(), hex.EncodeToString(b[:])),
 		wake:         make(chan struct{}, 1),
 		reasons:      map[string]reasonEntry{},
+		holds:        newHoldHub(maxHolds(d.Config)),
 	}
+}
+
+func maxHolds(c *config.Config) int {
+	if c == nil || c.Scan.MaxHolds == 0 {
+		return 1000
+	}
+	return c.Scan.MaxHolds
 }
 
 // Attach registers repository hooks: jobs are enqueued when components are
@@ -102,7 +118,9 @@ func (s *Service) Attach() {
 	s.Repos.QuarantineCheck = s.QuarantineCheck
 }
 
-// onStored enqueues scans for a stored component (one INSERT).
+// onStored enqueues scans for a stored component (one INSERT). In
+// repositories with strict verdicts, new or changed content also makes the
+// component pending until it is scanned again.
 func (s *Service) onStored(ctx context.Context, ev repo.StoredEvent) {
 	sc := ev.Repository.Cfg.Scan
 	if !sc.Enabled() || !ev.Changed || ev.ComponentID == "" {
@@ -125,7 +143,19 @@ func (s *Service) onStored(ctx context.Context, ev repo.StoredEvent) {
 		return
 	}
 	if n > 0 {
-		s.notify()
+		s.notifyJobs(ctx)
+	}
+	if ev.Sidecar {
+		return
+	}
+	if _, strict, err := s.strictConfig(ctx, sc); err != nil {
+		s.Logger.Warn("scan settings", "repository", ev.Repository.Name, "err", err)
+	} else if strict {
+		// A job that is already running scans the previous content; its
+		// result is stale and the component is queued again (afterResult).
+		if _, err := s.Store.MarkComponentPending(ctx, ev.ComponentID); err != nil {
+			s.Logger.Error("mark component pending", "component", ev.ComponentID, "err", err)
+		}
 	}
 }
 
@@ -137,16 +167,55 @@ func (s *Service) Enqueue(ctx context.Context, componentID string, scanners []st
 		return nil, err
 	}
 	if n > 0 {
-		s.notify()
+		s.notifyJobs(ctx)
 	}
 	return s.Store.OutstandingJobs(ctx, componentID, scanners)
 }
 
+// notify wakes an idle worker of this process.
 func (s *Service) notify() {
 	select {
 	case s.wake <- struct{}{}:
 	default:
 	}
+}
+
+// notifyJobs wakes idle workers here and, through a Postgres notification,
+// in other processes (a separate scan-worker deployment), so they don't
+// wait for their next poll.
+func (s *Service) notifyJobs(ctx context.Context) {
+	s.notify()
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
+	defer cancel()
+	if err := s.Store.Notify(ctx, store.ChannelScanJobs, ""); err != nil {
+		s.Logger.Debug("notify scan jobs", "err", err)
+	}
+}
+
+// listen relays Postgres notifications: verdict changes wake held
+// downloads, queued jobs wake this process's workers.
+func (s *Service) listen(ctx context.Context) {
+	var lost bool
+	s.Store.Listen(ctx, []string{store.ChannelScanVerdict, store.ChannelScanJobs}, func(channel, payload string) {
+		switch channel {
+		case store.ChannelScanVerdict:
+			s.holds.signal(payload)
+		case store.ChannelScanJobs:
+			s.notify()
+		}
+	}, func(err error) {
+		if err != nil {
+			if !lost {
+				s.Logger.Warn("scan notifications lost; held downloads poll until reconnected", "err", err)
+			}
+			lost = true
+			return
+		}
+		if lost {
+			s.Logger.Info("scan notifications reconnected")
+		}
+		lost = false
+	})
 }
 
 // Run starts the workers (scan.workers of them), the rescan scheduler and
@@ -163,7 +232,8 @@ func (s *Service) Run(ctx context.Context) {
 	if s.Config.Scan.Workers > 0 {
 		s.Logger.Info("scan workers started", "workers", s.Config.Scan.Workers, "id", s.workerID)
 	}
-	wg.Add(2)
+	wg.Add(3)
+	go func() { defer wg.Done(); s.listen(ctx) }()
 	go func() { defer wg.Done(); s.loop(ctx, s.RescanEvery, time.Minute, s.rescanTick) }()
 	go func() { defer wg.Done(); s.loop(ctx, s.ReapEvery, s.ReapEvery, s.reapTick) }()
 	wg.Wait()
@@ -211,6 +281,8 @@ func (s *Service) worker(ctx context.Context, id string) {
 			}
 			continue
 		}
+		// More jobs may be ready: let another idle worker look too.
+		s.notify()
 		s.process(ctx, id, job)
 	}
 }
@@ -230,6 +302,55 @@ func (s *Service) rescanTick(ctx context.Context) {
 	if _, err := s.RescanNow(ctx); err != nil && ctx.Err() == nil {
 		s.Logger.Error("schedule rescans", "err", err)
 	}
+	if _, err := s.RetryNow(ctx); err != nil && ctx.Err() == nil {
+		s.Logger.Error("schedule scan retries", "err", err)
+	}
+}
+
+// RetryNow queues scans again for components whose latest result from a
+// scanner covers older content than they hold (a rescan that was never
+// queued) and, in repositories with blockOnError, whose latest result is an
+// error older than scan.errorRetryInterval. It returns the number of jobs
+// queued.
+func (s *Service) RetryNow(ctx context.Context) (int, error) {
+	scanners, err := s.Store.ListScanners(ctx)
+	if err != nil {
+		return 0, err
+	}
+	age := s.Config.Scan.ErrorRetryInterval
+	total := 0
+	for _, sc := range scanners {
+		if !sc.Enabled {
+			continue
+		}
+		cands, err := s.Store.RetryCandidates(ctx, sc.ID, age, s.RescanBatch)
+		if err != nil {
+			return total, err
+		}
+		for _, cand := range cands {
+			c, err := s.Store.GetComponent(ctx, cand.ComponentID)
+			if err != nil {
+				continue
+			}
+			rp, err := s.Repos.Get(ctx, c.Repository)
+			if err != nil || !rp.Cfg.Scan.Enabled() || !contains(rp.Cfg.Scan.Scanners, sc.Name) {
+				continue
+			}
+			if cand.Errored && !rp.Cfg.Scan.BlockOnError {
+				continue
+			}
+			n, err := s.Store.EnqueueScans(ctx, c.ID, []string{sc.Name}, "retry")
+			if err != nil {
+				return total, err
+			}
+			total += n
+		}
+	}
+	if total > 0 {
+		s.Logger.Info("scan retries queued", "jobs", total)
+		s.notifyJobs(ctx)
+	}
+	return total, nil
 }
 
 // RescanNow enqueues rescans for components whose latest result from a
@@ -268,7 +389,7 @@ func (s *Service) RescanNow(ctx context.Context) (int, error) {
 	}
 	if total > 0 {
 		s.Logger.Info("rescans queued", "jobs", total)
-		s.notify()
+		s.notifyJobs(ctx)
 	}
 	return total, nil
 }
@@ -280,4 +401,37 @@ func contains(list []string, v string) bool {
 		}
 	}
 	return false
+}
+
+// rawBackfillBatch is the number of raw files linked to components per
+// statement.
+const rawBackfillBatch = 500
+
+// BackfillRaw gives the files of a raw repository with scanning enabled
+// that have no component one (named after the path), so they can be
+// scanned and gated. It is idempotent and safe to run on several replicas.
+func (s *Service) BackfillRaw(ctx context.Context, rp *repo.Repository) (int, error) {
+	if rp.Format != "raw" || rp.IsGroup() || !rp.Cfg.Scan.Enabled() {
+		return 0, nil
+	}
+	unlock, err := s.Store.AdvisoryLock(ctx, "raw-backfill:"+rp.ID)
+	if err != nil {
+		return 0, err
+	}
+	defer unlock()
+	total := 0
+	for ctx.Err() == nil {
+		n, err := s.Store.BackfillRawComponents(ctx, rp.ID, rawBackfillBatch)
+		if err != nil {
+			return total, err
+		}
+		total += n
+		if n < rawBackfillBatch {
+			break
+		}
+	}
+	if total > 0 {
+		s.Logger.Info("raw files linked to components for scanning", "repository", rp.Name, "files", total)
+	}
+	return total, ctx.Err()
 }

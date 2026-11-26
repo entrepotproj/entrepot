@@ -93,6 +93,9 @@ export function QuarantineBanner({ scans }: { scans?: ComponentScans }) {
   );
 }
 
+/** Threats found by file scanners (malware, policy blocks), not CVEs. */
+const isThreat = (f: Finding) => !!f.kind && f.kind !== 'vulnerability';
+
 function FindingsTable({
   result,
   severities,
@@ -131,6 +134,16 @@ function FindingsTable({
     );
   }
   if (result.findings.length === 0) {
+    const files = result.files ?? [];
+    if (files.length > 0) {
+      const reused = files.filter((f) => f.cached).length;
+      return (
+        <Alert color="teal" variant="light" icon={<IconShieldCheck size={18} />} m="sm">
+          No threats found in {files.length === 1 ? files[0].name : `${files.length} files`}
+          {reused > 0 ? ` (${reused === files.length ? 'earlier analysis' : `${reused} earlier analyses`} reused)` : ''}.
+        </Alert>
+      );
+    }
     return (
       <Alert color="teal" variant="light" icon={<IconShieldCheck size={18} />} m="sm">
         No vulnerabilities found{result.target ? ` in ${result.target}` : ''}.
@@ -144,15 +157,17 @@ function FindingsTable({
       </Text>
     );
   }
+  const threats = rows.some(isThreat);
+  const vulns = rows.some((f) => !isThreat(f));
   return (
     <ScrollArea.Autosize mah={560}>
       <Table stickyHeader verticalSpacing={8}>
         <Table.Thead>
           <Table.Tr>
             <Table.Th w={110}>Severity</Table.Th>
-            <Table.Th>Vulnerability</Table.Th>
-            <Table.Th>Package</Table.Th>
-            <Table.Th>Installed → fixed</Table.Th>
+            <Table.Th>{threats && !vulns ? 'Threat' : threats ? 'Finding' : 'Vulnerability'}</Table.Th>
+            <Table.Th>{threats && !vulns ? 'File' : threats ? 'Package or file' : 'Package'}</Table.Th>
+            <Table.Th>{threats && !vulns ? 'SHA-256' : 'Installed → fixed'}</Table.Th>
             {canWaive && <Table.Th w={60} />}
           </Table.Tr>
         </Table.Thead>
@@ -176,6 +191,11 @@ function FindingsTable({
                       {f.vulnId}
                     </Text>
                   )}
+                  {isThreat(f) && (
+                    <Badge size="xs" variant="light" color={f.kind === 'malware' ? 'red' : 'orange'} tt="none">
+                      {f.kind === 'malware' ? 'malware' : 'blocked by policy'}
+                    </Badge>
+                  )}
                   {f.waived && (
                     <Badge size="xs" variant="outline" color="gray" leftSection={<IconShieldOff size={10} />} tt="none">
                       waived
@@ -194,26 +214,34 @@ function FindingsTable({
                 </Text>
               </Table.Td>
               <Table.Td>
-                <Text size="sm" ff="monospace" style={{ whiteSpace: 'nowrap' }}>
-                  {f.installedVersion || '?'}{' '}
-                  <Text span c="dimmed">
-                    →
-                  </Text>{' '}
-                  {f.fixedVersion ? (
-                    <Text span c="teal" ff="monospace" size="sm">
-                      {f.fixedVersion}
+                {isThreat(f) ? (
+                  <Tooltip label="Start of the file's SHA-256 digest" withArrow>
+                    <Text size="sm" ff="monospace" c="dimmed" style={{ whiteSpace: 'nowrap' }}>
+                      {f.installedVersion ? `${f.installedVersion}…` : '?'}
                     </Text>
-                  ) : (
-                    <Text span c="dimmed" size="xs">
-                      no fix
-                    </Text>
-                  )}
-                </Text>
+                  </Tooltip>
+                ) : (
+                  <Text size="sm" ff="monospace" style={{ whiteSpace: 'nowrap' }}>
+                    {f.installedVersion || '?'}{' '}
+                    <Text span c="dimmed">
+                      →
+                    </Text>{' '}
+                    {f.fixedVersion ? (
+                      <Text span c="teal" ff="monospace" size="sm">
+                        {f.fixedVersion}
+                      </Text>
+                    ) : (
+                      <Text span c="dimmed" size="xs">
+                        no fix
+                      </Text>
+                    )}
+                  </Text>
+                )}
               </Table.Td>
               {canWaive && (
                 <Table.Td>
                   {!f.waived && (
-                    <Tooltip label="Waive this finding">
+                    <Tooltip label={isThreat(f) ? 'Waive this exact threat' : 'Waive this finding'}>
                       <ActionIcon variant="subtle" color="gray" onClick={() => onWaive(f)} aria-label={`Waive ${f.vulnId}`}>
                         <IconShieldOff size={16} />
                       </ActionIcon>

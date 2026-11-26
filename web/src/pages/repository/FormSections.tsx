@@ -6,6 +6,7 @@ import {
   Code,
   Group,
   MultiSelect,
+  NumberInput,
   Paper,
   SegmentedControl,
   Select,
@@ -131,8 +132,13 @@ export type ScanForm = {
   onUpload: boolean;
   onProxyFetch: boolean;
   blockUntilScanned: boolean;
+  blockOnError: boolean;
+  holdSeconds: number;
   distro: string;
 };
+
+/** Suggested hold per format: what each client tolerates before timing out. */
+export const HOLD_SUGGESTION: Record<string, number> = { pypi: 10, apt: 20, yum: 20, docker: 300 };
 
 const DISTRO_EXAMPLES: Record<string, string[]> = {
   apt: ['debian-12', 'debian-11', 'ubuntu-24.04', 'ubuntu-22.04'],
@@ -291,6 +297,34 @@ export function ScanFields({
               description="Quarantine mode: refuse downloads until the first scan completes"
               checked={value.blockUntilScanned}
               onChange={(e) => onChange({ blockUntilScanned: e.currentTarget.checked })}
+              disabled={!enabled || value.mode !== 'quarantine'}
+            />
+            <Switch
+              label="Hold downloads for the verdict"
+              description="Keep a download of content that is still being scanned open until the scan finishes, instead of refusing it"
+              checked={value.holdSeconds > 0}
+              onChange={(e) =>
+                onChange({ holdSeconds: e.currentTarget.checked ? (HOLD_SUGGESTION[format] ?? 60) : 0 })
+              }
+              disabled={!enabled || value.mode !== 'quarantine' || !value.blockUntilScanned}
+            />
+            {value.holdSeconds > 0 && (
+              <NumberInput
+                label="Hold for up to (seconds)"
+                description="Then the client gets 503 and retries. Keep it below your load balancer's idle timeout and the client's read timeout (pip: 15s)."
+                min={1}
+                max={600}
+                w={260}
+                value={value.holdSeconds}
+                onChange={(v) => onChange({ holdSeconds: typeof v === 'number' ? v : 0 })}
+                disabled={!enabled || value.mode !== 'quarantine' || !value.blockUntilScanned}
+              />
+            )}
+            <Switch
+              label="Block on scan errors"
+              description="Quarantine mode: refuse downloads while a configured scanner's latest scan failed; failed scans are retried"
+              checked={value.blockOnError}
+              onChange={(e) => onChange({ blockOnError: e.currentTarget.checked })}
               disabled={!enabled || value.mode !== 'quarantine'}
             />
           </Group>

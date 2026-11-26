@@ -110,6 +110,8 @@ function initialState(r?: Repository): State {
       onUpload: r?.scan?.onUpload ?? true,
       onProxyFetch: r?.scan?.onProxyFetch ?? true,
       blockUntilScanned: r?.scan?.blockUntilScanned ?? false,
+      blockOnError: r?.scan?.blockOnError ?? false,
+      holdSeconds: r?.scan?.holdSeconds ?? 0,
       distro: r?.scan?.distro ?? '',
     },
     cleanupPolicies: r?.cleanup?.policies ?? [],
@@ -169,6 +171,8 @@ function toInput(s: State, original?: Repository): RepositoryInput {
       onUpload: s.scan.onUpload,
       onProxyFetch: s.scan.onProxyFetch,
       blockUntilScanned: s.scan.blockUntilScanned,
+      blockOnError: s.scan.blockOnError || undefined,
+      holdSeconds: s.scan.holdSeconds || undefined,
       distro: s.scan.distro || undefined,
     };
   }

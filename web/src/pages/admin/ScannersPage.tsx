@@ -17,6 +17,7 @@ import {
   Table,
   TagsInput,
   Text,
+  Textarea,
   TextInput,
   Tooltip,
 } from '@mantine/core';
@@ -57,7 +58,32 @@ const TYPE_HELP: Record<ScannerType, string> = {
   trivy: 'Runs the Trivy CLI, optionally against a Trivy server that holds the vulnerability database. Scans every format, including Docker images and OS packages.',
   grype: 'Runs the Grype CLI on this server. Scans every format, including Docker images and OS packages.',
   webhook: 'Sends scan requests to your own HTTP service, which reports findings back asynchronously.',
+  metadefender:
+    'Sends the files of each package to OPSWAT MetaDefender Core for multi-engine malware analysis. Docker images are sent layer by layer. Files it already analysed with the same rule are matched by hash and not uploaded again.',
 };
+
+function MetaDefenderHelp() {
+  return (
+    <Alert variant="light" color="blue" icon={<IconInfoCircle size={18} />} title="How MetaDefender scanning works" p="sm">
+      <List size="xs" spacing={4}>
+        <List.Item>
+          Every file of a component (except derived files such as PyPI <Code>.metadata</Code> and Helm <Code>.prov</Code>) is
+          uploaded to <Code>POST /file</Code> and polled until the analysis finishes.
+        </List.Item>
+        <List.Item>
+          Files the rule blocks become critical findings: <Code>MALWARE:</Code>, <Code>SUSPICIOUS:</Code> and{' '}
+          <Code>PUA:</Code> with the threat name, or <Code>BLOCKED:</Code> with the reason (for example an encrypted
+          archive). Waivers for all vulnerabilities (<Code>*</Code>) never cover them.
+        </List.Item>
+        <List.Item>
+          In repositories using this scanner a component stays pending until every selected scanner has reported. Turn on{' '}
+          <b>Block when a scan fails</b> to keep files blocked while MetaDefender is unavailable, and <b>Hold downloads</b>{' '}
+          so clients wait for the verdict.
+        </List.Item>
+      </List>
+    </Alert>
+  );
+}
 
 function WebhookHelp() {
   const { data: info } = useSystemInfo();
@@ -111,6 +137,13 @@ type Form = {
   extraArgs: string[];
   url: string;
   secret: string;
+  apiKey: string;
+  rule: string;
+  concurrency: number | '';
+  hashLookup: boolean;
+  maxResultAgeHours: number | '';
+  webUrl: string;
+  caCertificate: string;
 };
 
 function initial(s: Scanner | null): Form {
@@ -124,10 +157,19 @@ function initial(s: Scanner | null): Form {
     binary: cfg?.binary ?? '',
     serverUrl: s?.trivy?.serverUrl ?? '',
     serverToken: '',
-    timeoutSeconds: (t === 'webhook' ? s?.webhook?.timeoutSeconds : cfg?.timeoutSeconds) ?? '',
+    timeoutSeconds:
+      (t === 'webhook' ? s?.webhook?.timeoutSeconds : t === 'metadefender' ? s?.metadefender?.timeoutSeconds : cfg?.timeoutSeconds) ??
+      '',
     extraArgs: cfg?.extraArgs ?? [],
-    url: s?.webhook?.url ?? '',
+    url: (t === 'metadefender' ? s?.metadefender?.url : s?.webhook?.url) ?? '',
     secret: '',
+    apiKey: '',
+    rule: s?.metadefender?.rule ?? '',
+    concurrency: s?.metadefender?.concurrency ?? '',
+    hashLookup: s?.metadefender?.hashLookup ?? true,
+    maxResultAgeHours: s?.metadefender?.maxResultAgeHours ?? '',
+    webUrl: s?.metadefender?.webUrl ?? '',
+    caCertificate: s?.metadefender?.caCertificate ?? '',
   };
 }
 
@@ -149,6 +191,18 @@ function toInput(f: Form): ScannerInput {
     };
   } else if (f.type === 'grype') {
     input.grype = { binary: f.binary.trim() || undefined, timeoutSeconds: timeout, extraArgs: f.extraArgs };
+  } else if (f.type === 'metadefender') {
+    input.metadefender = {
+      url: f.url.trim(),
+      apiKey: f.apiKey || undefined,
+      rule: f.rule.trim() || undefined,
+      timeoutSeconds: timeout,
+      concurrency: f.concurrency === '' ? undefined : f.concurrency,
+      hashLookup: f.hashLookup,
+      maxResultAgeHours: f.maxResultAgeHours === '' ? undefined : f.maxResultAgeHours,
+      webUrl: f.webUrl.trim() || undefined,
+      caCertificate: f.caCertificate.trim() || undefined,
+    };
   } else {
     input.webhook = { url: f.url.trim(), secret: f.secret || undefined, timeoutSeconds: timeout };
   }
@@ -176,7 +230,9 @@ function ScannerModal({ scanner, onClose }: { scanner: Scanner | null; onClose: 
 
   const errors = {
     name: !NAME_RE.test(f.name) ? "Lowercase letters, digits, '.', '_' and '-'" : null,
-    url: f.type === 'webhook' && !/^https?:\/\/.+/.test(f.url.trim()) ? 'An http(s) URL is required' : null,
+    url:
+      (f.type === 'webhook' || f.type === 'metadefender') && !/^https?:\/\/.+/.test(f.url.trim()) ? 'An http(s) URL is required' : null,
+    webUrl: f.type === 'metadefender' && f.webUrl.trim() && !/^https?:\/\/.+/.test(f.webUrl.trim()) ? 'Must be an http(s) URL' : null,
     serverUrl: f.type === 'trivy' && f.serverUrl.trim() && !/^https?:\/\/.+/.test(f.serverUrl.trim()) ? 'Must be an http(s) URL' : null,
   };
   const valid = Object.values(errors).every((e) => !e);
@@ -224,6 +280,7 @@ function ScannerModal({ scanner, onClose }: { scanner: Scanner | null; onClose: 
                   { value: 'trivy', label: 'Trivy' },
                   { value: 'grype', label: 'Grype' },
                   { value: 'webhook', label: 'Webhook' },
+                  { value: 'metadefender', label: 'MetaDefender' },
                 ]}
               />
             </div>
@@ -273,8 +330,88 @@ function ScannerModal({ scanner, onClose }: { scanner: Scanner | null; onClose: 
               />
             </SimpleGrid>
           )}
-          <SimpleGrid cols={{ base: 1, sm: f.type === 'webhook' ? 2 : 3 }}>
-            {f.type !== 'webhook' && (
+          {f.type === 'metadefender' && (
+            <>
+              <SimpleGrid cols={{ base: 1, sm: 2 }}>
+                <TextInput
+                  label="URL"
+                  description="MetaDefender Core REST API"
+                  placeholder="https://metadefender.example.com:8008"
+                  value={f.url}
+                  onChange={(e) => set('url', e.currentTarget.value)}
+                  error={err('url')}
+                  required
+                />
+                <PasswordInput
+                  label="API key"
+                  description={editing ? 'Leave blank to keep the stored key (kept only while the URL is unchanged)' : 'Sent in the apikey header, if your server requires one'}
+                  placeholder={editing ? '••••••••' : undefined}
+                  value={f.apiKey}
+                  onChange={(e) => set('apiKey', e.currentTarget.value)}
+                  autoComplete="new-password"
+                />
+                <TextInput
+                  label="Rule"
+                  description="Workflow rule to process files with; blank for the server default"
+                  placeholder="File process"
+                  value={f.rule}
+                  onChange={(e) => set('rule', e.currentTarget.value)}
+                />
+                <TextInput
+                  label="Result link"
+                  description={
+                    <>
+                      Links findings to the console; <Code fz={11}>{'{dataId}'}</Code> is replaced
+                    </>
+                  }
+                  placeholder="https://metadefender.example.com:8008/#/public/process/dataId/{dataId}"
+                  value={f.webUrl}
+                  onChange={(e) => set('webUrl', e.currentTarget.value)}
+                  error={err('webUrl')}
+                />
+              </SimpleGrid>
+              <SimpleGrid cols={{ base: 1, sm: 3 }}>
+                <NumberInput
+                  label="Concurrency"
+                  description="Files of a component analysed at once (default 4)"
+                  placeholder="4"
+                  min={1}
+                  max={32}
+                  value={f.concurrency}
+                  onChange={(v) => set('concurrency', typeof v === 'number' ? v : '')}
+                />
+                <NumberInput
+                  label="Reuse results for (hours)"
+                  description="Earlier analyses found by hash (default 24)"
+                  placeholder="24"
+                  min={1}
+                  value={f.maxResultAgeHours}
+                  onChange={(v) => set('maxResultAgeHours', typeof v === 'number' ? v : '')}
+                  disabled={!f.hashLookup}
+                />
+                <Switch
+                  mt="lg"
+                  label="Hash lookup"
+                  description="Skip uploading files analysed before with the same rule and current definitions"
+                  checked={f.hashLookup}
+                  onChange={(e) => set('hashLookup', e.currentTarget.checked)}
+                />
+              </SimpleGrid>
+              <Textarea
+                label="CA certificate"
+                description="PEM certificates to trust for the URL, if it uses an internal CA"
+                placeholder="-----BEGIN CERTIFICATE-----"
+                autosize
+                minRows={2}
+                maxRows={6}
+                value={f.caCertificate}
+                onChange={(e) => set('caCertificate', e.currentTarget.value)}
+                styles={{ input: { fontFamily: 'var(--mantine-font-family-monospace)', fontSize: 12 } }}
+              />
+            </>
+          )}
+          <SimpleGrid cols={{ base: 1, sm: f.type === 'webhook' || f.type === 'metadefender' ? 2 : 3 }}>
+            {f.type !== 'webhook' && f.type !== 'metadefender' && (
               <TextInput
                 label="Binary"
                 description={`Path to the CLI (default "${f.type}")`}
@@ -285,8 +422,14 @@ function ScannerModal({ scanner, onClose }: { scanner: Scanner | null; onClose: 
             )}
             <NumberInput
               label="Timeout (seconds)"
-              description={f.type === 'webhook' ? 'Time allowed for the callback (default 900)' : 'Per scan'}
-              placeholder={f.type === 'webhook' ? '900' : '300'}
+              description={
+                f.type === 'webhook'
+                  ? 'Time allowed for the callback (default 900)'
+                  : f.type === 'metadefender'
+                    ? 'Per component, all files (default 600)'
+                    : 'Per scan'
+              }
+              placeholder={f.type === 'webhook' ? '900' : f.type === 'metadefender' ? '600' : '300'}
               min={1}
               value={f.timeoutSeconds}
               onChange={(v) => set('timeoutSeconds', typeof v === 'number' ? v : '')}
@@ -299,7 +442,7 @@ function ScannerModal({ scanner, onClose }: { scanner: Scanner | null; onClose: 
               onChange={(v) => set('rescanIntervalHours', typeof v === 'number' ? v : '')}
             />
           </SimpleGrid>
-          {f.type !== 'webhook' && (
+          {f.type !== 'webhook' && f.type !== 'metadefender' && (
             <TagsInput
               label="Extra arguments"
               description={
@@ -326,6 +469,7 @@ function ScannerModal({ scanner, onClose }: { scanner: Scanner | null; onClose: 
             onChange={(e) => set('enabled', e.currentTarget.checked)}
           />
           {f.type === 'webhook' && <WebhookHelp />}
+          {f.type === 'metadefender' && <MetaDefenderHelp />}
           <Group justify="flex-end">
             <Button variant="default" onClick={onClose}>
               Cancel
@@ -342,6 +486,7 @@ function ScannerModal({ scanner, onClose }: { scanner: Scanner | null; onClose: 
 
 function target(s: Scanner): string {
   if (s.type === 'webhook') return s.webhook?.url ?? '';
+  if (s.type === 'metadefender') return [s.metadefender?.url, s.metadefender?.rule].filter(Boolean).join(' · ');
   if (s.type === 'trivy') return s.trivy?.serverUrl || s.trivy?.binary || 'trivy';
   return s.grype?.binary || 'grype';
 }
@@ -434,7 +579,7 @@ export default function ScannersPage() {
           <EmptyState
             icon={<IconRadar2 size={28} stroke={1.5} />}
             title="No scanners"
-            description="Add a Trivy or Grype scanner, or connect your own scanning service with a webhook. Then select it in a repository's scanning settings."
+            description="Add a Trivy or Grype scanner, MetaDefender Core for malware analysis, or connect your own scanning service with a webhook. Then select it in a repository's scanning settings."
             action={
               <Button leftSection={<IconPlus size={16} />} onClick={() => setEditing('new')}>
                 Add scanner

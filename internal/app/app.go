@@ -153,12 +153,36 @@ func (a *App) Close() { a.Pool.Close() }
 func (a *App) RunBackground(ctx context.Context) {
 	go a.Repos.RunMaintenance(ctx, 15*time.Minute, a.Logger)
 	go a.Scan.Run(ctx)
+	go a.backfillRaw(ctx)
 	go a.Cleanup.Run(ctx, a.Config.Cleanup.Interval)
 	flush := a.Config.Usage.FlushInterval
 	if flush <= 0 {
 		flush = 10 * time.Second
 	}
 	go a.Usage.Run(ctx, flush)
+}
+
+// backfillRaw links the files of raw repositories with scanning enabled to
+// components (files stored before scanning was enabled, or before raw files
+// were scannable).
+func (a *App) backfillRaw(ctx context.Context) {
+	list, err := a.Store.ListRepositories(ctx)
+	if err != nil {
+		a.Logger.Warn("raw backfill: list repositories", "err", err)
+		return
+	}
+	for _, r := range list {
+		if r.Format != "raw" || r.Kind == repo.KindGroup {
+			continue
+		}
+		rp, err := a.Repos.Get(ctx, r.Name)
+		if err != nil {
+			continue
+		}
+		if _, err := a.Scan.BackfillRaw(ctx, rp); err != nil && ctx.Err() == nil {
+			a.Logger.Warn("raw backfill", "repository", r.Name, "err", err)
+		}
+	}
 }
 
 // bootstrap creates blob stores declared in configuration, or a "default"
@@ -287,6 +311,30 @@ func (a *App) resealSecrets(ctx context.Context) error {
 			return err
 		}
 		a.Logger.Info("sealed stored secret", "blobStore", b.Name)
+	}
+	scanners, err := a.Store.ListScanners(ctx)
+	if err != nil {
+		return err
+	}
+	for _, sc := range scanners {
+		cfg, err := scan.ParseScannerConfig(sc.Config)
+		if err != nil {
+			continue
+		}
+		changed, err := cfg.Reseal(a.Secrets)
+		if err != nil {
+			return fmt.Errorf("scanner %s: %w", sc.Name, err)
+		}
+		if !changed {
+			continue
+		}
+		if sc.Config, err = json.Marshal(cfg); err != nil {
+			return err
+		}
+		if _, err := a.Store.UpdateScanner(ctx, sc); err != nil {
+			return err
+		}
+		a.Logger.Info("sealed stored secret", "scanner", sc.Name)
 	}
 	return nil
 }

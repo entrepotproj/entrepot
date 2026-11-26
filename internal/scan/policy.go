@@ -35,8 +35,11 @@ type Verdict struct {
 	Blocking []Finding
 	// Outstanding is the number of queued/running jobs.
 	Outstanding int
-	Mode        string
-	Threshold   string
+	// Strict is true when the repository's verdicts wait for every
+	// configured scanner (blockOnError, or a file scanner configured).
+	Strict    bool
+	Mode      string
+	Threshold string
 	// Reason explains a quarantine.
 	Reason string
 }
@@ -59,7 +62,12 @@ func WaiverMatches(w *store.Waiver, repoName, name, version, vuln string) bool {
 	if w.ExpiresAt != nil && !w.ExpiresAt.After(time.Now()) {
 		return false
 	}
-	if w.VulnID != "*" && !strings.EqualFold(w.VulnID, vuln) {
+	if w.VulnID == "*" {
+		// Threats (malware, policy blocks) are only waived by their exact id.
+		if drivers.IsThreat(vuln) {
+			return false
+		}
+	} else if !strings.EqualFold(w.VulnID, vuln) {
 		return false
 	}
 	if p := w.RepositoryPattern; p != "" && p != "*" && p != "**" && !match.Glob(p, repoName) {
@@ -91,6 +99,11 @@ func (s *Service) verdict(ctx context.Context, comp *store.Component, rp *repo.R
 	if sc == nil {
 		v.Mode = "off"
 	}
+	configured, strict, err := s.strictConfig(ctx, sc)
+	if err != nil {
+		return nil, err
+	}
+	v.Strict = strict
 	thr := drivers.SeverityRank(v.Threshold)
 	var ok, errored, unsupported int
 	seen := map[string]bool{}
@@ -132,6 +145,31 @@ func (s *Service) verdict(ctx context.Context, comp *store.Component, rp *repo.R
 			}
 		}
 	}
+	// Strict verdicts: a configured scanner that hasn't scanned the current
+	// content and has a job outstanding keeps the component pending; one
+	// whose current result is an error makes it error (with blockOnError).
+	awaited, failed := false, false
+	if strict {
+		current := map[string]*store.ScanResult{}
+		for _, r := range results {
+			if configured[r.Scanner] && r.ContentRev >= comp.ContentRev {
+				current[r.Scanner] = r
+			}
+		}
+		outstanding := map[string]bool{}
+		for _, j := range jobs {
+			outstanding[j.Scanner] = true
+		}
+		for name := range configured {
+			r := current[name]
+			switch {
+			case outstanding[name] && (r == nil || r.Status == "error"):
+				awaited = true
+			case r != nil && r.Status == "error":
+				failed = true
+			}
+		}
+	}
 	switch {
 	case len(results) == 0 && v.Outstanding > 0:
 		v.State = "pending"
@@ -139,6 +177,10 @@ func (s *Service) verdict(ctx context.Context, comp *store.Component, rp *repo.R
 		v.State = "unscanned"
 	case ok > 0 && len(v.Counts) > 0:
 		v.State = "vulnerable"
+	case awaited:
+		v.State = "pending"
+	case failed && sc.BlockOnError:
+		v.State = "error"
 	case ok > 0:
 		v.State = "clean"
 	case errored > 0:
@@ -156,6 +198,9 @@ func (s *Service) verdict(ctx context.Context, comp *store.Component, rp *repo.R
 func quarantineReason(comp *store.Component, blocking []Finding) string {
 	sortFindings(blocking)
 	f := blocking[0]
+	if drivers.IsThreat(f.VulnID) {
+		return threatReason(comp, f, len(blocking)-1)
+	}
 	where := describe(comp)
 	if f.Package != "" && f.Package != comp.Name {
 		where = strings.TrimSpace(f.Package+" "+f.InstalledVersion) + " in " + where
@@ -165,6 +210,24 @@ func quarantineReason(comp *store.Component, blocking []Finding) string {
 		msg += fmt.Sprintf(" and %d more", len(blocking)-1)
 	}
 	return msg + " — waive or fix to download"
+}
+
+// threatReason describes a blocking threat found by a file scanner.
+func threatReason(comp *store.Component, f Finding, more int) string {
+	where := describe(comp)
+	if f.Package != "" && f.Package != where {
+		where = f.Package + " (" + where + ")"
+	}
+	var msg string
+	if drivers.FindingKind(f.VulnID) == "policy" {
+		msg = fmt.Sprintf("%s refused %s: %s", f.Scanner, where, strings.TrimPrefix(f.VulnID, drivers.ThreatBlocked))
+	} else {
+		msg = fmt.Sprintf("%s detected by %s in %s", f.VulnID, f.Scanner, where)
+	}
+	if more > 0 {
+		msg += fmt.Sprintf(" and %d more", more)
+	}
+	return msg + " — downloads are blocked; only a waiver for this exact finding releases it"
 }
 
 func sortFindings(fs []Finding) {
@@ -178,6 +241,10 @@ func sortFindings(fs []Finding) {
 func less(a, b Finding) bool {
 	if ra, rb := drivers.SeverityRank(a.Severity), drivers.SeverityRank(b.Severity); ra != rb {
 		return ra > rb
+	}
+	// Threats before vulnerabilities of the same severity.
+	if ta, tb := drivers.IsThreat(a.VulnID), drivers.IsThreat(b.VulnID); ta != tb {
+		return ta
 	}
 	return a.VulnID < b.VulnID
 }
@@ -206,6 +273,7 @@ func (s *Service) Evaluate(ctx context.Context, componentID string) (*Verdict, *
 			return nil, nil, nil, err
 		}
 		comp.ScanState, comp.Quarantined, comp.ScannedAt = v.State, v.Quarantined, v.ScannedAt
+		s.holds.signal(comp.ID)
 	}
 	s.mu.Lock()
 	delete(s.reasons, comp.ID)
@@ -256,21 +324,57 @@ type reasonEntry struct {
 
 // QuarantineCheck is the download gate (repo.Service.QuarantineCheck). In
 // quarantine mode it blocks quarantined components and, with
-// blockUntilScanned, components without a completed scan. Docker layer
-// blobs are never blocked; manifests are blocked through the tags that
-// point at them (or the index they belong to).
-func (s *Service) QuarantineCheck(ctx context.Context, rp *repo.Repository, a *store.Asset) (bool, string) {
+// blockUntilScanned, components without a completed scan (and, with
+// blockOnError, whose scan failed). Docker layer blobs are never blocked;
+// manifests are blocked through the tags that point at them (or the index
+// they belong to). With holdSeconds, a download of content that is still
+// being scanned waits for the verdict; if the hold runs out the client is
+// asked to retry (503).
+func (s *Service) QuarantineCheck(ctx context.Context, rp *repo.Repository, a *store.Asset) repo.GateDecision {
+	d, pending := s.gate(ctx, rp, a)
+	if len(pending) == 0 {
+		return d
+	}
+	hold := rp.Cfg.Scan.HoldTimeout()
+	if hold <= 0 {
+		return d
+	}
+	// Sidecars (PyPI .metadata, Helm .prov) are derived from the package:
+	// clients fetch them while resolving, often for many versions, so they
+	// are served while the package is scanned rather than held. A
+	// quarantine still blocks them (gate decides that above).
+	if repo.IsSidecar(rp.Format, a.Path) {
+		return repo.GateDecision{}
+	}
+	return s.hold(ctx, rp, a, pending, hold)
+}
+
+// gate decides a download now. pending lists the components it waits for:
+// not scanned yet, or failed with a retry outstanding.
+func (s *Service) gate(ctx context.Context, rp *repo.Repository, a *store.Asset) (repo.GateDecision, []string) {
 	sc := rp.Cfg.Scan
 	if !sc.Enabled() || sc.EffectiveMode() != "quarantine" {
-		return false, ""
+		return repo.GateDecision{}, nil
 	}
 	var statuses []*store.QuarantineStatus
+	if a.ComponentID == nil && rp.Format == "raw" {
+		// A raw file stored before scanning was enabled (the startup and
+		// settings backfill may not have reached it yet).
+		id, err := s.Store.AttachRawComponent(context.WithoutCancel(ctx), rp.ID, a.ID, a.Path)
+		if err != nil {
+			s.Logger.Warn("attach raw component", "asset", a.ID, "err", err)
+			return repo.GateDecision{}, nil
+		}
+		linked := *a
+		linked.ComponentID = &id
+		a = &linked
+	}
 	switch {
 	case a.ComponentID != nil:
 		q, err := s.Store.ComponentQuarantine(ctx, *a.ComponentID)
 		if err != nil {
 			s.Logger.Warn("quarantine check", "asset", a.ID, "err", err)
-			return false, ""
+			return repo.GateDecision{}, nil
 		}
 		statuses = []*store.QuarantineStatus{q}
 	case rp.Format == "docker" && strings.Contains(a.Path, "/_manifests/"):
@@ -278,42 +382,177 @@ func (s *Service) QuarantineCheck(ctx context.Context, rp *repo.Repository, a *s
 		qs, err := s.Store.ManifestQuarantine(ctx, rp.ID, image, image+"/_tags/", a.Digest)
 		if err != nil {
 			s.Logger.Warn("quarantine check", "asset", a.ID, "err", err)
-			return false, ""
+			return repo.GateDecision{}, nil
 		}
-		statuses = qs
+		statuses = append(qs, s.unscannedPlatform(ctx, rp, image, a.Digest)...)
 	default:
-		return false, ""
+		return repo.GateDecision{}, nil
 	}
 	for _, q := range statuses {
 		if q.Quarantined {
-			return true, s.reasonFor(ctx, q)
+			return repo.GateDecision{Blocked: true, Reason: s.reasonFor(ctx, q)}, nil
 		}
 		// The verdict was stored under another mode or threshold (the
 		// repository settings changed): check it again (cached briefly).
 		if q.ScanState == "vulnerable" {
 			if blocked, reason := s.recheck(ctx, q); blocked {
-				return true, reason
+				return repo.GateDecision{Blocked: true, Reason: reason}, nil
 			}
+		}
+	}
+	if sc.BlockOnError {
+		for _, q := range statuses {
+			if q.ScanState != "error" {
+				continue
+			}
+			// Retry the failed scans on demand, at most once a minute (the
+			// retry loop also does, every scan.errorRetryInterval).
+			if q.ScannedAt == nil || time.Since(*q.ScannedAt) > time.Minute {
+				s.retryFailed(ctx, q.ComponentID)
+			}
+			d := repo.GateDecision{Blocked: true, Reason: refOf(rp, q) + " could not be scanned; downloads are blocked until a scan succeeds"}
+			if jobs, err := s.Store.OutstandingJobs(ctx, q.ComponentID, nil); err == nil && len(jobs) > 0 {
+				return d, []string{q.ComponentID}
+			}
+			return d, nil
 		}
 	}
 	if sc.BlockUntilScanned {
+		var pending []string
+		reason := ""
 		for _, q := range statuses {
 			if q.ScanState == "unscanned" || q.ScanState == "pending" {
-				ref := q.Name + "@" + q.Version
-				if rp.Format == "docker" {
-					ref = q.Name + ":" + q.Version
-				}
 				if q.ScanState == "unscanned" {
 					// Content stored before scanning was enabled: scan it now.
-					if _, err := s.Store.EnqueueScans(context.WithoutCancel(ctx), q.ComponentID, sc.Scanners, "rescan"); err == nil {
-						s.notify()
+					if n, err := s.Store.EnqueueScans(context.WithoutCancel(ctx), q.ComponentID, sc.Scanners, "rescan"); err == nil && n > 0 {
+						s.notifyJobs(ctx)
 					}
 				}
-				return true, ref + " has not been scanned yet; downloads are blocked until the scan completes"
+				if reason == "" {
+					reason = refOf(rp, q) + " has not been scanned yet; downloads are blocked until the scan completes"
+				}
+				pending = append(pending, q.ComponentID)
 			}
 		}
+		if len(pending) > 0 {
+			return repo.GateDecision{Blocked: true, Reason: reason}, pending
+		}
 	}
-	return false, ""
+	return repo.GateDecision{}, nil
+}
+
+// unscannedPlatform handles a pull of a platform manifest that the image's
+// last scan left out (a proxy had not cached it). In strict repositories
+// this is new content: the image is scanned again, with the platform, and
+// the pull waits like any pending download.
+func (s *Service) unscannedPlatform(ctx context.Context, rp *repo.Repository, image, digest string) []*store.QuarantineStatus {
+	if _, strict, err := s.strictConfig(ctx, rp.Cfg.Scan); err != nil || !strict {
+		return nil
+	}
+	refs, err := s.Store.SkippedManifestComponents(ctx, rp.ID, image, digest)
+	if err != nil {
+		s.Logger.Warn("unscanned platform check", "image", image, "err", err)
+		return nil
+	}
+	var out []*store.QuarantineStatus
+	for _, r := range refs {
+		bctx := context.WithoutCancel(ctx)
+		if bumped, err := s.Store.BumpContentRev(bctx, r.ComponentID, r.ContentRev); err == nil && bumped {
+			s.Logger.Info("platform pulled that was not scanned; rescanning", "image", image, "manifest", digest,
+				"component", r.ComponentID)
+			if _, err := s.Store.MarkComponentPending(bctx, r.ComponentID); err != nil {
+				s.Logger.Warn("mark component pending", "component", r.ComponentID, "err", err)
+			}
+			if _, err := s.Enqueue(bctx, r.ComponentID, rp.Cfg.Scan.Scanners, "proxy"); err != nil {
+				s.Logger.Warn("queue platform rescan", "component", r.ComponentID, "err", err)
+			}
+		}
+		if q, err := s.Store.ComponentQuarantine(ctx, r.ComponentID); err == nil {
+			out = append(out, q)
+		}
+	}
+	return out
+}
+
+// hold waits (up to timeout) for the verdict of the pending components and
+// decides again. The components' ready jobs go to the front of the queue.
+func (s *Service) hold(ctx context.Context, rp *repo.Repository, a *store.Asset, ids []string, timeout time.Duration) repo.GateDecision {
+	start := time.Now()
+	waiting := func() repo.GateDecision {
+		return repo.GateDecision{Pending: true, Reason: "still being scanned; retry shortly"}
+	}
+	ch, unsubscribe, ok := s.holds.subscribe(ids)
+	if !ok {
+		holdDuration.WithLabelValues("refused").Observe(0)
+		return waiting()
+	}
+	defer unsubscribe()
+	if n, err := s.Store.PrioritizeJobs(context.WithoutCancel(ctx), ids); err == nil && n > 0 {
+		s.notifyJobs(ctx)
+	}
+	deadline := time.NewTimer(timeout)
+	defer deadline.Stop()
+	poll := 250 * time.Millisecond
+	for {
+		pollT := time.NewTimer(poll)
+		select {
+		case <-ctx.Done():
+			pollT.Stop()
+			holdDuration.WithLabelValues("cancelled").Observe(time.Since(start).Seconds())
+			return waiting()
+		case <-s.holds.stop:
+			pollT.Stop()
+			holdDuration.WithLabelValues("timeout").Observe(time.Since(start).Seconds())
+			return waiting()
+		case <-deadline.C:
+			pollT.Stop()
+			holdDuration.WithLabelValues("timeout").Observe(time.Since(start).Seconds())
+			return waiting()
+		case <-ch:
+			pollT.Stop()
+		case <-pollT.C:
+			if poll < time.Second {
+				poll *= 2
+			}
+		}
+		d, pending := s.gate(ctx, rp, a)
+		if len(pending) == 0 {
+			outcome := "served"
+			if d.Blocked {
+				outcome = "blocked"
+			}
+			holdDuration.WithLabelValues(outcome).Observe(time.Since(start).Seconds())
+			return d
+		}
+	}
+}
+
+// StopHolds answers held downloads (and later ones) without waiting; called
+// when the HTTP server shuts down so draining pods don't hold requests.
+func (s *Service) StopHolds() { s.holds.shutdown() }
+
+func refOf(rp *repo.Repository, q *store.QuarantineStatus) string {
+	switch {
+	case q.Version == "":
+		return q.Name // raw files
+	case rp.Format == "docker":
+		return q.Name + ":" + q.Version
+	}
+	return q.Name + "@" + q.Version
+}
+
+// retryFailed queues the scanners whose latest result for a component is
+// an error again.
+func (s *Service) retryFailed(ctx context.Context, componentID string) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+	defer cancel()
+	names, err := s.Store.ErroredScanners(ctx, componentID)
+	if err != nil || len(names) == 0 {
+		return
+	}
+	if n, err := s.Store.EnqueueScans(ctx, componentID, names, "retry"); err == nil && n > 0 {
+		s.notifyJobs(ctx)
+	}
 }
 
 // recheck evaluates a vulnerable, not quarantined component again; the
@@ -350,7 +589,11 @@ func (s *Service) reasonFor(ctx context.Context, q *store.QuarantineStatus) stri
 	if ok && time.Now().Before(e.expires) {
 		return e.reason
 	}
-	reason := "vulnerabilities at or above the severity threshold in " + q.Name + "@" + q.Version + " — waive or fix to download"
+	ref := q.Name
+	if q.Version != "" {
+		ref += "@" + q.Version
+	}
+	reason := "vulnerabilities at or above the severity threshold in " + ref + " — waive or fix to download"
 	if comp, err := s.Store.GetComponent(ctx, q.ComponentID); err == nil {
 		if v, err := s.ComponentVerdict(ctx, comp); err == nil && v.Reason != "" {
 			reason = v.Reason

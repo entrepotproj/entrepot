@@ -24,6 +24,9 @@ type Component struct {
 	ScanState   string     `json:"scanState"`
 	Quarantined bool       `json:"quarantined"`
 	ScannedAt   *time.Time `json:"scannedAt,omitempty"`
+	// ContentRev counts changes to the component's content; scan results
+	// record the revision they scanned.
+	ContentRev int64 `json:"-"`
 }
 
 type Asset struct {
@@ -164,6 +167,10 @@ type PutAssetParams struct {
 	NoOverwrite bool
 	// Uploader is recorded when the content changes (JSON object).
 	Uploader json.RawMessage
+	// BumpComponentRev increments the component's content revision when the
+	// asset is new or its content changed (not for sidecar files such as
+	// PyPI .metadata, whose content is derived from the package).
+	BumpComponentRev bool
 }
 
 // PutAsset inserts or replaces the asset at (repository, path) and maintains
@@ -200,6 +207,11 @@ func (s *Store) PutAsset(ctx context.Context, p PutAssetParams) (*Asset, error) 
 		if exists && oldDigest != p.Digest {
 			if _, err := tx.Exec(ctx, `UPDATE blobs SET refcount = refcount - 1, updated_at=now() WHERE store_id=$1 AND digest=$2`,
 				p.StoreID, oldDigest); err != nil {
+				return err
+			}
+		}
+		if p.BumpComponentRev && p.ComponentID != nil && (!exists || oldDigest != p.Digest) {
+			if _, err := tx.Exec(ctx, `UPDATE components SET content_rev = content_rev + 1 WHERE id=$1`, *p.ComponentID); err != nil {
 				return err
 			}
 		}
@@ -303,13 +315,13 @@ func (s *Store) UpsertComponent(ctx context.Context, repoID, name, version strin
 }
 
 const componentSelect = `SELECT c.id, c.repository_id, r.name, r.format, c.name, c.version, c.attrs, c.created_at, c.updated_at,
-	c.scan_state, c.quarantined, c.scanned_at
+	c.scan_state, c.quarantined, c.scanned_at, c.content_rev
 	FROM components c JOIN repositories r ON r.id = c.repository_id`
 
 func scanComponent(row interface{ Scan(...any) error }) (*Component, error) {
 	var c Component
 	err := row.Scan(&c.ID, &c.RepositoryID, &c.Repository, &c.Format, &c.Name, &c.Version, &c.Attrs, &c.CreatedAt, &c.UpdatedAt,
-		&c.ScanState, &c.Quarantined, &c.ScannedAt)
+		&c.ScanState, &c.Quarantined, &c.ScannedAt, &c.ContentRev)
 	return &c, err
 }
 
@@ -450,4 +462,35 @@ func likePrefix(p string) string { return escapeLike(p) + "%" }
 func escapeLike(s string) string {
 	r := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
 	return r.Replace(s)
+}
+
+// BackfillRawComponents gives up to limit assets of a raw repository that
+// have no component one named after their path (version ""), and returns
+// how many it linked. Repeat until it returns 0; it is idempotent.
+func (s *Store) BackfillRawComponents(ctx context.Context, repoID string, limit int) (int, error) {
+	tag, err := s.pool.Exec(ctx, `WITH todo AS (
+			SELECT id, path FROM assets WHERE repository_id=$1 AND component_id IS NULL ORDER BY path LIMIT $2),
+		comps AS (
+			INSERT INTO components (repository_id, name, version) SELECT $1, path, '' FROM todo
+			ON CONFLICT (repository_id, name, version) DO UPDATE SET updated_at = components.updated_at
+			RETURNING id, name)
+		UPDATE assets a SET component_id = comps.id FROM todo JOIN comps ON comps.name = todo.path
+		WHERE a.id = todo.id AND a.component_id IS NULL`, repoID, limit)
+	if err != nil {
+		return 0, mapErr(err, "backfill raw components")
+	}
+	return int(tag.RowsAffected()), nil
+}
+
+// AttachRawComponent links a raw file without a component to one named
+// after its path, and returns the component id.
+func (s *Store) AttachRawComponent(ctx context.Context, repoID, assetID, path string) (string, error) {
+	var id string
+	err := s.pool.QueryRow(ctx, `WITH comp AS (
+			INSERT INTO components (repository_id, name, version) VALUES ($1, $3, '')
+			ON CONFLICT (repository_id, name, version) DO UPDATE SET updated_at = components.updated_at
+			RETURNING id)
+		UPDATE assets a SET component_id = coalesce(a.component_id, comp.id) FROM comp
+		WHERE a.id = $2 AND a.repository_id = $1 RETURNING a.component_id`, repoID, assetID, path).Scan(&id)
+	return id, mapErr(err, "attach raw component")
 }

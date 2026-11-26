@@ -305,3 +305,83 @@ func (h *Handler) ImageManifests(ctx context.Context, rp *repo.Repository, image
 	}
 	return out, nil
 }
+
+// Layer is a layer blob shared by one or more platform images.
+type Layer struct {
+	Digest    string
+	MediaType string
+	Size      int64
+	// Platforms that use the layer ("" for a plain image).
+	Platforms []string
+}
+
+// ImageLayers returns the unique layer blobs of the given platform image
+// manifests, in manifest order. Config blobs and foreign (non-distributable)
+// layers are left out. Manifests a proxy has not cached are fetched from the
+// upstream; blobs are not (see OpenBlob).
+func (h *Handler) ImageLayers(ctx context.Context, rp *repo.Repository, image string, manifests []ImageManifest) ([]Layer, error) {
+	e := &exporter{repos: h.env.Repos, h: h, rp: rp, image: image}
+	var out []Layer
+	seen := map[string]int{}
+	for _, m := range manifests {
+		d, err := storage.ParseDigest(m.Digest)
+		if err != nil {
+			return nil, err
+		}
+		_, body, doc, mt, err := e.readManifest(ctx, d)
+		if err != nil {
+			return nil, err
+		}
+		if storage.DigestBytes(body) != d {
+			return nil, fmt.Errorf("manifest %s: stored content does not match its digest", d)
+		}
+		if !isImage(mt) && doc.Config == nil {
+			return nil, fmt.Errorf("manifest %s is not an image manifest (%s)", d, mt)
+		}
+		for _, l := range doc.Layers {
+			if len(l.URLs) > 0 || strings.Contains(l.MediaType, "foreign") || strings.Contains(l.MediaType, "nondistributable") {
+				continue
+			}
+			if _, err := storage.ParseDigest(l.Digest); err != nil {
+				return nil, fmt.Errorf("manifest %s: layer %q: %w", d, l.Digest, err)
+			}
+			if i, ok := seen[l.Digest]; ok {
+				if m.Platform != "" && !contains(out[i].Platforms, m.Platform) {
+					out[i].Platforms = append(out[i].Platforms, m.Platform)
+				}
+				continue
+			}
+			seen[l.Digest] = len(out)
+			layer := Layer{Digest: l.Digest, MediaType: l.MediaType, Size: l.Size}
+			if m.Platform != "" {
+				layer.Platforms = []string{m.Platform}
+			}
+			out = append(out, layer)
+		}
+	}
+	return out, nil
+}
+
+func contains(list []string, s string) bool {
+	for _, v := range list {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}
+
+// OpenBlob opens a blob of the image. For proxy repositories a blob that is
+// not cached yet is fetched from the upstream (and cached).
+func (h *Handler) OpenBlob(ctx context.Context, rp *repo.Repository, image, digest string) (io.ReadCloser, error) {
+	d, err := storage.ParseDigest(digest)
+	if err != nil {
+		return nil, err
+	}
+	e := &exporter{repos: h.env.Repos, h: h, rp: rp, image: image}
+	a, err := e.blob(ctx, d)
+	if err != nil {
+		return nil, fmt.Errorf("blob %s: %w", d, err)
+	}
+	return h.env.Repos.Open(ctx, rp, a)
+}

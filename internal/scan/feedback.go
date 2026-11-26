@@ -198,12 +198,23 @@ func statusDescription(comp *store.Component, v *Verdict) string {
 	if w := waivedCount(v); w > 0 {
 		d += fmt.Sprintf(" (%d waived)", w)
 	}
-	if v.Quarantined {
+	if v.Quarantined && hasThreat(v.Blocking) {
+		d += " - malware or policy block, quarantined"
+	} else if v.Quarantined {
 		d += " - quarantined"
 	} else if len(v.Blocking) > 0 {
 		d += fmt.Sprintf(" - %d at or above %s", len(v.Blocking), v.Threshold)
 	}
 	return d
+}
+
+func hasThreat(fs []Finding) bool {
+	for _, f := range fs {
+		if drivers.IsThreat(f.VulnID) {
+			return true
+		}
+	}
+	return false
 }
 
 func mdEscape(s string) string {
@@ -220,6 +231,8 @@ func noteBody(marker string, comp *store.Component, rp *repo.Repository, v *Verd
 	b.WriteString(marker + "\n")
 	icon, verdict := ":white_check_mark:", "no vulnerabilities found"
 	switch {
+	case v.Quarantined && hasThreat(v.Blocking):
+		icon, verdict = ":no_entry:", "threat detected, quarantined — downloads are blocked"
 	case v.Quarantined:
 		icon, verdict = ":no_entry:", "quarantined — downloads are blocked"
 	case len(v.Blocking) > 0:
@@ -247,7 +260,7 @@ func noteBody(marker string, comp *store.Component, rp *repo.Repository, v *Verd
 	fs := append([]Finding(nil), v.Findings...)
 	sortFindings(fs)
 	if len(fs) > 0 {
-		b.WriteString("| Severity | Vulnerability | Package | Installed | Fixed in | Title |\n")
+		b.WriteString("| Severity | Finding | Package or file | Installed | Fixed in | Title |\n")
 		b.WriteString("| --- | --- | --- | --- | --- | --- |\n")
 		seen := map[string]bool{}
 		rows := 0

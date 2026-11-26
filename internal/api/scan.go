@@ -2,8 +2,10 @@ package api
 
 import (
 	"context"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -28,7 +30,7 @@ func scannerToAPI(sc *store.Scanner) apigen.Scanner {
 		return out
 	}
 	out.RescanIntervalHours = cfg.RescanIntervalHours
-	// Secrets (serverToken, webhook secret) are write-only.
+	// Secrets (serverToken, webhook secret, MetaDefender apiKey) are write-only.
 	if t := cfg.Trivy; t != nil {
 		out.Trivy = &apigen.TrivySettings{Binary: optStr(t.Binary), ServerUrl: optStr(t.ServerURL),
 			TimeoutSeconds: optInt(t.TimeoutSeconds), ExtraArgs: optSlice(t.ExtraArgs)}
@@ -40,6 +42,11 @@ func scannerToAPI(sc *store.Scanner) apigen.Scanner {
 	if w := cfg.Webhook; w != nil {
 		out.Webhook = &apigen.WebhookScannerSettings{Url: w.URL, TimeoutSeconds: optInt(w.TimeoutSeconds)}
 	}
+	if m := cfg.MetaDefender; m != nil {
+		out.Metadefender = &apigen.MetaDefenderSettings{Url: m.URL, Rule: optStr(m.Rule), TimeoutSeconds: optInt(m.TimeoutSeconds),
+			Concurrency: optInt(m.Concurrency), HashLookup: m.HashLookup, MaxResultAgeHours: optInt(m.MaxResultAgeHours),
+			WebUrl: optStr(m.WebURL), CaCertificate: optStr(m.CACertificate)}
+	}
 	return out
 }
 
@@ -48,6 +55,13 @@ func optStr(s string) *string {
 		return nil
 	}
 	return &s
+}
+
+func optBool(b bool) *bool {
+	if !b {
+		return nil
+	}
+	return &b
 }
 
 func optInt(n int) *int {
@@ -123,8 +137,40 @@ func (s *Server) scannerConfig(in apigen.ScannerInput, prev *store.Scanner) (*st
 			w.Secret = old.Webhook.Secret
 		}
 		cfg.Webhook = w
+	case scan.TypeMetaDefender:
+		m := in.Metadefender
+		if m == nil || !isHTTPURL(strings.TrimSpace(m.Url)) {
+			return nil, errBad("metadefender.url (an http(s) URL) is required for metadefender scanners")
+		}
+		if err := checkTimeout(m.TimeoutSeconds); err != nil {
+			return nil, err
+		}
+		md := &scan.MetaDefenderSettings{URL: strings.TrimRight(strings.TrimSpace(m.Url), "/"), APIKey: deref(m.ApiKey),
+			Rule: strings.TrimSpace(deref(m.Rule)), TimeoutSeconds: deref(m.TimeoutSeconds), Concurrency: deref(m.Concurrency),
+			HashLookup: m.HashLookup, MaxResultAgeHours: deref(m.MaxResultAgeHours), WebURL: strings.TrimSpace(deref(m.WebUrl)),
+			CACertificate: strings.TrimSpace(deref(m.CaCertificate))}
+		if md.Concurrency < 0 || md.Concurrency > scan.MaxMetaDefenderConcurrency {
+			return nil, errBad(fmt.Sprintf("metadefender.concurrency must be between 0 and %d", scan.MaxMetaDefenderConcurrency))
+		}
+		if md.MaxResultAgeHours < 0 || md.MaxResultAgeHours > 24*365 {
+			return nil, errBad("metadefender.maxResultAgeHours must be between 0 and 8760")
+		}
+		if md.WebURL != "" && !isHTTPURL(md.WebURL) {
+			return nil, errBad("metadefender.webUrl must be an http(s) URL")
+		}
+		if md.CACertificate != "" {
+			if !x509.NewCertPool().AppendCertsFromPEM([]byte(md.CACertificate)) {
+				return nil, errBad("metadefender.caCertificate must contain PEM certificates")
+			}
+		}
+		// The stored key is only kept for the same server, so changing the
+		// URL never sends it to a new host.
+		if md.APIKey == "" && old != nil && old.MetaDefender != nil && old.MetaDefender.URL == md.URL {
+			md.APIKey = old.MetaDefender.APIKey
+		}
+		cfg.MetaDefender = md
 	default:
-		return nil, errBad("type must be trivy, grype or webhook")
+		return nil, errBad("type must be trivy, grype, webhook or metadefender")
 	}
 	if err := cfg.Seal(s.Secrets); err != nil {
 		return nil, err
@@ -180,6 +226,7 @@ func (s *Server) CreateScanner(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.audit(r, "scanner.create", out.Name, map[string]any{"type": out.Type, "enabled": out.Enabled})
+	s.Scan.ForgetScanners()
 	httpx.WriteJSON(w, http.StatusCreated, scannerToAPI(out))
 }
 
@@ -226,6 +273,7 @@ func (s *Server) UpdateScanner(w http.ResponseWriter, r *http.Request, name stri
 		return
 	}
 	s.audit(r, "scanner.update", out.Name, map[string]any{"type": out.Type, "enabled": out.Enabled})
+	s.Scan.ForgetScanners()
 	httpx.WriteJSON(w, http.StatusOK, scannerToAPI(out))
 }
 
@@ -267,6 +315,7 @@ func (s *Server) DeleteScanner(w http.ResponseWriter, r *http.Request, name stri
 		return
 	}
 	s.audit(r, "scanner.delete", name, nil)
+	s.Scan.ForgetScanners()
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -397,8 +446,9 @@ func (s *Server) attachFindings(ctx context.Context, cs []*store.Component, out 
 			}
 			seen[k] = true
 			counts[f.Severity]++
-			list = append(list, apigen.Finding{VulnId: f.VulnID, Severity: apigen.Severity(f.Severity), Package: f.Package,
-				InstalledVersion: f.InstalledVersion, FixedVersion: f.FixedVersion, Title: f.Title, Url: f.URL})
+			list = append(list, apigen.Finding{VulnId: f.VulnID, Kind: apigen.FindingKind(drivers.FindingKind(f.VulnID)),
+				Severity: apigen.Severity(f.Severity), Package: f.Package, InstalledVersion: f.InstalledVersion,
+				FixedVersion: f.FixedVersion, Title: f.Title, Url: f.URL})
 		}
 		sort.SliceStable(list, func(a, b int) bool {
 			return drivers.SeverityRank(string(list[a].Severity)) > drivers.SeverityRank(string(list[b].Severity))
@@ -455,12 +505,21 @@ func (s *Server) GetComponentScans(w http.ResponseWriter, r *http.Request, id st
 	}
 	for _, res := range v.Results {
 		var sm struct {
-			Target string `json:"target"`
-			Error  string `json:"error"`
+			Target string               `json:"target"`
+			Error  string               `json:"error"`
+			Files  []drivers.FileResult `json:"files"`
 		}
 		_ = json.Unmarshal(res.Summary, &sm)
 		ar := apigen.ScanResult{Id: res.ID, Scanner: res.Scanner, Status: apigen.ScanResultStatus(res.Status),
 			ScannedAt: res.ScannedAt, Findings: []apigen.Finding{}}
+		if len(sm.Files) > 0 {
+			files := make([]apigen.ScannedFile, 0, len(sm.Files))
+			for _, f := range sm.Files {
+				files = append(files, apigen.ScannedFile{Name: f.Name, Sha256: optStr(f.SHA256), DataId: optStr(f.DataID),
+					Result: optStr(f.Result), Cached: optBool(f.Cached)})
+			}
+			ar.Files = &files
+		}
 		if sm.Target != "" {
 			ar.Target = &sm.Target
 		}
@@ -469,8 +528,9 @@ func (s *Server) GetComponentScans(w http.ResponseWriter, r *http.Request, id st
 		}
 		counts := map[string]int{}
 		for _, f := range byScanner[res.Scanner] {
-			af := apigen.Finding{VulnId: f.VulnID, Severity: apigen.Severity(f.Severity), Package: f.Package,
-				InstalledVersion: f.InstalledVersion, FixedVersion: f.FixedVersion, Title: f.Title, Url: f.URL, Waived: f.Waived}
+			af := apigen.Finding{VulnId: f.VulnID, Kind: apigen.FindingKind(drivers.FindingKind(f.VulnID)),
+				Severity: apigen.Severity(f.Severity), Package: f.Package, InstalledVersion: f.InstalledVersion,
+				FixedVersion: f.FixedVersion, Title: f.Title, Url: f.URL, Waived: f.Waived}
 			if f.WaiverID != "" {
 				af.WaiverId = ptr(f.WaiverID)
 			} else {
