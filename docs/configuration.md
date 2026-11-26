@@ -28,6 +28,7 @@ followed by its upper-cased path joined with `_`:
 | `secrets.previousKeys` | comma-separated | none. Old keys that can still decrypt during a rotation; values are re-encrypted with the current key at startup |
 | `scan.workers` | `ENTREPOT_SCAN_WORKERS` | `2` in-process scan workers (`0` when a separate `entrepot scan-worker` runs them) |
 | `scan.workDir` / `scan.jobTimeout` / `scan.pollInterval` | `ENTREPOT_SCAN_*` | temp dir / `15m` / `2s` |
+| `scan.errorRetryInterval` | `ENTREPOT_SCAN_ERRORRETRYINTERVAL` | `15m`: how long after a failed scan it is retried, in repositories with `blockOnError` (`0` disables) |
 | `cleanup.interval` | `ENTREPOT_CLEANUP_INTERVAL` | `24h` (`0` disables scheduled cleanup) |
 | `usage.recordDownloads` | `ENTREPOT_USAGE_RECORDDOWNLOADS` | `true`: add every download to the activity log (counters and charts are always kept) |
 | `usage.activityRetention` | `ENTREPOT_USAGE_ACTIVITYRETENTION` | `720h` (30 days) |
@@ -87,5 +88,5 @@ blobStores:
 | `proxy.routingRule` | routing rule restricting what is fetched upstream |
 | `hosted.apt.distributions` | Apt: `[{name, components, architectures, origin, label}]` (default `stable`/`main`) |
 | `hosted.yum.repodataDepth` | Yum: directory depth for repodata (default 0) |
-| `scan` | `{scanners, mode: off\|warn\|quarantine, severityThreshold, onUpload, onProxyFetch, blockUntilScanned, distro}`. See [scanning](scanning.md) |
+| `scan` | `{scanners, mode: off\|warn\|quarantine, severityThreshold, onUpload, onProxyFetch, blockUntilScanned, blockOnError, distro}`. See [scanning](scanning.md) |
 | `cleanup.policies` | cleanup policies to apply. See [cleanup](cleanup-and-routing.md) |

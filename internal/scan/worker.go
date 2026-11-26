@@ -318,9 +318,15 @@ func (s *Service) fail(ctx context.Context, job *store.ScanJob, owner store.JobO
 	}
 }
 
-// afterResult re-evaluates the component, reports to GitLab and, for Docker
-// tags that moved while being scanned, queues another scan.
+// afterResult re-evaluates the component, reports to GitLab and, when the
+// content changed while it was being scanned (a file added or replaced, a
+// Docker tag moved), queues another scan by the same scanner.
 func (s *Service) afterResult(ctx context.Context, componentID string, res *store.ScanResult) {
+	// Queue the rescan before evaluating, so a strict verdict sees the job
+	// outstanding and stays pending instead of releasing unscanned content.
+	if res != nil {
+		s.requeueIfStale(ctx, componentID, res)
+	}
 	v, comp, rp, err := s.Evaluate(ctx, componentID)
 	if err != nil {
 		if !errors.Is(err, store.ErrNotFound) {
@@ -329,18 +335,25 @@ func (s *Service) afterResult(ctx context.Context, componentID string, res *stor
 		return
 	}
 	s.reportGitLab(comp, rp, v)
-	if comp.Format == "docker" && res != nil {
-		var sm summary
-		_ = json.Unmarshal(res.Summary, &sm)
-		if sm.Digest != "" {
-			if a, err := s.Store.GetAsset(ctx, comp.RepositoryID, comp.Name+"/_tags/"+comp.Version); err == nil && a.Digest != sm.Digest {
-				if rp.Cfg.Scan.Enabled() {
-					if _, err := s.Enqueue(ctx, comp.ID, rp.Cfg.Scan.Scanners, "upload"); err != nil {
-						s.Logger.Warn("re-queue moved tag", "err", err)
-					}
-				}
-			}
-		}
+}
+
+// requeueIfStale queues another scan by res's scanner when res covers older
+// content than the component now holds.
+func (s *Service) requeueIfStale(ctx context.Context, componentID string, res *store.ScanResult) {
+	comp, err := s.Store.GetComponent(ctx, componentID)
+	if err != nil || res.ContentRev >= comp.ContentRev {
+		return
+	}
+	rp, err := s.Repos.GetByID(ctx, comp.RepositoryID)
+	if err != nil || !rp.Cfg.Scan.Enabled() {
+		return
+	}
+	sc, err := s.Store.GetScannerByID(ctx, res.ScannerID)
+	if err != nil || !contains(rp.Cfg.Scan.Scanners, sc.Name) {
+		return
+	}
+	if _, err := s.Enqueue(ctx, comp.ID, []string{sc.Name}, "upload"); err != nil {
+		s.Logger.Warn("re-queue changed content", "component", comp.ID, "err", err)
 	}
 }
 

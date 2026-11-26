@@ -131,6 +131,7 @@ export type ScanForm = {
   onUpload: boolean;
   onProxyFetch: boolean;
   blockUntilScanned: boolean;
+  blockOnError: boolean;
   distro: string;
 };
 
@@ -291,6 +292,13 @@ export function ScanFields({
               description="Quarantine mode: refuse downloads until the first scan completes"
               checked={value.blockUntilScanned}
               onChange={(e) => onChange({ blockUntilScanned: e.currentTarget.checked })}
+              disabled={!enabled || value.mode !== 'quarantine'}
+            />
+            <Switch
+              label="Block on scan errors"
+              description="Quarantine mode: refuse downloads while a configured scanner's latest scan failed; failed scans are retried"
+              checked={value.blockOnError}
+              onChange={(e) => onChange({ blockOnError: e.currentTarget.checked })}
               disabled={!enabled || value.mode !== 'quarantine'}
             />
           </Group>

@@ -1119,6 +1119,8 @@ export interface components {
             severityThreshold?: "critical" | "high" | "medium" | "low";
             /** @description quarantine mode: block downloads until the first scan completes */
             blockUntilScanned?: boolean;
+            /** @description quarantine mode: block downloads of components whose latest scan by a configured scanner failed, until a retry succeeds (failed scans are retried every scan.errorRetryInterval). Verdicts become strict: a component stays pending until every configured scanner has scanned its current content. */
+            blockOnError?: boolean;
             /** @description Apt/Yum: distribution for vulnerability matching, e.g. debian-12, ubuntu-24.04, rocky-9 */
             distro?: string;
         };
@@ -1433,7 +1435,7 @@ export interface components {
             /** @enum {string} */
             status: "queued" | "running" | "done" | "failed";
             /** @enum {string} */
-            reason: "upload" | "proxy" | "manual" | "rescan";
+            reason: "upload" | "proxy" | "manual" | "rescan" | "retry";
             attempts: number;
             error: string;
             /** Format: date-time */

@@ -104,7 +104,10 @@ type ScanJob struct {
 	CreatedAt    time.Time  `json:"createdAt"`
 	UpdatedAt    time.Time  `json:"updatedAt"`
 	FinishedAt   *time.Time `json:"finishedAt,omitempty"`
-	tokenSet     bool
+	// ContentRev is the component content revision the job scans (set when
+	// it is claimed).
+	ContentRev int64 `json:"-"`
+	tokenSet   bool
 }
 
 // HasToken reports whether a webhook callback token is set on the job.
@@ -112,7 +115,7 @@ func (j *ScanJob) HasToken() bool { return j.tokenSet }
 
 const jobSelect = `SELECT j.id, j.component_id, j.scanner_id, s.name, s.type, c.name, c.version, c.repository_id, r.name,
 	j.status, j.reason, j.attempts, j.run_after, j.locked_by, j.locked_until, j.error, j.created_at, j.updated_at,
-	j.finished_at, j.token_hash IS NOT NULL
+	j.finished_at, j.token_hash IS NOT NULL, j.content_rev
 	FROM scan_jobs j JOIN scanners s ON s.id = j.scanner_id JOIN components c ON c.id = j.component_id
 	JOIN repositories r ON r.id = c.repository_id`
 
@@ -120,7 +123,7 @@ func scanJob(row interface{ Scan(...any) error }) (*ScanJob, error) {
 	var j ScanJob
 	err := row.Scan(&j.ID, &j.ComponentID, &j.ScannerID, &j.Scanner, &j.ScannerType, &j.Component, &j.Version,
 		&j.RepositoryID, &j.Repository, &j.Status, &j.Reason, &j.Attempts, &j.RunAfter, &j.LockedBy, &j.LockedUntil,
-		&j.Error, &j.CreatedAt, &j.UpdatedAt, &j.FinishedAt, &j.tokenSet)
+		&j.Error, &j.CreatedAt, &j.UpdatedAt, &j.FinishedAt, &j.tokenSet, &j.ContentRev)
 	return &j, err
 }
 
@@ -160,6 +163,17 @@ func (s *Store) EnqueueScans(ctx context.Context, componentID string, scanners [
 	return n, mapErr(err, "enqueue scans")
 }
 
+// MarkComponentPending sets a component's stored state to pending (keeping
+// a quarantine in force) because its content changed and it is scanned
+// again. It returns false if it was already pending.
+func (s *Store) MarkComponentPending(ctx context.Context, componentID string) (bool, error) {
+	tag, err := s.pool.Exec(ctx, `UPDATE components SET scan_state='pending' WHERE id=$1 AND scan_state <> 'pending'`, componentID)
+	if err != nil {
+		return false, mapErr(err, "mark component pending")
+	}
+	return tag.RowsAffected() == 1, nil
+}
+
 // OutstandingJobs returns the queued/running jobs of a component (optionally
 // restricted to scanner names).
 func (s *Store) OutstandingJobs(ctx context.Context, componentID string, scanners []string) ([]*ScanJob, error) {
@@ -172,11 +186,13 @@ func (s *Store) OutstandingJobs(ctx context.Context, componentID string, scanner
 }
 
 // ClaimScanJob takes the next ready job (FOR UPDATE SKIP LOCKED), marks it
-// running and leases it to worker until now()+lease.
+// running, leases it to worker until now()+lease and records the component
+// content revision it is about to scan.
 func (s *Store) ClaimScanJob(ctx context.Context, worker string, lease time.Duration) (*ScanJob, error) {
 	var id string
 	err := s.pool.QueryRow(ctx, `UPDATE scan_jobs SET status='running', locked_by=$1,
-			locked_until = now() + make_interval(secs => $2), attempts = attempts + 1, token_hash = NULL, updated_at = now()
+			locked_until = now() + make_interval(secs => $2), attempts = attempts + 1, token_hash = NULL, updated_at = now(),
+			content_rev = (SELECT c.content_rev FROM components c WHERE c.id = scan_jobs.component_id)
 		WHERE id = (SELECT id FROM scan_jobs WHERE status='queued' AND run_after <= now()
 			ORDER BY run_after LIMIT 1 FOR UPDATE SKIP LOCKED)
 		RETURNING id`, worker, lease.Seconds()).Scan(&id)
@@ -255,6 +271,8 @@ type ScanResult struct {
 	Summary     json.RawMessage `json:"summary"`
 	ScannedAt   time.Time       `json:"scannedAt"`
 	Findings    []ScanFinding   `json:"findings"`
+	// ContentRev is the component content revision that was scanned.
+	ContentRev int64 `json:"-"`
 }
 
 // JobOwner identifies who may complete a running job: the worker holding
@@ -297,9 +315,13 @@ func (s *Store) CompleteScanJob(ctx context.Context, jobID string, owner JobOwne
 }
 
 func insertResult(ctx context.Context, tx pgx.Tx, res *ScanResult) error {
-	if err := tx.QueryRow(ctx, `INSERT INTO scan_results (component_id, scanner_id, job_id, status, summary)
-		VALUES ($1,$2,$3,$4,$5) RETURNING id, scanned_at`, res.ComponentID, res.ScannerID, res.JobID, res.Status, res.Summary).
-		Scan(&res.ID, &res.ScannedAt); err != nil {
+	// The result covers the revision its job scanned (a result without a job
+	// covers the current one).
+	if err := tx.QueryRow(ctx, `INSERT INTO scan_results (component_id, scanner_id, job_id, status, summary, content_rev)
+		VALUES ($1,$2,$3,$4,$5, coalesce((SELECT content_rev FROM scan_jobs WHERE id=$3),
+			(SELECT content_rev FROM components WHERE id=$1), 0))
+		RETURNING id, scanned_at, content_rev`, res.ComponentID, res.ScannerID, res.JobID, res.Status, res.Summary).
+		Scan(&res.ID, &res.ScannedAt, &res.ContentRev); err != nil {
 		return err
 	}
 	if len(res.Findings) == 0 {
@@ -405,7 +427,7 @@ func (s *Store) ComponentScanJobs(ctx context.Context, componentID string, limit
 // component, with findings.
 func (s *Store) LatestScanResults(ctx context.Context, componentID string) ([]*ScanResult, error) {
 	rows, err := s.pool.Query(ctx, `SELECT DISTINCT ON (r.scanner_id) r.id, r.component_id, r.scanner_id, s.name, r.job_id,
-			r.status, r.summary, r.scanned_at
+			r.status, r.summary, r.scanned_at, r.content_rev
 		FROM scan_results r JOIN scanners s ON s.id = r.scanner_id
 		WHERE r.component_id=$1 ORDER BY r.scanner_id, r.scanned_at DESC`, componentID)
 	if err != nil {
@@ -415,7 +437,8 @@ func (s *Store) LatestScanResults(ctx context.Context, componentID string) ([]*S
 	byID := map[string]*ScanResult{}
 	for rows.Next() {
 		var r ScanResult
-		if err := rows.Scan(&r.ID, &r.ComponentID, &r.ScannerID, &r.Scanner, &r.JobID, &r.Status, &r.Summary, &r.ScannedAt); err != nil {
+		if err := rows.Scan(&r.ID, &r.ComponentID, &r.ScannerID, &r.Scanner, &r.JobID, &r.Status, &r.Summary, &r.ScannedAt,
+			&r.ContentRev); err != nil {
 			rows.Close()
 			return nil, err
 		}
@@ -556,6 +579,63 @@ func (s *Store) RescanCandidates(ctx context.Context, scannerID string, age time
 			return nil, err
 		}
 		out = append(out, id)
+	}
+	return out, rows.Err()
+}
+
+// RetryCandidates returns components with no outstanding job for scanner
+// whose latest result from it is an error older than errorAge, or covers an
+// older content revision than the component's (a rescan that never got
+// queued). errorAge <= 0 skips errors.
+// RetryCandidate is a component RetryCandidates selected; Errored is true
+// when its latest result is an error (otherwise it is stale).
+type RetryCandidate struct {
+	ComponentID string
+	Errored     bool
+}
+
+func (s *Store) RetryCandidates(ctx context.Context, scannerID string, errorAge time.Duration, limit int) ([]RetryCandidate, error) {
+	rows, err := s.pool.Query(ctx, `SELECT l.component_id, l.status = 'error' AND l.content_rev >= c.content_rev FROM (
+			SELECT DISTINCT ON (component_id) component_id, status, scanned_at, content_rev FROM scan_results
+			WHERE scanner_id=$1 ORDER BY component_id, scanned_at DESC) l
+		JOIN components c ON c.id = l.component_id
+		WHERE (($2::float8 > 0 AND l.status = 'error' AND l.scanned_at < now() - make_interval(secs => $2::float8)) OR l.content_rev < c.content_rev)
+		AND NOT EXISTS (SELECT 1 FROM scan_jobs j WHERE j.component_id=l.component_id AND j.scanner_id=$1
+			AND j.status IN ('queued','running'))
+		ORDER BY l.scanned_at LIMIT $3`, scannerID, errorAge.Seconds(), limit)
+	if err != nil {
+		return nil, mapErr(err, "retry candidates")
+	}
+	defer rows.Close()
+	var out []RetryCandidate
+	for rows.Next() {
+		var c RetryCandidate
+		if err := rows.Scan(&c.ComponentID, &c.Errored); err != nil {
+			return nil, err
+		}
+		out = append(out, c)
+	}
+	return out, rows.Err()
+}
+
+// ErroredScanners returns the names of the scanners whose latest result for
+// a component is an error.
+func (s *Store) ErroredScanners(ctx context.Context, componentID string) ([]string, error) {
+	rows, err := s.pool.Query(ctx, `SELECT l.name FROM (
+			SELECT DISTINCT ON (r.scanner_id) s.name, r.status FROM scan_results r JOIN scanners s ON s.id = r.scanner_id
+			WHERE r.component_id=$1 ORDER BY r.scanner_id, r.scanned_at DESC) l
+		WHERE l.status = 'error' ORDER BY l.name`, componentID)
+	if err != nil {
+		return nil, mapErr(err, "errored scanners")
+	}
+	defer rows.Close()
+	var out []string
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		out = append(out, name)
 	}
 	return out, rows.Err()
 }

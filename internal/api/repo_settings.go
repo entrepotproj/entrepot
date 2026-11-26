@@ -18,6 +18,7 @@ func (s *Server) phase2Settings(ctx context.Context, in apigen.RepositoryInput, 
 			OnUpload:          sc.OnUpload,
 			OnProxyFetch:      sc.OnProxyFetch,
 			BlockUntilScanned: deref(sc.BlockUntilScanned),
+			BlockOnError:      deref(sc.BlockOnError),
 			Distro:            deref(sc.Distro),
 		}
 		if sc.Scanners != nil {
@@ -112,6 +113,7 @@ func phase2ToAPI(rp *repo.Repository, out *apigen.Repository) {
 		out.Scan = &apigen.ScanSettings{
 			Scanners: ptr(nonNil(c.Scanners)), Mode: &mode, SeverityThreshold: &thr,
 			OnUpload: &up, OnProxyFetch: &px, BlockUntilScanned: ptr(c.BlockUntilScanned),
+			BlockOnError: ptr(c.BlockOnError),
 		}
 		if c.Distro != "" {
 			out.Scan.Distro = ptr(c.Distro)

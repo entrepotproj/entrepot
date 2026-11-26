@@ -99,6 +99,35 @@ func (c *ScannerConfig) Open(box *secrets.Box) error {
 	return nil
 }
 
+// Reseal re-encrypts secret fields that are still plaintext or sealed with
+// a previous key, and reports whether anything changed.
+func (c *ScannerConfig) Reseal(box *secrets.Box) (bool, error) {
+	changed := false
+	for _, f := range c.secretFields() {
+		if !box.NeedsReseal(*f) {
+			continue
+		}
+		v, err := box.Reseal(*f)
+		if err != nil {
+			return changed, err
+		}
+		*f, changed = v, true
+	}
+	return changed, nil
+}
+
+// secretFields points at every secret value of the configuration.
+func (c *ScannerConfig) secretFields() []*string {
+	var out []*string
+	if c.Trivy != nil && c.Trivy.ServerToken != "" {
+		out = append(out, &c.Trivy.ServerToken)
+	}
+	if c.Webhook != nil && c.Webhook.Secret != "" {
+		out = append(out, &c.Webhook.Secret)
+	}
+	return out
+}
+
 // Redacted returns a copy without secret values.
 func (c *ScannerConfig) Redacted() *ScannerConfig {
 	out := *c

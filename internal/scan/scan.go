@@ -69,9 +69,10 @@ type Service struct {
 	workerID string
 	wake     chan struct{}
 
-	mu       sync.Mutex
-	reasons  map[string]reasonEntry
-	feedback sync.WaitGroup
+	mu         sync.Mutex
+	reasons    map[string]reasonEntry
+	scannerIdx *scannerIndex
+	feedback   sync.WaitGroup
 	// waiverLast is when expired waivers were last looked for.
 	waiverLast time.Time
 }
@@ -102,7 +103,9 @@ func (s *Service) Attach() {
 	s.Repos.QuarantineCheck = s.QuarantineCheck
 }
 
-// onStored enqueues scans for a stored component (one INSERT).
+// onStored enqueues scans for a stored component (one INSERT). In
+// repositories with strict verdicts, new or changed content also makes the
+// component pending until it is scanned again.
 func (s *Service) onStored(ctx context.Context, ev repo.StoredEvent) {
 	sc := ev.Repository.Cfg.Scan
 	if !sc.Enabled() || !ev.Changed || ev.ComponentID == "" {
@@ -126,6 +129,18 @@ func (s *Service) onStored(ctx context.Context, ev repo.StoredEvent) {
 	}
 	if n > 0 {
 		s.notify()
+	}
+	if ev.Sidecar {
+		return
+	}
+	if _, strict, err := s.strictConfig(ctx, sc); err != nil {
+		s.Logger.Warn("scan settings", "repository", ev.Repository.Name, "err", err)
+	} else if strict {
+		// A job that is already running scans the previous content; its
+		// result is stale and the component is queued again (afterResult).
+		if _, err := s.Store.MarkComponentPending(ctx, ev.ComponentID); err != nil {
+			s.Logger.Error("mark component pending", "component", ev.ComponentID, "err", err)
+		}
 	}
 }
 
@@ -230,6 +245,55 @@ func (s *Service) rescanTick(ctx context.Context) {
 	if _, err := s.RescanNow(ctx); err != nil && ctx.Err() == nil {
 		s.Logger.Error("schedule rescans", "err", err)
 	}
+	if _, err := s.RetryNow(ctx); err != nil && ctx.Err() == nil {
+		s.Logger.Error("schedule scan retries", "err", err)
+	}
+}
+
+// RetryNow queues scans again for components whose latest result from a
+// scanner covers older content than they hold (a rescan that was never
+// queued) and, in repositories with blockOnError, whose latest result is an
+// error older than scan.errorRetryInterval. It returns the number of jobs
+// queued.
+func (s *Service) RetryNow(ctx context.Context) (int, error) {
+	scanners, err := s.Store.ListScanners(ctx)
+	if err != nil {
+		return 0, err
+	}
+	age := s.Config.Scan.ErrorRetryInterval
+	total := 0
+	for _, sc := range scanners {
+		if !sc.Enabled {
+			continue
+		}
+		cands, err := s.Store.RetryCandidates(ctx, sc.ID, age, s.RescanBatch)
+		if err != nil {
+			return total, err
+		}
+		for _, cand := range cands {
+			c, err := s.Store.GetComponent(ctx, cand.ComponentID)
+			if err != nil {
+				continue
+			}
+			rp, err := s.Repos.Get(ctx, c.Repository)
+			if err != nil || !rp.Cfg.Scan.Enabled() || !contains(rp.Cfg.Scan.Scanners, sc.Name) {
+				continue
+			}
+			if cand.Errored && !rp.Cfg.Scan.BlockOnError {
+				continue
+			}
+			n, err := s.Store.EnqueueScans(ctx, c.ID, []string{sc.Name}, "retry")
+			if err != nil {
+				return total, err
+			}
+			total += n
+		}
+	}
+	if total > 0 {
+		s.Logger.Info("scan retries queued", "jobs", total)
+		s.notify()
+	}
+	return total, nil
 }
 
 // RescanNow enqueues rescans for components whose latest result from a

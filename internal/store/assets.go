@@ -24,6 +24,9 @@ type Component struct {
 	ScanState   string     `json:"scanState"`
 	Quarantined bool       `json:"quarantined"`
 	ScannedAt   *time.Time `json:"scannedAt,omitempty"`
+	// ContentRev counts changes to the component's content; scan results
+	// record the revision they scanned.
+	ContentRev int64 `json:"-"`
 }
 
 type Asset struct {
@@ -164,6 +167,10 @@ type PutAssetParams struct {
 	NoOverwrite bool
 	// Uploader is recorded when the content changes (JSON object).
 	Uploader json.RawMessage
+	// BumpComponentRev increments the component's content revision when the
+	// asset is new or its content changed (not for sidecar files such as
+	// PyPI .metadata, whose content is derived from the package).
+	BumpComponentRev bool
 }
 
 // PutAsset inserts or replaces the asset at (repository, path) and maintains
@@ -200,6 +207,11 @@ func (s *Store) PutAsset(ctx context.Context, p PutAssetParams) (*Asset, error) 
 		if exists && oldDigest != p.Digest {
 			if _, err := tx.Exec(ctx, `UPDATE blobs SET refcount = refcount - 1, updated_at=now() WHERE store_id=$1 AND digest=$2`,
 				p.StoreID, oldDigest); err != nil {
+				return err
+			}
+		}
+		if p.BumpComponentRev && p.ComponentID != nil && (!exists || oldDigest != p.Digest) {
+			if _, err := tx.Exec(ctx, `UPDATE components SET content_rev = content_rev + 1 WHERE id=$1`, *p.ComponentID); err != nil {
 				return err
 			}
 		}
@@ -303,13 +315,13 @@ func (s *Store) UpsertComponent(ctx context.Context, repoID, name, version strin
 }
 
 const componentSelect = `SELECT c.id, c.repository_id, r.name, r.format, c.name, c.version, c.attrs, c.created_at, c.updated_at,
-	c.scan_state, c.quarantined, c.scanned_at
+	c.scan_state, c.quarantined, c.scanned_at, c.content_rev
 	FROM components c JOIN repositories r ON r.id = c.repository_id`
 
 func scanComponent(row interface{ Scan(...any) error }) (*Component, error) {
 	var c Component
 	err := row.Scan(&c.ID, &c.RepositoryID, &c.Repository, &c.Format, &c.Name, &c.Version, &c.Attrs, &c.CreatedAt, &c.UpdatedAt,
-		&c.ScanState, &c.Quarantined, &c.ScannedAt)
+		&c.ScanState, &c.Quarantined, &c.ScannedAt, &c.ContentRev)
 	return &c, err
 }
 

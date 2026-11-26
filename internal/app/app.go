@@ -288,5 +288,29 @@ func (a *App) resealSecrets(ctx context.Context) error {
 		}
 		a.Logger.Info("sealed stored secret", "blobStore", b.Name)
 	}
+	scanners, err := a.Store.ListScanners(ctx)
+	if err != nil {
+		return err
+	}
+	for _, sc := range scanners {
+		cfg, err := scan.ParseScannerConfig(sc.Config)
+		if err != nil {
+			continue
+		}
+		changed, err := cfg.Reseal(a.Secrets)
+		if err != nil {
+			return fmt.Errorf("scanner %s: %w", sc.Name, err)
+		}
+		if !changed {
+			continue
+		}
+		if sc.Config, err = json.Marshal(cfg); err != nil {
+			return err
+		}
+		if _, err := a.Store.UpdateScanner(ctx, sc); err != nil {
+			return err
+		}
+		a.Logger.Info("sealed stored secret", "scanner", sc.Name)
+	}
 	return nil
 }

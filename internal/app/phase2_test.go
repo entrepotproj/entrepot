@@ -69,6 +69,11 @@ func TestResealPlaintextSecrets(t *testing.T) {
 	if _, err := inst.App.Pool.Exec(ctx, `UPDATE repositories SET config = jsonb_set(config, '{proxy,password}', '"plain-old"') WHERE name='legacy'`); err != nil {
 		t.Fatal(err)
 	}
+	inst.JSON("POST", "/scanners", map[string]any{"name": "hook", "type": "webhook",
+		"webhook": map[string]any{"url": "https://scanner.example/hook", "secret": "s3cret"}}, http.StatusCreated, nil)
+	if _, err := inst.App.Pool.Exec(ctx, `UPDATE scanners SET config = jsonb_set(config, '{webhook,secret}', '"plain-hook"') WHERE name='hook'`); err != nil {
+		t.Fatal(err)
+	}
 	box, _ := secrets.New(inst.Config.SecretsKey())
 	// Simulate a restart by running the startup migration through a second app.
 	inst2 := testutil.Reopen(t, inst)
@@ -79,6 +84,10 @@ func TestResealPlaintextSecrets(t *testing.T) {
 	}
 	if pt, err := box.Open(string(raw)); err != nil || pt != "plain-old" {
 		t.Fatalf("open: %q %v", pt, err)
+	}
+	_ = inst2.App.Pool.QueryRow(ctx, `SELECT config->'webhook'->>'secret' FROM scanners WHERE name='hook'`).Scan(&raw)
+	if pt, err := box.Open(string(raw)); !secrets.IsSealed(string(raw)) || err != nil || pt != "plain-hook" {
+		t.Fatalf("scanner secret not resealed: %s (%q %v)", raw, pt, err)
 	}
 }
 

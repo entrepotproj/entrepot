@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -53,6 +54,11 @@ type ScanConfig struct {
 	SeverityThreshold string `json:"severityThreshold,omitempty"`
 	// BlockUntilScanned blocks downloads until the first scan completes.
 	BlockUntilScanned bool `json:"blockUntilScanned,omitempty"`
+	// BlockOnError (quarantine mode) blocks downloads of components whose
+	// latest scan by a configured scanner failed, until a retry succeeds. It
+	// also makes verdicts strict: a component stays pending until every
+	// configured scanner has scanned its current content.
+	BlockOnError bool `json:"blockOnError,omitempty"`
 	// Distro qualifies Apt/Yum packages for vulnerability matching (debian-12).
 	Distro string `json:"distro,omitempty"`
 }
@@ -256,6 +262,22 @@ type StoredEvent struct {
 	Cached bool
 	// Changed is false when identical content was re-stored (no-op upload).
 	Changed bool
+	// Sidecar is true for files derived from the package (IsSidecar).
+	Sidecar bool
+}
+
+// IsSidecar reports whether path is a file derived from a package rather
+// than package content: PyPI .metadata (PEP 658) and Helm .prov signatures.
+// Sidecars don't change a component's content revision and are not sent to
+// file scanners.
+func IsSidecar(format, path string) bool {
+	switch format {
+	case "pypi":
+		return strings.HasSuffix(path, ".metadata")
+	case "helm":
+		return strings.HasSuffix(path, ".prov")
+	}
+	return false
 }
 
 // StoredHook is called synchronously after an asset with a component is
@@ -431,6 +453,8 @@ func (s *Service) PutStored(ctx context.Context, rp *Repository, d storage.Diges
 		ComponentID:  componentID,
 		Cached:       o.Cached,
 		NoOverwrite:  o.NoOverwrite,
+		// A new or changed package file is new content to scan.
+		BumpComponentRev: !IsSidecar(rp.Format, o.Path),
 	})
 	if errors.Is(err, store.ErrConflict) {
 		return nil, ErrRedeploy
@@ -440,7 +464,7 @@ func (s *Service) PutStored(ctx context.Context, rp *Repository, d storage.Diges
 	}
 	if err == nil && componentID != nil {
 		s.fireStored(ctx, StoredEvent{Repository: rp, Asset: a, ComponentID: *componentID, Cached: o.Cached,
-			Changed: prevDigest != a.Digest})
+			Changed: prevDigest != a.Digest, Sidecar: IsSidecar(rp.Format, o.Path)})
 	}
 	return a, err
 }

@@ -1481,6 +1481,12 @@ components:
           enum: [critical, high, medium, low]
           description: "Lowest severity that quarantines (default high)"
         blockUntilScanned: { type: boolean, description: "quarantine mode: block downloads until the first scan completes" }
+        blockOnError:
+          type: boolean
+          description: >-
+            quarantine mode: block downloads of components whose latest scan by a configured scanner failed, until a
+            retry succeeds (failed scans are retried every scan.errorRetryInterval). Verdicts become strict: a
+            component stays pending until every configured scanner has scanned its current content.
         distro: { type: string, description: "Apt/Yum: distribution for vulnerability matching, e.g. debian-12, ubuntu-24.04, rocky-9" }
     CleanupSettings:
       type: object
@@ -1820,7 +1826,7 @@ components:
         repository: { type: string }
         scanner: { type: string }
         status: { type: string, enum: [queued, running, done, failed] }
-        reason: { type: string, enum: [upload, proxy, manual, rescan] }
+        reason: { type: string, enum: [upload, proxy, manual, rescan, retry] }
         attempts: { type: integer }
         error: { type: string }
         runAfter: { type: string, format: date-time }

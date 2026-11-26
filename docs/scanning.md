@@ -72,6 +72,7 @@ any number of replicas.
   "onUpload": true,
   "onProxyFetch": true,
   "blockUntilScanned": false,
+  "blockOnError": false,
   "distro": "debian-12"
 }
 ```
@@ -95,6 +96,22 @@ any number of replicas.
   * Docker tag manifests and digest manifests are blocked; layers never are.
 * **Block until scanned** (quarantine mode only) also blocks components that
   have not been scanned yet. The download attempt queues the scan.
+* **Block on scan errors** (`blockOnError`, quarantine mode only) fails
+  closed: a component whose latest scan by a configured scanner failed is
+  blocked with `… could not be scanned; downloads are blocked until a scan
+  succeeds`. Failed scans are queued again every `scan.errorRetryInterval`
+  (default 15 minutes), and a download attempt retries them once the failure
+  is more than a minute old. Use it with `blockUntilScanned`.
+* **Strict verdicts.** Repositories with `blockOnError` decide a component's
+  state only once every configured scanner has scanned its current content.
+  * Until then the component is `pending`. Other repositories keep the
+    original rule: the first completed scan decides, and later results update
+    the state.
+  * A new or changed file in a component (another wheel of a version, a
+    re-upload, a Docker tag that moved) makes it `pending` again and queues a
+    scan. A scan that was already running when the file arrived is repeated.
+  * Sidecar files (PyPI `.metadata`, Helm `.prov`) are derived from the
+    package and don't count as new content.
 * Switching a repository from warn to quarantine takes effect immediately,
   without rescanning.
 

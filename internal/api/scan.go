@@ -180,6 +180,7 @@ func (s *Server) CreateScanner(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.audit(r, "scanner.create", out.Name, map[string]any{"type": out.Type, "enabled": out.Enabled})
+	s.Scan.ForgetScanners()
 	httpx.WriteJSON(w, http.StatusCreated, scannerToAPI(out))
 }
 
@@ -226,6 +227,7 @@ func (s *Server) UpdateScanner(w http.ResponseWriter, r *http.Request, name stri
 		return
 	}
 	s.audit(r, "scanner.update", out.Name, map[string]any{"type": out.Type, "enabled": out.Enabled})
+	s.Scan.ForgetScanners()
 	httpx.WriteJSON(w, http.StatusOK, scannerToAPI(out))
 }
 
@@ -267,6 +269,7 @@ func (s *Server) DeleteScanner(w http.ResponseWriter, r *http.Request, name stri
 		return
 	}
 	s.audit(r, "scanner.delete", name, nil)
+	s.Scan.ForgetScanners()
 	w.WriteHeader(http.StatusNoContent)
 }
 

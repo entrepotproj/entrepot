@@ -245,6 +245,7 @@ const (
 	ScanJobReasonManual ScanJobReason = "manual"
 	ScanJobReasonProxy  ScanJobReason = "proxy"
 	ScanJobReasonRescan ScanJobReason = "rescan"
+	ScanJobReasonRetry  ScanJobReason = "retry"
 	ScanJobReasonUpload ScanJobReason = "upload"
 )
 
@@ -256,6 +257,8 @@ func (e ScanJobReason) Valid() bool {
 	case ScanJobReasonProxy:
 		return true
 	case ScanJobReasonRescan:
+		return true
+	case ScanJobReasonRetry:
 		return true
 	case ScanJobReasonUpload:
 		return true
@@ -1277,6 +1280,9 @@ type ScanResultStatus string
 
 // ScanSettings defines model for ScanSettings.
 type ScanSettings struct {
+	// BlockOnError quarantine mode: block downloads of components whose latest scan by a configured scanner failed, until a retry succeeds (failed scans are retried every scan.errorRetryInterval). Verdicts become strict: a component stays pending until every configured scanner has scanned its current content.
+	BlockOnError *bool `json:"blockOnError,omitempty"`
+
 	// BlockUntilScanned quarantine mode: block downloads until the first scan completes
 	BlockUntilScanned *bool `json:"blockUntilScanned,omitempty"`
 
