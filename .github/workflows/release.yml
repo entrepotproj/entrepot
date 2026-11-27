@@ -48,6 +48,8 @@ jobs:
 
   images:
     runs-on: ubuntu-latest
+    # Normally about 10 minutes; a hung build fails instead of running for 6 hours.
+    timeout-minutes: 60
     needs: release
     if: needs.release.outputs.published == 'true'
     permissions:
