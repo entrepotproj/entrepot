@@ -5,8 +5,13 @@
 #   scanner    Debian-based image with trivy and grype, for `entrepot scan-worker`
 #              docker build --target scanner -t entrepot-scanner .
 
+# The UI, the Go binary and the scanner CLI downloads are built on the build
+# machine's platform ($BUILDPLATFORM) and cross-compiled, so multi-platform
+# builds (linux/arm64 on amd64 runners) never run npm or the Go toolchain
+# under QEMU emulation, which is slow and can crash.
+
 # --- Web UI -----------------------------------------------------------------
-FROM node:22-alpine AS ui
+FROM --platform=$BUILDPLATFORM node:22-alpine AS ui
 WORKDIR /src/web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci --no-audit --no-fund
@@ -15,20 +20,22 @@ COPY api/openapi.yaml /src/api/openapi.yaml
 RUN npm run build
 
 # --- Server -----------------------------------------------------------------
-FROM golang:1.26-alpine AS build
+FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS build
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 COPY --from=ui /src/web/dist ./web/dist
 ARG VERSION=dev
-RUN CGO_ENABLED=0 go build -trimpath \
+ARG TARGETOS=linux
+ARG TARGETARCH
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath \
       -ldflags "-s -w -X github.com/entrepotproj/entrepot/internal/api.Version=${VERSION}" \
       -o /out/entrepot ./cmd/entrepot \
  && mkdir -p /out/data
 
 # --- Scanner CLIs (checksum-verified release binaries) ----------------------
-FROM debian:bookworm-slim AS tools
+FROM --platform=$BUILDPLATFORM debian:bookworm-slim AS tools
 ARG TARGETARCH=amd64
 # renovate: datasource=github-releases depName=aquasecurity/trivy extractVersion=^v(?<version>.+)$
 ARG TRIVY_VERSION=0.76.0
