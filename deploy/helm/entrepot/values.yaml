@@ -171,6 +171,8 @@ ingress:
     nginx.ingress.kubernetes.io/proxy-read-timeout: "900"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "900"
     nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+  # Docker repositories can be served on their own hostname (docker.host):
+  # add those names here, or a wildcard (see examples/docker-hosts.yaml).
   hosts:
     - host: entrepot.example.com
       paths: ["/"]

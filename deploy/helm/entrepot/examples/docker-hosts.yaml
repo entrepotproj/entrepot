@@ -1,0 +1,26 @@
+# Docker repositories on their own hostnames, e.g. hub.entrepot.example.com
+# for a Docker Hub proxy (usable as Docker Engine's registry mirror) and
+# registry.entrepot.example.com for internal images.
+#
+# Set each repository's hostname in Entrepot (UI: the repository's
+# Hostname; API: "docker": {"host": "hub.entrepot.example.com"}). DNS: point
+# entrepot.example.com and *.entrepot.example.com at the ingress. TLS: a
+# certificate for both names, here in the entrepot-tls secret (for example
+# issued by cert-manager with a DNS-01 solver, which wildcards need).
+baseURL: https://entrepot.example.com
+database:
+  existingSecret: entrepot-db          # key: database-url
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: entrepot.example.com
+      paths: ["/"]
+    - host: "*.entrepot.example.com"
+      paths: ["/"]
+  tls:
+    - secretName: entrepot-tls
+      hosts:
+        - entrepot.example.com
+        - "*.entrepot.example.com"

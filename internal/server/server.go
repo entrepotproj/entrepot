@@ -208,7 +208,11 @@ func (s *Server) logAndMeasure(next http.Handler) http.Handler {
 		r = httpx.WithRequestInfo(r)
 		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 		next.ServeHTTP(ww, r)
-		if name := repoFromPath(r.URL.Path); name != "" && s.Usage != nil {
+		name := httpx.RepositoryOf(r.Context())
+		if name == "" {
+			name = repoFromPath(r.URL.Path)
+		}
+		if name != "" && s.Usage != nil {
 			if rp, err := s.Env.Repos.Get(r.Context(), name); err == nil {
 				st := ww.Status()
 				if st == 0 {

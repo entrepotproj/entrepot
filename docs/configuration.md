@@ -91,3 +91,4 @@ blobStores:
 | `hosted.yum.repodataDepth` | Yum: directory depth for repodata (default 0) |
 | `scan` | `{scanners, mode: off\|warn\|quarantine, severityThreshold, onUpload, onProxyFetch, blockUntilScanned, holdSeconds, blockOnError, distro}`. See [scanning](scanning.md) |
 | `cleanup.policies` | cleanup policies to apply. See [cleanup](cleanup-and-routing.md) |
+| `docker.host` | Docker: an optional hostname on which `/v2/` is this repository (images without the repository prefix; usable as a registry mirror). Unique, and not the server's own host. See [clients](clients.md#a-repositorys-own-hostname) |

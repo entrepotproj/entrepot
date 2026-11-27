@@ -33,7 +33,12 @@ func (a action) authz() authz.Action {
 	return authz.Read
 }
 
+// realm is the token endpoint. On a repository's own hostname it is on that
+// host, so token requests carry the host (and the scope names images).
 func (h *Handler) realm(r *http.Request) string {
+	if h.hostRepo(r) != nil {
+		return h.env.URLs.RequestOrigin(r) + "/v2/token"
+	}
 	return h.env.URLs.BaseURL(r) + "/v2/token"
 }
 
@@ -50,12 +55,40 @@ func (h *Handler) challenge(w http.ResponseWriter, r *http.Request, name, action
 
 // invalidCredentials is the authenticator middleware challenge.
 func (h *Handler) invalidCredentials(w http.ResponseWriter, r *http.Request) {
-	if strings.HasSuffix(r.URL.Path, "/token") && (strings.HasPrefix(r.URL.Path, "/v2/") || strings.HasPrefix(r.URL.Path, "/service/")) {
+	isToken := strings.HasSuffix(r.URL.Path, "/token") && (strings.HasPrefix(r.URL.Path, "/v2/") || strings.HasPrefix(r.URL.Path, "/service/"))
+	// Docker Engine sends a registry mirror the user's Docker Hub
+	// credentials. On the hostname of a repository that allows anonymous
+	// reads, answer with an anonymous token instead of 401, so the mirror
+	// is used rather than silently bypassed.
+	if isToken {
+		if hr := h.hostRepo(r); hr != nil && hr.AnonymousRead && h.env.Can(r, hr, pull.authz()) {
+			h.env.Logger.Debug("invalid credentials on a registry mirror host; issuing an anonymous token",
+				"host", h.env.URLs.RequestHost(r), "repository", hr.Name)
+			h.token(w, r)
+			return
+		}
+	}
+	if isToken {
 		w.Header().Set("WWW-Authenticate", `Basic realm="Entrepot"`)
 		writeErr(w, http.StatusUnauthorized, codeUnauthorized, "invalid credentials")
 		return
 	}
 	h.challenge(w, r, "", "", "invalid or expired credentials")
+}
+
+// scopeRepo resolves the repository a token scope name refers to: the
+// repository of the request's hostname (the whole name is an image), or
+// the name's first segment.
+func (h *Handler) scopeRepo(r *http.Request, name string) (*repo.Repository, bool) {
+	if hr := h.hostRepo(r); hr != nil {
+		return hr, true
+	}
+	repoName, _, _ := strings.Cut(name, "/")
+	rp, err := h.env.Repos.Get(r.Context(), repoName)
+	if err != nil || rp.Format != h.Name() {
+		return nil, false
+	}
+	return rp, true
 }
 
 // apiCheck implements GET /v2/ (also used by docker login).
@@ -73,7 +106,7 @@ func (h *Handler) apiCheck(w http.ResponseWriter, r *http.Request) {
 
 // authorize checks that the caller may perform a on the request repository.
 func (h *Handler) authorize(w http.ResponseWriter, r *http.Request, q *request, a action) bool {
-	return h.authorizeRepo(w, r, q.rp, q.name, a)
+	return h.authorizeRepo(w, r, q.rp, q.client, a)
 }
 
 func (h *Handler) authorizeRepo(w http.ResponseWriter, r *http.Request, rp *repo.Repository, name string, a action) bool {
@@ -188,9 +221,8 @@ func (h *Handler) grant(r *http.Request, p *auth.Principal, scope string) (auth.
 	if typ != "repository" {
 		return ra, true
 	}
-	repoName, _, _ := strings.Cut(name, "/")
-	rp, err := h.env.Repos.Get(r.Context(), repoName)
-	if err != nil || rp.Format != h.Name() {
+	rp, ok := h.scopeRepo(r, name)
+	if !ok {
 		return ra, true
 	}
 	t := format.Target(rp)

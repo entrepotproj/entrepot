@@ -214,3 +214,12 @@ func (s *Store) RepositoryStats(ctx context.Context, id string) (RepositoryStats
 		(SELECT coalesce(sum(size),0) FROM assets WHERE repository_id=$1)`, id).Scan(&st.Assets, &st.Components, &st.TotalBytes)
 	return st, mapErr(err, "repository stats")
 }
+
+// RepositoryByDockerHost returns the name of the Docker repository whose
+// docker.host is host, or ErrNotFound.
+func (s *Store) RepositoryByDockerHost(ctx context.Context, host string) (string, error) {
+	var name string
+	err := s.pool.QueryRow(ctx, `SELECT name FROM repositories
+		WHERE format = 'docker' AND lower(config->'docker'->>'host') = lower($1)`, host).Scan(&name)
+	return name, mapErr(err, "repository for host "+host)
+}

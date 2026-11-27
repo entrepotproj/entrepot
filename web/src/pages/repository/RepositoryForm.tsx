@@ -72,6 +72,7 @@ type State = {
   repodataDepth: number | '';
   scan: ScanForm;
   cleanupPolicies: string[];
+  dockerHost: string;
 };
 
 function initialState(r?: Repository): State {
@@ -115,6 +116,7 @@ function initialState(r?: Repository): State {
       distro: r?.scan?.distro ?? '',
     },
     cleanupPolicies: r?.cleanup?.policies ?? [],
+    dockerHost: r?.docker?.host ?? '',
   };
 }
 
@@ -160,6 +162,11 @@ function toInput(s: State, original?: Repository): RepositoryInput {
   if (s.kind === 'group') {
     input.group = { members: s.members };
     if (PREFER_HOSTED_FORMATS.includes(s.format)) input.group.preferHosted = s.preferHosted;
+  }
+  // Only send the Docker hostname when it is (or was) set, so servers without
+  // the setting keep accepting the request; an empty object clears it.
+  if (s.format === 'docker' && (s.dockerHost.trim() || original?.docker?.host)) {
+    input.docker = { host: s.dockerHost.trim().toLowerCase() || undefined };
   }
   // Only send scan/cleanup settings when they are in use, so servers without
   // these features keep accepting the request.
@@ -536,6 +543,25 @@ export function RepositoryForm({
             {PREFER_HOSTED_FORMATS.includes(s.format) && (
               <PreferHostedField checked={s.preferHosted} onChange={(v) => set('preferHosted', v)} />
             )}
+          </Section>
+        )}
+
+        {s.format === 'docker' && (
+          <Section
+            title="Hostname"
+            description="Optionally serve this registry on its own hostname, so images don't need the repository prefix."
+          >
+            <TextInput
+              label="Hostname"
+              placeholder="hub.entrepot.example.com"
+              value={s.dockerHost}
+              onChange={(e) => set('dockerHost', e.currentTarget.value)}
+              description={
+                s.kind === 'proxy'
+                  ? 'Images become <hostname>/<image>, and a Docker Hub proxy with a hostname can be Docker Engine\'s registry mirror. Point DNS and TLS for the name at Entrepot (a wildcard certificate covers several). The path form keeps working.'
+                  : 'Images become <hostname>/<image>. Point DNS and TLS for the name at Entrepot (a wildcard certificate covers several). The path form keeps working.'
+              }
+            />
           </Section>
         )}
 
