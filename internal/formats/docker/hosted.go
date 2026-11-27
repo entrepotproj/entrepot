@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/entrepotproj/entrepot/internal/format"
+	"github.com/entrepotproj/entrepot/internal/httpx"
 	"github.com/entrepotproj/entrepot/internal/repo"
 	"github.com/entrepotproj/entrepot/internal/storage"
 	"github.com/entrepotproj/entrepot/internal/store"
@@ -258,7 +259,7 @@ func (h *Handler) putManifest(w http.ResponseWriter, r *http.Request, q *request
 		if errors.Is(err, repo.ErrRedeploy) {
 			writeErr(w, http.StatusConflict, codeDenied, fmt.Sprintf(
 				"tag %s:%s already exists with different content and redeploy is disabled for repository %s",
-				q.name, tag, q.rp.Name))
+				q.client, tag, q.rp.Name))
 			return
 		}
 		if err != nil {
@@ -552,6 +553,10 @@ func blobCreated(w http.ResponseWriter, q *request, d storage.Digest) {
 func (h *Handler) mount(w http.ResponseWriter, r *http.Request, q *request, d storage.Digest, from string) bool {
 	ctx := r.Context()
 	srcRepo, srcImage, ok := splitName(from)
+	if q.onHost() {
+		// On a repository's own hostname, from names an image of it.
+		srcRepo, srcImage, ok = q.rp.Name, from, imageRE.MatchString(from)
+	}
 	if !ok {
 		return false
 	}
@@ -883,7 +888,7 @@ func (h *Handler) tagsList(w http.ResponseWriter, r *http.Request, q *request) {
 		return
 	}
 	if !found && len(tags) == 0 {
-		writeErr(w, http.StatusNotFound, codeNameUnknown, "repository name not known to registry", map[string]string{"name": q.name})
+		writeErr(w, http.StatusNotFound, codeNameUnknown, "repository name not known to registry", map[string]string{"name": q.client})
 		return
 	}
 	tags, ok := paginate(w, r, tags, q.base()+"/tags/list")
@@ -893,7 +898,7 @@ func (h *Handler) tagsList(w http.ResponseWriter, r *http.Request, q *request) {
 	if tags == nil {
 		tags = []string{}
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"name": q.name, "tags": tags})
+	writeJSON(w, http.StatusOK, map[string]any{"name": q.client, "tags": tags})
 }
 
 // imageNames lists images (with at least one tag) stored in rp.
@@ -915,15 +920,26 @@ func (h *Handler) imageNames(ctx context.Context, rp *repo.Repository, depth int
 	return names
 }
 
-// catalog lists the images of all docker repositories the caller can read.
+// catalog lists the images of all docker repositories the caller can read,
+// or on a repository's own hostname that repository's images.
 func (h *Handler) catalog(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	set := map[string]bool{}
+	if hr := h.hostRepo(r); hr != nil {
+		httpx.SetRepository(ctx, hr.Name)
+		if h.env.Can(r, hr, pull.authz()) {
+			for _, n := range h.imageNames(ctx, hr, 0) {
+				set[n] = true
+			}
+		}
+		h.writeCatalog(w, r, set)
+		return
+	}
 	rs, err := h.env.Repos.Store.ListRepositories(ctx)
 	if err != nil {
 		h.fail(w, r, err, codeNameUnknown)
 		return
 	}
-	set := map[string]bool{}
 	for _, x := range rs {
 		if x.Format != h.Name() {
 			continue
@@ -936,6 +952,10 @@ func (h *Handler) catalog(w http.ResponseWriter, r *http.Request) {
 			set[rp.Name+"/"+n] = true
 		}
 	}
+	h.writeCatalog(w, r, set)
+}
+
+func (h *Handler) writeCatalog(w http.ResponseWriter, r *http.Request, set map[string]bool) {
 	names := make([]string, 0, len(set))
 	for n := range set {
 		names = append(names, n)

@@ -250,6 +250,13 @@ function snippets(r: Repository, baseUrl: string, keyUrl: string): { cli: Snippe
           code: `docker tag <image>:<tag> ${ref}/<image>:<tag>\ndocker push ${ref}/<image>:<tag>`,
         });
       }
+      // A Docker Hub proxy on its own hostname can be the daemon's mirror.
+      if (r.docker?.host && r.kind === 'proxy' && /docker\.io/.test(r.proxy?.remoteUrl ?? '')) {
+        cli.push({
+          title: `Use as Docker Engine's mirror for Docker Hub (/etc/docker/daemon.json${r.anonymousRead ? '' : '; needs anonymous read'})`,
+          code: JSON.stringify({ 'registry-mirrors': [`https://${r.docker.host}`] }, null, 2),
+        });
+      }
       const ci: Snippet[] = [
         {
           title: '.gitlab-ci.yml',

@@ -48,6 +48,7 @@ import (
 
 	"github.com/entrepotproj/entrepot/internal/auth"
 	"github.com/entrepotproj/entrepot/internal/format"
+	"github.com/entrepotproj/entrepot/internal/httpx"
 	"github.com/entrepotproj/entrepot/internal/proxy"
 	"github.com/entrepotproj/entrepot/internal/repo"
 	"github.com/entrepotproj/entrepot/internal/storage"
@@ -86,8 +87,12 @@ func New(env *format.Env) *Handler { return &Handler{env: env, tokens: newTokenC
 func (h *Handler) Name() string    { return "docker" }
 func (h *Handler) Kinds() []string { return []string{repo.KindHosted, repo.KindProxy, repo.KindGroup} }
 
-// ClientURL is what users put in front of image names: host/{repo}.
+// ClientURL is what users put in front of image names: host/{repo}, or the
+// repository's own hostname.
 func (h *Handler) ClientURL(baseURL string, rp *repo.Repository) string {
+	if dh := rp.Cfg.DockerHost(); dh != "" {
+		return dh
+	}
 	host := baseURL
 	if u, err := url.Parse(baseURL); err == nil && u.Host != "" {
 		host = u.Host + strings.TrimRight(u.Path, "/")
@@ -256,12 +261,20 @@ func splitName(name string) (repoName, image string, ok bool) {
 
 // request is a parsed registry request.
 type request struct {
-	name  string // full name {repo}/{image}
-	rp    *repo.Repository
-	image string
+	name string // full name {repo}/{image}
+	// client is the name as the client addressed it: name, or just the
+	// image on the repository's own hostname.
+	client string
+	rp     *repo.Repository
+	image  string
 }
 
-func (q *request) base() string { return "/v2/" + q.name }
+// base is the client-visible path of the image (for Location and Link).
+func (q *request) base() string { return "/v2/" + q.client }
+
+// onHost reports whether the request came through the repository's own
+// hostname.
+func (q *request) onHost() bool { return q.client != q.name }
 
 // serve routes /v2/... requests.
 func (h *Handler) serve(w http.ResponseWriter, r *http.Request) {
@@ -300,15 +313,25 @@ func (h *Handler) serve(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusNotFound, codeNameUnknown, "unknown registry endpoint")
 		return
 	}
-	repoName, image, ok := splitName(name)
-	if !ok {
-		writeErr(w, http.StatusBadRequest, codeNameInvalid, "invalid repository name "+name+
-			" (expected {entrepot-repository}/{image})")
-		return
-	}
-	q, ok := h.resolve(w, r, name, repoName, image, route, arg)
-	if !ok {
-		return
+	var q *request
+	if hr := h.hostRepo(r); hr != nil {
+		// The repository's own hostname: the whole name is the image.
+		httpx.SetRepository(r.Context(), hr.Name)
+		if !imageRE.MatchString(name) || len(name) > 255-len(hr.Name)-1 {
+			writeErr(w, http.StatusBadRequest, codeNameInvalid, "invalid image name "+name)
+			return
+		}
+		q = &request{name: hr.Name + "/" + name, client: name, rp: hr, image: name}
+	} else {
+		repoName, image, ok := splitName(name)
+		if !ok {
+			writeErr(w, http.StatusBadRequest, codeNameInvalid, "invalid repository name "+name+
+				" (expected {entrepot-repository}/{image})")
+			return
+		}
+		if q, ok = h.resolve(w, r, name, repoName, image, route, arg); !ok {
+			return
+		}
 	}
 	switch route {
 	case "manifests":
@@ -350,7 +373,7 @@ func (h *Handler) resolve(w http.ResponseWriter, r *http.Request, name, repoName
 		writeErr(w, http.StatusNotFound, codeNameUnknown, "repository "+repoName+" does not exist or is not a docker repository")
 		return nil, false
 	}
-	return &request{name: name, rp: rp, image: image}, true
+	return &request{name: name, client: name, rp: rp, image: image}, true
 }
 
 // actionsFor returns the Docker scope actions a request needs (for challenges).

@@ -2,10 +2,15 @@ package api
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"net/url"
 	"slices"
+	"strings"
 
 	"github.com/entrepotproj/entrepot/internal/api/apigen"
 	"github.com/entrepotproj/entrepot/internal/repo"
+	"github.com/entrepotproj/entrepot/internal/store"
 )
 
 var severities = []string{"critical", "high", "medium", "low"}
@@ -83,6 +88,26 @@ func (s *Server) phase2Settings(ctx context.Context, in apigen.RepositoryInput, 
 	if cfg.Group != nil && in.Group != nil {
 		cfg.Group.PreferHosted = in.Group.PreferHosted
 	}
+	if d := in.Docker; d != nil && strings.TrimSpace(deref(d.Host)) != "" {
+		if in.Format != "docker" {
+			return errBad("docker settings are only valid for docker repositories")
+		}
+		host, err := repo.NormalizeDockerHost(*d.Host)
+		if err != nil {
+			return errBad(err.Error())
+		}
+		if base := s.baseHost(); base != "" && host == base {
+			return errBad("docker.host must differ from the server's own host (server.baseURL); use a subdomain such as hub." + base)
+		}
+		owner, err := s.Store.RepositoryByDockerHost(ctx, host)
+		switch {
+		case err == nil && owner != in.Name:
+			return fmt.Errorf("docker.host %s is already used by repository %s (%w)", host, owner, store.ErrConflict)
+		case err != nil && !errors.Is(err, store.ErrNotFound):
+			return err
+		}
+		cfg.Docker = &repo.DockerConfig{Host: host}
+	}
 	if cfg.Hosted != nil && in.Hosted != nil {
 		if a := in.Hosted.Apt; a != nil && in.Format == "apt" {
 			ac := &repo.AptConfig{}
@@ -108,8 +133,24 @@ func (s *Server) phase2Settings(ctx context.Context, in apigen.RepositoryInput, 
 	return nil
 }
 
+// baseHost is the hostname of server.baseURL ("" when it is derived from
+// requests).
+func (s *Server) baseHost() string {
+	if s.Config == nil || s.Config.Server.BaseURL == "" {
+		return ""
+	}
+	u, err := url.Parse(s.Config.Server.BaseURL)
+	if err != nil {
+		return ""
+	}
+	return strings.ToLower(u.Hostname())
+}
+
 // phase2ToAPI fills the optional settings of a repository response.
 func phase2ToAPI(rp *repo.Repository, out *apigen.Repository) {
+	if h := rp.Cfg.DockerHost(); h != "" {
+		out.Docker = &apigen.DockerSettings{Host: ptr(h)}
+	}
 	if c := rp.Cfg.Scan; c != nil {
 		mode := apigen.ScanSettingsMode(c.EffectiveMode())
 		thr := apigen.ScanSettingsSeverityThreshold(c.Threshold())

@@ -9,7 +9,9 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -40,6 +42,46 @@ type Config struct {
 	Group   *GroupConfig   `json:"group,omitempty"`
 	Scan    *ScanConfig    `json:"scan,omitempty"`
 	Cleanup *CleanupConfig `json:"cleanup,omitempty"`
+	Docker  *DockerConfig  `json:"docker,omitempty"`
+}
+
+// DockerConfig holds Docker-specific settings.
+type DockerConfig struct {
+	// Host is an optional hostname on which the registry API (/v2/) is this
+	// repository: images are addressed as host/image instead of
+	// baseHost/repository/image (and the host can be a registry mirror).
+	Host string `json:"host,omitempty"`
+}
+
+// DockerHost returns the repository's own hostname, if any.
+func (c Config) DockerHost() string {
+	if c.Docker == nil {
+		return ""
+	}
+	return c.Docker.Host
+}
+
+var hostLabelRE = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`)
+
+// NormalizeDockerHost validates a repository hostname (a lowercase DNS
+// name without scheme, port or path) and returns it lowercased.
+func NormalizeDockerHost(h string) (string, error) {
+	h = strings.ToLower(strings.TrimSuffix(strings.TrimSpace(h), "."))
+	if h == "" || len(h) > 253 {
+		return "", errors.New("docker.host must be a hostname such as hub.entrepot.example.com")
+	}
+	if strings.ContainsAny(h, ":/@?# ") {
+		return "", errors.New("docker.host must be a bare hostname, without scheme, port or path")
+	}
+	if net.ParseIP(h) != nil {
+		return "", errors.New("docker.host must be a hostname, not an IP address")
+	}
+	for _, l := range strings.Split(h, ".") {
+		if !hostLabelRE.MatchString(l) {
+			return "", fmt.Errorf("docker.host %q is not a valid hostname", h)
+		}
+	}
+	return h, nil
 }
 
 // ScanConfig selects scanners and the download policy for a repository.
@@ -269,6 +311,14 @@ type Service struct {
 	mu    sync.RWMutex
 	cache map[string]cacheEntry
 	ttl   time.Duration
+	// hosts maps Docker repository hostnames to repository names ("" for
+	// hosts that belong to no repository).
+	hosts map[string]hostEntry
+}
+
+type hostEntry struct {
+	name    string
+	expires time.Time
 }
 
 type cacheEntry struct {
@@ -277,7 +327,8 @@ type cacheEntry struct {
 }
 
 func NewService(st *store.Store, blobs *storage.Registry, logger *slog.Logger) *Service {
-	return &Service{Store: st, blobs: blobs, logger: logger, cache: map[string]cacheEntry{}, ttl: 5 * time.Second}
+	return &Service{Store: st, blobs: blobs, logger: logger, cache: map[string]cacheEntry{}, ttl: 5 * time.Second,
+		hosts: map[string]hostEntry{}}
 }
 
 // StoredEvent describes an asset linked to a component that was just stored.
@@ -400,11 +451,45 @@ func (s *Service) wrap(r *store.Repository) (*Repository, error) {
 	return &Repository{Repository: r, Cfg: cfg}, nil
 }
 
-// Invalidate drops the cached copy of a repository.
+// Invalidate drops the cached copy of a repository (and the hostname
+// lookups, which may have changed with it).
 func (s *Service) Invalidate(name string) {
 	s.mu.Lock()
 	delete(s.cache, name)
+	s.hosts = map[string]hostEntry{}
 	s.mu.Unlock()
+}
+
+// ByDockerHost returns the Docker repository served on host (lowercase, no
+// port), or ErrNotFound. Lookups, including misses, are cached briefly.
+func (s *Service) ByDockerHost(ctx context.Context, host string) (*Repository, error) {
+	s.mu.RLock()
+	e, ok := s.hosts[host]
+	s.mu.RUnlock()
+	if !ok || !time.Now().Before(e.expires) {
+		name, err := s.Store.RepositoryByDockerHost(ctx, host)
+		if err != nil && !errors.Is(err, store.ErrNotFound) {
+			return nil, err
+		}
+		e = hostEntry{name: name, expires: time.Now().Add(s.ttl)}
+		s.mu.Lock()
+		if len(s.hosts) > 10000 {
+			s.hosts = map[string]hostEntry{}
+		}
+		s.hosts[host] = e
+		s.mu.Unlock()
+	}
+	if e.name == "" {
+		return nil, ErrNotFound
+	}
+	rp, err := s.Get(ctx, e.name)
+	if err != nil {
+		return nil, err
+	}
+	if rp.Cfg.DockerHost() != host {
+		return nil, ErrNotFound // changed since it was cached
+	}
+	return rp, nil
 }
 
 // BlobStore returns the blob store backing rp.

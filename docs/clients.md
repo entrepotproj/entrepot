@@ -119,11 +119,53 @@ Notes:
   `proxy.username`/`password` on the repository to use an authenticated quota.
   Tags are revalidated with cheap HEAD requests, which don't count as pulls.
 
-### containerd / Kubernetes mirror
+### A repository's own hostname
 
-To make a cluster pull Docker Hub images through Entrepot, configure a
-registry mirror. For example, for containerd in
+A Docker repository can also be served on its own hostname, set with
+`docker.host` (UI: the repository's **Hostname**). On that host `/v2/` is
+the repository, so images have no repository prefix:
+
+```bash
+docker pull hub.entrepot.example.com/library/alpine:3.20
+docker push registry.acme.example.com/team/my-app:1.0
+```
+
+* Point DNS for the name at Entrepot and give the ingress or load balancer a
+  certificate for it. A wildcard record and certificate
+  (`*.entrepot.example.com`) cover every repository hostname; see the Helm
+  chart's `examples/docker-hosts.yaml`.
+* The path form (`entrepot.example.com/<repository>/<image>`) keeps working,
+  so clients can move over gradually.
+* Log in to the hostname itself (`docker login hub.entrepot.example.com`).
+  The token endpoint is on the same host.
+* A hostname belongs to one repository, and can't be the server's own host.
+
+### Registry mirrors
+
+With a hostname on a Docker Hub proxy, Docker Engine can use Entrepot as its
+mirror for every `docker pull` of a Docker Hub image, in
+`/etc/docker/daemon.json`:
+
+```json
+{ "registry-mirrors": ["https://hub.entrepot.example.com"] }
+```
+
+The daemon sends the mirror the user's Docker Hub credentials, if any, so
+the proxy repository needs `anonymousRead`. On a repository hostname that
+allows anonymous reads, Entrepot answers credentials it doesn't recognise
+with an anonymous token, so the mirror is used rather than skipped. If the
+mirror can't serve an image, the daemon falls back to Docker Hub.
+
+For containerd (Kubernetes nodes), in
 `/etc/containerd/certs.d/docker.io/hosts.toml`:
+
+```toml
+server = "https://registry-1.docker.io"
+[host."https://hub.entrepot.example.com"]
+  capabilities = ["pull", "resolve"]
+```
+
+Without a hostname, containerd can still use the path form:
 
 ```toml
 server = "https://registry-1.docker.io"

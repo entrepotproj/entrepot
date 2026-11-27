@@ -1129,6 +1129,14 @@ export interface components {
         CleanupSettings: {
             policies?: string[];
         };
+        /** @description Docker repositories only. */
+        DockerSettings: {
+            /**
+             * @description Optional hostname on which the registry API (/v2/) is this repository, so images are addressed as host/image instead of entrepot-host/repository/image, and the host can be used as a registry mirror. Point DNS and TLS for it at Entrepot. Must be unique; the path form keeps working.
+             * @example hub.entrepot.example.com
+             */
+            host?: string;
+        };
         RepositoryInput: {
             name: string;
             /** @enum {string} */
@@ -1145,6 +1153,7 @@ export interface components {
             group?: components["schemas"]["GroupSettings"];
             scan?: components["schemas"]["ScanSettings"];
             cleanup?: components["schemas"]["CleanupSettings"];
+            docker?: components["schemas"]["DockerSettings"];
         };
         Repository: {
             name: string;
@@ -1161,6 +1170,7 @@ export interface components {
             group?: components["schemas"]["GroupSettings"];
             scan?: components["schemas"]["ScanSettings"];
             cleanup?: components["schemas"]["CleanupSettings"];
+            docker?: components["schemas"]["DockerSettings"];
             /** @description Actions the caller may perform */
             permissions: string[];
             stats?: components["schemas"]["RepositoryStats"];
