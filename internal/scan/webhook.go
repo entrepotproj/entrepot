@@ -19,6 +19,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/entrepotproj/entrepot/internal/repo"
 	"github.com/entrepotproj/entrepot/internal/scan/drivers"
@@ -406,6 +408,9 @@ func (s *Service) TestScanner(ctx context.Context, sc *store.Scanner) TestResult
 		if w == nil || w.URL == "" {
 			return TestResult{Message: "webhook.url is not set"}
 		}
+		if t := w.Test; t != nil && (t.URL != "" || t.VersionPath != "") {
+			return s.testWebhookEndpoint(ctx, w, t, ls.Name)
+		}
 		code, err := s.postWebhook(ctx, w, &WebhookRequest{Type: "ping", Scanner: ls.Name})
 		if err != nil {
 			return TestResult{Message: err.Error()}
@@ -472,4 +477,146 @@ func (s *Service) checkTrivyServer(ctx context.Context, url string) error {
 		return fmt.Errorf("healthz answered %d", resp.StatusCode)
 	}
 	return nil
+}
+
+// testWebhookEndpoint calls the scanner's configured test endpoint, checks the
+// status and extracts the version from the JSON reply.
+func (s *Service) testWebhookEndpoint(ctx context.Context, w *WebhookSettings, t *WebhookTest, name string) TestResult {
+	u := t.URL
+	if u == "" {
+		u = w.URL
+	}
+	method := strings.ToUpper(t.Method)
+	if method == "" {
+		method = http.MethodGet
+	}
+	if method != http.MethodGet && method != http.MethodPost {
+		return TestResult{Message: "webhook.test.method must be GET or POST"}
+	}
+	var body []byte
+	if method == http.MethodPost {
+		body, _ = json.Marshal(&WebhookRequest{Type: "ping", Scanner: name})
+	}
+	hr, err := http.NewRequestWithContext(ctx, method, u, bytes.NewReader(body))
+	if err != nil {
+		return TestResult{Message: fmt.Sprintf("webhook test %s: invalid request", redactURL(u))}
+	}
+	hr.Header.Set("User-Agent", "Entrepot-Scanner")
+	hr.Header.Set("Accept", "application/json")
+	if method == http.MethodPost {
+		hr.Header.Set("Content-Type", "application/json")
+		hr.Header.Set("X-Entrepot-Event", "ping")
+		if w.Secret != "" {
+			hr.Header.Set(SignatureHeader, Sign(w.Secret, body))
+		}
+	}
+	resp, err := s.HTTP.Do(hr)
+	if err != nil {
+		return TestResult{Message: fmt.Sprintf("webhook test %s: %v", redactURL(u), redactErr(err, u))}
+	}
+	defer resp.Body.Close()
+	data, _ := io.ReadAll(io.LimitReader(resp.Body, 64<<10))
+	okStatus := resp.StatusCode >= 200 && resp.StatusCode <= 299
+	if t.ExpectedStatus != 0 {
+		okStatus = resp.StatusCode == t.ExpectedStatus
+	}
+	if !okStatus {
+		return TestResult{Message: fmt.Sprintf("webhook test %s answered %d: %s", redactURL(u), resp.StatusCode,
+			strings.TrimSpace(string(data[:min(len(data), 2048)])))}
+	}
+	msg := fmt.Sprintf("webhook %s answered %d", redactURL(u), resp.StatusCode)
+	if t.VersionPath == "" {
+		return TestResult{OK: true, Message: msg}
+	}
+	v, err := ExtractJSONString(data, t.VersionPath)
+	if err != nil {
+		return TestResult{Message: msg + "; version: " + err.Error()}
+	}
+	return TestResult{OK: true, Message: msg + ", version " + v, Version: v}
+}
+
+// redactErr strips the full URL (with its query and credentials) from a
+// transport error, which net/http includes verbatim.
+func redactErr(err error, u string) string {
+	return strings.ReplaceAll(err.Error(), u, redactURL(u))
+}
+
+// ExtractJSONString reads a scalar from a JSON document using a simple path:
+// "$.a.b", "$.items[0].version" or ".a.b" ("$" alone is the document root).
+func ExtractJSONString(data []byte, path string) (string, error) {
+	var doc any
+	if err := json.Unmarshal(data, &doc); err != nil {
+		return "", errors.New("reply is not JSON")
+	}
+	p := strings.TrimPrefix(strings.TrimSpace(path), "$")
+	cur := doc
+	for p != "" {
+		switch p[0] {
+		case '.':
+			p = p[1:]
+			end := strings.IndexAny(p, ".[")
+			if end < 0 {
+				end = len(p)
+			}
+			key := p[:end]
+			p = p[end:]
+			m, ok := cur.(map[string]any)
+			if !ok || key == "" {
+				return "", fmt.Errorf("path %q not found", path)
+			}
+			if cur, ok = m[key]; !ok {
+				return "", fmt.Errorf("path %q not found", path)
+			}
+		case '[':
+			end := strings.IndexByte(p, ']')
+			if end < 0 {
+				return "", fmt.Errorf("invalid path %q", path)
+			}
+			idx, err := strconv.Atoi(p[1:end])
+			p = p[end+1:]
+			arr, ok := cur.([]any)
+			if err != nil || !ok || idx < 0 || idx >= len(arr) {
+				return "", fmt.Errorf("path %q not found", path)
+			}
+			cur = arr[idx]
+		default:
+			return "", fmt.Errorf("invalid path %q", path)
+		}
+	}
+	var out string
+	switch v := cur.(type) {
+	case string:
+		out = v
+	case float64, bool:
+		out = fmt.Sprint(v)
+	default:
+		return "", fmt.Errorf("path %q is not a string or number", path)
+	}
+	return sanitizeVersion(out)
+}
+
+// MaxVersionLen is the longest version (in characters) a scanner test reports.
+// The value comes from a remote endpoint, so it is bounded and cleaned before
+// it is stored in a result, logged or shown.
+const MaxVersionLen = 64
+
+// sanitizeVersion rejects empty values and control characters, and truncates
+// to MaxVersionLen characters.
+func sanitizeVersion(v string) (string, error) {
+	v = strings.TrimSpace(v)
+	if v == "" {
+		return "", errors.New("version is empty")
+	}
+	if !utf8.ValidString(v) {
+		return "", errors.New("version is not valid text")
+	}
+	for _, r := range v {
+		if unicode.IsControl(r) || unicode.Is(unicode.Cf, r) || unicode.Is(unicode.Zl, r) || unicode.Is(unicode.Zp, r) {
+			return "", errors.New("version contains control characters")
+		}
+	}
+	if r := []rune(v); len(r) > MaxVersionLen {
+		v = string(r[:MaxVersionLen]) + "…"
+	}
+	return v, nil
 }

@@ -619,6 +619,52 @@ func TestScannerAPI(t *testing.T) {
 	if !res.OK || len(pings) != 1 || !strings.Contains(pings[0], `"type":"ping"`) {
 		t.Fatalf("ping: %+v %v", res, pings)
 	}
+	// Test block: version read from the endpoint's JSON reply.
+	status := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/status":
+			_, _ = w.Write([]byte(`{"role":"ingress","version":"r2-41e818e41df7"}`))
+		case "/text":
+			_, _ = w.Write([]byte("ok"))
+		default:
+			http.Error(w, "nope", http.StatusServiceUnavailable)
+		}
+	}))
+	defer status.Close()
+	put := func(test map[string]any) {
+		inst.JSON("PUT", "/scanners/hook", map[string]any{"name": "hook", "type": "webhook", "enabled": true,
+			"webhook": map[string]any{"url": hook.URL, "test": test}}, http.StatusOK, nil)
+	}
+	put(map[string]any{"url": status.URL + "/status", "versionPath": "$.version"})
+	res.Version = ""
+	inst.JSON("POST", "/scanners/hook/test", nil, http.StatusOK, &res)
+	if !res.OK || res.Version != "r2-41e818e41df7" || len(pings) != 1 {
+		t.Fatalf("test endpoint: %+v", res)
+	}
+	put(map[string]any{"url": status.URL + "/status?token=s3cret", "versionPath": "$.nope"})
+	res.Version = ""
+	inst.JSON("POST", "/scanners/hook/test", nil, http.StatusOK, &res)
+	if res.OK || res.Version != "" || strings.Contains(res.Message, "s3cret") {
+		t.Fatalf("missing path: %+v", res)
+	}
+	put(map[string]any{"url": status.URL + "/text", "versionPath": "$.version"})
+	res.Version = ""
+	inst.JSON("POST", "/scanners/hook/test", nil, http.StatusOK, &res)
+	if res.OK || !strings.Contains(res.Message, "not JSON") {
+		t.Fatalf("non-JSON: %+v", res)
+	}
+	put(map[string]any{"url": status.URL + "/down?token=s3cret", "versionPath": "$.version"})
+	res.Version = ""
+	inst.JSON("POST", "/scanners/hook/test", nil, http.StatusOK, &res)
+	if res.OK || !strings.Contains(res.Message, "503") || strings.Contains(res.Message, "s3cret") {
+		t.Fatalf("bad status: %+v", res)
+	}
+	put(map[string]any{"url": status.URL + "/down", "expectedStatus": 503})
+	res.Version = ""
+	inst.JSON("POST", "/scanners/hook/test", nil, http.StatusOK, &res)
+	if !res.OK {
+		t.Fatalf("expected status: %+v", res)
+	}
 	// Trivy: version, and the (fake) server's /healthz is checked.
 	inst.JSON("POST", "/scanners/trivy/test", nil, http.StatusOK, &res)
 	if res.Version != "0.99.0-fake" || res.OK || !strings.Contains(res.Message, "healthz answered") {
@@ -908,5 +954,28 @@ func untar(t *testing.T, b []byte) map[string][]byte {
 		}
 		c, _ := io.ReadAll(tr)
 		out[h.Name] = c
+	}
+}
+
+func TestExtractJSONString(t *testing.T) {
+	doc := []byte(`{"version":"1.2","n":7,"items":[{"v":"a"},{"v":"b"}],"o":{"x":null}}`)
+	for path, want := range map[string]string{"$.version": "1.2", ".version": "1.2", "$.n": "7", "$.items[1].v": "b"} {
+		if got, err := scan.ExtractJSONString(doc, path); err != nil || got != want {
+			t.Errorf("%s = %q, %v; want %q", path, got, err, want)
+		}
+	}
+	long, _ := json.Marshal(map[string]string{"v": strings.Repeat("é", 500), "c": "1.0\x1b[31m", "n": "1.0\nX", "e": "  "})
+	if got, err := scan.ExtractJSONString(long, "$.v"); err != nil || len([]rune(got)) != scan.MaxVersionLen+1 || !strings.HasSuffix(got, "…") {
+		t.Errorf("long version = %d runes, %v", len([]rune(got)), err)
+	}
+	for _, path := range []string{"$.c", "$.n", "$.e"} {
+		if got, err := scan.ExtractJSONString(long, path); err == nil {
+			t.Errorf("%s = %q, want error", path, got)
+		}
+	}
+	for _, path := range []string{"$.missing", "$.items[5].v", "$.items", "$.o.x", "$.version.x", "$[", "$version"} {
+		if got, err := scan.ExtractJSONString(doc, path); err == nil {
+			t.Errorf("%s = %q, want error", path, got)
+		}
 	}
 }

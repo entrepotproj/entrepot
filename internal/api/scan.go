@@ -41,6 +41,14 @@ func scannerToAPI(sc *store.Scanner) apigen.Scanner {
 	}
 	if w := cfg.Webhook; w != nil {
 		out.Webhook = &apigen.WebhookScannerSettings{Url: w.URL, TimeoutSeconds: optInt(w.TimeoutSeconds)}
+		if t := w.Test; t != nil {
+			out.Webhook.Test = &apigen.WebhookScannerTest{Url: optStr(t.URL), ExpectedStatus: optInt(t.ExpectedStatus),
+				VersionPath: optStr(t.VersionPath)}
+			if t.Method != "" {
+				m := apigen.WebhookScannerTestMethod(t.Method)
+				out.Webhook.Test.Method = &m
+			}
+		}
 	}
 	if m := cfg.MetaDefender; m != nil {
 		out.Metadefender = &apigen.MetaDefenderSettings{Url: m.URL, Rule: optStr(m.Rule), TimeoutSeconds: optInt(m.TimeoutSeconds),
@@ -135,6 +143,24 @@ func (s *Server) scannerConfig(in apigen.ScannerInput, prev *store.Scanner) (*st
 		w := &scan.WebhookSettings{URL: in.Webhook.Url, Secret: deref(in.Webhook.Secret), TimeoutSeconds: deref(in.Webhook.TimeoutSeconds)}
 		if w.Secret == "" && old != nil && old.Webhook != nil {
 			w.Secret = old.Webhook.Secret
+		}
+		if t := in.Webhook.Test; t != nil {
+			wt := &scan.WebhookTest{URL: deref(t.Url), ExpectedStatus: deref(t.ExpectedStatus), VersionPath: deref(t.VersionPath)}
+			if t.Method != nil {
+				wt.Method = string(*t.Method)
+			}
+			if len(wt.URL) > 2048 || len(wt.VersionPath) > 256 {
+				return nil, errBad("webhook.test.url (max 2048) or versionPath (max 256) is too long")
+			}
+			if wt.URL != "" && !isHTTPURL(wt.URL) {
+				return nil, errBad("webhook.test.url must be an http(s) URL")
+			}
+			if wt.ExpectedStatus != 0 && (wt.ExpectedStatus < 100 || wt.ExpectedStatus > 599) {
+				return nil, errBad("webhook.test.expectedStatus must be an HTTP status code")
+			}
+			if wt.URL != "" || wt.VersionPath != "" || wt.Method != "" || wt.ExpectedStatus != 0 {
+				w.Test = wt
+			}
 		}
 		cfg.Webhook = w
 	case scan.TypeMetaDefender:

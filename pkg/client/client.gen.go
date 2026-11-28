@@ -501,6 +501,24 @@ func (e UsageOverviewScope) Valid() bool {
 	}
 }
 
+// Defines values for WebhookScannerTestMethod.
+const (
+	GET  WebhookScannerTestMethod = "GET"
+	POST WebhookScannerTestMethod = "POST"
+)
+
+// Valid indicates whether the value is a known member of the WebhookScannerTestMethod enum.
+func (e WebhookScannerTestMethod) Valid() bool {
+	switch e {
+	case GET:
+		return true
+	case POST:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ExportFormat.
 const (
 	ExportFormatCsv  ExportFormat = "csv"
@@ -1623,12 +1641,33 @@ type WebhookScannerSettings struct {
 	// Secret HMAC-SHA256 key for the X-Entrepot-Signature header
 	Secret *string `json:"secret,omitempty"`
 
+	// Test How the scanner test reaches the scanner and reads its version. When neither url nor versionPath is set, the test sends a signed ping.
+	Test *WebhookScannerTest `json:"test,omitempty"`
+
 	// TimeoutSeconds Time allowed for the callback (default 900)
 	TimeoutSeconds *int `json:"timeoutSeconds,omitempty"`
 
 	// Url Endpoint that receives scan requests
 	Url string `json:"url"`
 }
+
+// WebhookScannerTest How the scanner test reaches the scanner and reads its version. When neither url nor versionPath is set, the test sends a signed ping.
+type WebhookScannerTest struct {
+	// ExpectedStatus Status that means success (default any 2xx)
+	ExpectedStatus *int `json:"expectedStatus,omitempty"`
+
+	// Method HTTP method (default GET; POST sends the signed ping)
+	Method *WebhookScannerTestMethod `json:"method,omitempty"`
+
+	// Url Health or status endpoint (default the webhook url)
+	Url *string `json:"url,omitempty"`
+
+	// VersionPath Path to the version in the JSON reply, e.g. $.version
+	VersionPath *string `json:"versionPath,omitempty"`
+}
+
+// WebhookScannerTestMethod HTTP method (default GET; POST sends the signed ping)
+type WebhookScannerTestMethod string
 
 // YumHostedSettings defines model for YumHostedSettings.
 type YumHostedSettings struct {

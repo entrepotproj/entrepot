@@ -1404,6 +1404,21 @@ export interface components {
             secret?: string;
             /** @description Time allowed for the callback (default 900) */
             timeoutSeconds?: number;
+            test?: components["schemas"]["WebhookScannerTest"];
+        };
+        /** @description How the scanner test reaches the scanner and reads its version. When neither url nor versionPath is set, the test sends a signed ping. */
+        WebhookScannerTest: {
+            /** @description Health or status endpoint (default the webhook url) */
+            url?: string;
+            /**
+             * @description HTTP method (default GET; POST sends the signed ping)
+             * @enum {string}
+             */
+            method?: "GET" | "POST";
+            /** @description Status that means success (default any 2xx) */
+            expectedStatus?: number;
+            /** @description Path to the version in the JSON reply, e.g. $.version */
+            versionPath?: string;
         };
         /** @description OPSWAT MetaDefender Core. Every file of a component (except sidecars such as PyPI .metadata), or every layer of a Docker image, is uploaded for analysis, or matched by hash with an earlier analysis by the same rule. */
         MetaDefenderSettings: {
