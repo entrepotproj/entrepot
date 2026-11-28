@@ -266,7 +266,29 @@ How the scanner responds:
    * `{"unsupported":true}`.
 
 The token is single-use and expires after `timeoutSeconds` (default 900s);
-the job is then retried. The scanner test sends a signed `{"type":"ping"}`.
+the job is then retried. By default the scanner test sends a signed
+`{"type":"ping"}`.
+
+To show the scanner's version on the Test button, add a `test` block to the
+webhook settings. The test then calls that endpoint, checks the status and reads
+the version from the JSON reply:
+
+```json
+"webhook": {
+  "url": "https://scanner.example.com/entrepot",
+  "test": {"url": "https://scanner.example.com/status", "versionPath": "$.version"}
+}
+```
+
+* `url`: the endpoint to call (default: the webhook `url`);
+* `method`: `GET` (default) or `POST` (sends the signed ping);
+* `expectedStatus`: the status that means success (default: any `2xx`);
+* `versionPath`: the version in the reply, as `$.key.sub` or `$.items[0].v`.
+  Without it the test only checks the status. The version comes from a remote
+  reply, so it is limited to 64 characters (longer values are cut and end with
+  `…`) and a value containing control characters fails the test.
+
+Failures name the endpoint without its query string or credentials.
 `server.baseURL` must be set for webhook scanners.
 
 ## GitLab feedback

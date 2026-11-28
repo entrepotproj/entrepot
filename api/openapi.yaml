@@ -1803,6 +1803,17 @@ components:
         url: { type: string, description: Endpoint that receives scan requests }
         secret: { type: string, writeOnly: true, description: HMAC-SHA256 key for the X-Entrepot-Signature header }
         timeoutSeconds: { type: integer, description: Time allowed for the callback (default 900) }
+        test: { $ref: "#/components/schemas/WebhookScannerTest" }
+    WebhookScannerTest:
+      type: object
+      description: >
+        How the scanner test reaches the scanner and reads its version. When
+        neither url nor versionPath is set, the test sends a signed ping.
+      properties:
+        url: { type: string, description: Health or status endpoint (default the webhook url) }
+        method: { type: string, enum: [GET, POST], description: "HTTP method (default GET; POST sends the signed ping)" }
+        expectedStatus: { type: integer, description: Status that means success (default any 2xx) }
+        versionPath: { type: string, description: 'Path to the version in the JSON reply, e.g. $.version' }
     MetaDefenderSettings:
       type: object
       required: [url]

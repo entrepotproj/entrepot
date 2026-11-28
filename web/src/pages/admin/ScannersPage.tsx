@@ -144,6 +144,10 @@ type Form = {
   maxResultAgeHours: number | '';
   webUrl: string;
   caCertificate: string;
+  testUrl: string;
+  testMethod: 'GET' | 'POST';
+  testStatus: number | '';
+  versionPath: string;
 };
 
 function initial(s: Scanner | null): Form {
@@ -170,6 +174,10 @@ function initial(s: Scanner | null): Form {
     maxResultAgeHours: s?.metadefender?.maxResultAgeHours ?? '',
     webUrl: s?.metadefender?.webUrl ?? '',
     caCertificate: s?.metadefender?.caCertificate ?? '',
+    testUrl: s?.webhook?.test?.url ?? '',
+    testMethod: s?.webhook?.test?.method ?? 'GET',
+    testStatus: s?.webhook?.test?.expectedStatus ?? '',
+    versionPath: s?.webhook?.test?.versionPath ?? '',
   };
 }
 
@@ -204,7 +212,14 @@ function toInput(f: Form): ScannerInput {
       caCertificate: f.caCertificate.trim() || undefined,
     };
   } else {
-    input.webhook = { url: f.url.trim(), secret: f.secret || undefined, timeoutSeconds: timeout };
+    const test = {
+      url: f.testUrl.trim() || undefined,
+      method: f.testMethod,
+      expectedStatus: f.testStatus === '' ? undefined : f.testStatus,
+      versionPath: f.versionPath.trim() || undefined,
+    };
+    const hasTest = !!(test.url || test.expectedStatus || test.versionPath);
+    input.webhook = { url: f.url.trim(), secret: f.secret || undefined, timeoutSeconds: timeout, test: hasTest ? test : undefined };
   }
   return input;
 }
@@ -461,6 +476,37 @@ function ScannerModal({ scanner, onClose }: { scanner: Scanner | null; onClose: 
               onChange={(v) => set('extraArgs', v)}
               styles={{ input: { fontFamily: 'var(--mantine-font-family-monospace)' } }}
             />
+          )}
+          {f.type === 'webhook' && (
+            <SimpleGrid cols={{ base: 1, sm: 2 }}>
+              <TextInput
+                label="Test URL"
+                description="Health or status endpoint for the Test button (default: the URL above)"
+                placeholder="https://scanner.example.com/status"
+                value={f.testUrl}
+                onChange={(e) => set('testUrl', e.currentTarget.value)}
+              />
+              <TextInput
+                label="Version path"
+                description="Where the version is in the JSON reply"
+                placeholder="$.version"
+                value={f.versionPath}
+                onChange={(e) => set('versionPath', e.currentTarget.value)}
+              />
+              <SegmentedControl
+                data={['GET', 'POST']}
+                value={f.testMethod}
+                onChange={(v) => set('testMethod', v as 'GET' | 'POST')}
+              />
+              <NumberInput
+                label="Expected status"
+                description="Default: any 2xx"
+                min={100}
+                max={599}
+                value={f.testStatus}
+                onChange={(v) => set('testStatus', typeof v === 'number' ? v : '')}
+              />
+            </SimpleGrid>
           )}
           <Switch
             label="Enabled"

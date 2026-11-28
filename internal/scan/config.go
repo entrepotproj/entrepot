@@ -47,6 +47,17 @@ type WebhookSettings struct {
 	URL            string `json:"url"`
 	Secret         string `json:"secret,omitempty"`
 	TimeoutSeconds int    `json:"timeoutSeconds,omitempty"`
+	// Test, when set, makes the scanner test call a health/status endpoint and
+	// read the scanner's version from the reply, instead of sending a ping.
+	Test *WebhookTest `json:"test,omitempty"`
+}
+
+// WebhookTest describes how to test a webhook scanner and read its version.
+type WebhookTest struct {
+	URL            string `json:"url,omitempty"`            // default: the webhook URL
+	Method         string `json:"method,omitempty"`         // GET (default) or POST
+	ExpectedStatus int    `json:"expectedStatus,omitempty"` // default: any 2xx
+	VersionPath    string `json:"versionPath,omitempty"`    // e.g. $.version
 }
 
 // MetaDefenderSettings configures a MetaDefender Core scanner.
